@@ -1,0 +1,53 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--padding);
+  padding: var(--padding);
+  text-align: center;
+
+  h1,
+  h2,
+  h3 {
+    margin: 0;
+  }
+
+  h1 {
+    margin-top: var(--padding);
+  }
+
+  hr {
+    margin-top: var(--padding);
+  }
+
+  h3 {
+    padding: 0 calc(2 * var(--padding));
+    white-space: nowrap;
+    font-size: var(--font-md);
+    line-height: 1;
+  }
+
+  h3:first-of-type {
+    margin-top: 0.125rem;
+  }
+
+  p {
+    margin: 0;
+    padding-top: 0;
+    font-size: var(--text-xs);
+  }
+
+  .messages {
+    display: flex;
+    border: 1px solid var(--base-medium);
+    width: calc(100% - var(--padding) * 2);
+    border-radius: var(--border-radius-medium);
+    padding: var(--padding);
+  }
+
+  form {
+    display: flex;
+    gap: var(--padding);
+  }
+}

@@ -1,0 +1,54 @@
+.container {
+  display: flex;
+  align-items: center;
+  line-height: 1;
+  gap: var(--padding-medium);
+
+  .pfp {
+    width: 2.166rem;
+    height: 2.166rem;
+    min-width: 2.166rem;
+    min-height: 2.166rem;
+    border-radius: 100%;
+    border: 1px solid var(--base-medium);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-size: cover;
+    background-position: center;
+
+    .pfpIcon {
+      color: var(--text-color);
+      font-size: 1.5rem;
+    }
+  }
+
+  .iconBtns {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    text-align: left;
+    .name {
+      font-weight: 600;
+      line-height: 0.966;
+    }
+    .dateTime {
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      span {
+        font-size: 0.6866rem;
+        line-height: 0.866;
+        font-weight: 600;
+      }
+    }
+  }
+}

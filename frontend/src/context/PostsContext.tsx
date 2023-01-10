@@ -1,0 +1,285 @@
+import {
+  useState,
+  useContext,
+  createContext,
+  useEffect,
+  useCallback,
+} from "react";
+import type { ReactNode } from "react";
+import { IPostCard } from "../routes/Blog";
+import { IResMsg } from "../components/ResMsg";
+import { getPage, SortMode, SortOrder } from "../services/posts";
+import useSocket from "./SocketContext";
+import { instanceOfChangeData } from "../utils/DetermineSocketEvent";
+import { baseURL } from "../services/makeRequest";
+import { useUsers } from "./UsersContext";
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
+
+const PostsContext = createContext<{
+  posts: IPostCard[];
+  postsCount: number;
+
+  postEnteredView: (id: string) => void;
+  postLeftView: (id: string) => void;
+
+  getPageWithParams: (pageNum: number) => void;
+
+  updatePostCard: (data: Partial<IPostCard>) => void;
+  removePostCard: (id: string) => void;
+
+  getSortOrderFromParams: () => SortOrder;
+  getSortModeFromParams: () => SortMode;
+
+  nextPage: () => void;
+  prevPage: () => void;
+
+  setSortOrderInParams: (to: number) => void;
+  setSortModeInParams: (to: number) => void;
+
+  resMsg: IResMsg;
+}>({
+  posts: [],
+  postsCount: 0,
+
+  postEnteredView: () => {},
+  postLeftView: () => {},
+
+  getPageWithParams: () => {},
+
+  updatePostCard: () => {},
+  removePostCard: () => {},
+
+  getSortOrderFromParams: () => "DESC",
+  getSortModeFromParams: () => "DATE",
+
+  setSortOrderInParams: () => {},
+  setSortModeInParams: () => {},
+
+  nextPage: () => {},
+  prevPage: () => {},
+
+  resMsg: { msg: "", err: false, pen: false },
+});
+
+export const PostsProvider = ({ children }: { children: ReactNode }) => {
+  const { socket, openSubscription, closeSubscription } = useSocket();
+  const { cacheUserData } = useUsers();
+  const navigate = useNavigate();
+  const { page } = useParams();
+  let [searchParams] = useSearchParams();
+  const { search: queryString } = useLocation();
+
+  //if value is an empty string, it removes the param from the url
+  const addUpdateOrRemoveParamsAndNavigateToUrl = (
+    name?: string,
+    value?: string
+  ) => {
+    const rawTags =
+      name === "tags" ? value : searchParams.get("tags")?.replaceAll(" ", "+");
+    const rawTerm =
+      name === "term" ? value : searchParams.get("term")?.replaceAll(" ", "+");
+    const rawOrder = name === "order" ? value : searchParams.get("order");
+    const rawMode = name === "mode" ? value : searchParams.get("mode");
+    let outTags = rawTags ? `&tags=${rawTags}` : "";
+    let outTerm = rawTerm ? `&term=${rawTerm}` : "";
+    let outOrder = rawOrder ? `&order=${rawOrder}` : "";
+    let outMode = rawMode ? `&mode=${rawMode}` : "";
+    const outStr = `/blog/1${outTags}${outTerm}${outOrder.toLowerCase()}${outMode.toLowerCase()}`;
+    navigate(`${outStr}`.replace("/blog/1&", "/blog/1?"));
+  };
+
+  const getSortOrderFromParams = useCallback(() => {
+    const order = searchParams.get("order");
+    if (!order) return "DESC";
+    return order.toUpperCase() as SortOrder;
+  }, [searchParams]);
+  const getSortModeFromParams = useCallback(() => {
+    const mode = searchParams.get("mode");
+    if (!mode) return "DATE";
+    return mode.toUpperCase() as SortMode;
+  }, [searchParams]);
+  const setSortOrderInParams = (index: number) => {
+    addUpdateOrRemoveParamsAndNavigateToUrl(
+      "order",
+      index === 0 ? "DESC" : "ASC"
+    );
+  };
+  const setSortModeInParams = (index: number) => {
+    addUpdateOrRemoveParamsAndNavigateToUrl(
+      "mode",
+      index === 0 ? "DATE" : "POPULARITY"
+    );
+  };
+
+  const [posts, setPosts] = useState<IPostCard[]>([]);
+  const [postsCount, setPostsCount] = useState(0); // Document count of all posts matching query... not the count of posts on the page
+  const [resMsg, setResMsg] = useState<IResMsg>({
+    msg: "",
+    err: false,
+    pen: false,
+  });
+
+  const postEnteredView = (id: string) => {
+    openSubscription(`post_card=${id}`);
+  };
+
+  const postLeftView = (id: string) => {
+    closeSubscription(`post_card=${id}`);
+  };
+
+  const getPageWithParams = (pageNum: number) => {
+    getPage(pageNum, getSortOrderFromParams(), getSortModeFromParams())
+      .then((p: any) => {
+        setResMsg({ msg: "", err: false, pen: true });
+        setPosts(
+          p.posts
+            ? JSON.parse(p.posts).map((p: IPostCard) => ({
+                ...p,
+                img_url: `${baseURL}/api/posts/${p.ID}/image?v=1`,
+              }))
+            : []
+        );
+        setPostsCount(p.count);
+        p?.posts.forEach((p: IPostCard) => cacheUserData(p.author_id));
+        setResMsg({ msg: "", err: false, pen: false });
+      })
+      .catch((e) => {
+        setResMsg({ msg: `${e}`, err: true, pen: false });
+      });
+  };
+
+  const updatePostCard = (data: Partial<IPostCard>) => {
+    setPosts((o) => {
+      let newPosts = o;
+      const i = o.findIndex((p) => p.ID === data.ID);
+      if (i === -1) return o;
+      newPosts[i] = { ...newPosts[i], ...data };
+      return [...newPosts];
+    });
+  };
+
+  const updatePostCardImage = (data: { ID: string }) => {
+    setPosts((o) => {
+      let newPosts = o;
+      const i = o.findIndex((p) => p.ID === data.ID);
+      if (i === -1) return o;
+      const v = Number(newPosts[i].img_url.split("?v=")[1]);
+      newPosts[i] = {
+        ...newPosts[i],
+        ...data,
+        img_url: `${newPosts[i].img_url.split("?v=")[0] + (v + 1)}`,
+      };
+      return [...newPosts];
+    });
+  };
+
+  const removePostCard = (id: string) => {
+    setPosts((o) => [...o.filter((p) => p.ID !== id)]);
+  };
+
+  const createPostCard = (data: IPostCard, addToStart?: boolean) => {
+    if (addToStart) setPosts((o) => [data, ...o].slice(0, 20));
+    else setPosts((o) => [...o, data].slice(0, 20));
+  };
+
+  const handleMessage = useCallback((e: MessageEvent) => {
+    const data = JSON.parse(e.data);
+    data["DATA"] = JSON.parse(data["DATA"]);
+    console.log(data);
+    if (instanceOfChangeData(data)) {
+      if (data.ENTITY === "POST") {
+        if (data.METHOD === "DELETE") {
+          removePostCard(data.DATA.ID);
+        }
+        if (data.METHOD === "UPDATE") {
+          updatePostCard(data.DATA);
+        }
+        if (data.METHOD === "UPDATE_IMAGE") {
+          updatePostCardImage({ ID: data.DATA.ID });
+        }
+        if (data.METHOD === "INSERT") {
+          if (getSortModeFromParams() === "DATE") {
+            if (getSortOrderFromParams() === "DESC" && page === "1") {
+              /* If sorting by most recent posts and
+              on the first page, add the post to the top
+          of the feed */
+              //@ts-ignore
+              cacheUserData(String(data.DATA.author_id));
+              setPostsCount(postsCount + 1);
+              createPostCard(data.DATA as IPostCard, true);
+              if (posts[0]) {
+                removePostCard(posts[0].ID);
+              }
+            } else if (
+              getSortOrderFromParams() === "ASC" &&
+              posts.length < 20
+            ) {
+              /* If sorting by oldest posts and there are less than 20
+          posts (the maximum number of posts on a page) it means the
+          user is on the last page, so add the post to the end of
+          the list */
+              //@ts-ignore
+              cacheUserData(String(data.DATA.author_id));
+              createPostCard(data.DATA as IPostCard);
+            } else {
+              // Otherwise just refresh the page...
+              getPageWithParams(Number(page));
+            }
+          } else {
+            // Otherwise just refresh the page...
+            getPageWithParams(Number(page));
+          }
+        }
+      }
+    }
+  }, []);
+
+  const nextPage = () =>
+    navigate(
+      "/blog/" +
+        Math.min(Number(page) + 1, Math.ceil(postsCount / 20)) +
+        queryString
+    );
+
+  const prevPage = () =>
+    navigate("/blog/" + Math.max(Number(page) - 1, 1) + queryString);
+
+  useEffect(() => {
+    if (socket) socket?.addEventListener("message", handleMessage);
+    return () => {
+      if (socket) socket?.removeEventListener("message", handleMessage);
+    };
+  }, [socket]);
+
+  return (
+    <PostsContext.Provider
+      value={{
+        posts,
+        postsCount,
+        postEnteredView,
+        postLeftView,
+        getPageWithParams,
+        updatePostCard,
+        removePostCard,
+        setSortModeInParams,
+        setSortOrderInParams,
+        getSortOrderFromParams,
+        getSortModeFromParams,
+        nextPage,
+        prevPage,
+        resMsg,
+      }}
+    >
+      {children}
+    </PostsContext.Provider>
+  );
+};
+
+const usePosts = () => useContext(PostsContext);
+
+export default usePosts;

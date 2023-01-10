@@ -1,0 +1,143 @@
+@font-face {
+  font-family: "Gidole";
+  src: url(../public/gidole.regular.otf);
+}
+
+body {
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: "Gidole";
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+input,
+textarea,
+button {
+  border-radius: var(--border-radius-medium);
+  border: 1px solid var(--base-medium);
+}
+input,
+textarea {
+  margin: 0;
+  background: var(--foreground);
+}
+input:focus,
+textarea:focus {
+  outline: 1px solid rgba(0, 128, 255, 0.5);
+}
+button {
+  cursor: pointer;
+  background: var(--foreground);
+}
+
+* {
+  color: var(--text-color);
+  font-size: var(--font-sm);
+  font-family: "Gidole";
+}
+
+h1 {
+  font-size: var(--font-lg);
+}
+
+hr {
+  margin: 0;
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--base-heavy);
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 50%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 50%,
+    transparent 100%
+  );
+}
+
+button {
+  background: var(--button);
+  color: white;
+}
+
+:root {
+  background: #f0f1f3;
+
+  /* Component dimensions */
+  --nav-height: 2.866rem;
+  --header-height: 4.75rem;
+  --pagination-controls: 5rem;
+
+  /* Component & layout colours */
+  --foreground: white;
+  --background: #f0f1f3;
+  --button: rgb(24, 24, 24);
+  --nav: rgb(14, 14, 14);
+  --header: linear-gradient(to top, rgb(14, 14, 14) 0%, rgb(8, 8, 8) 100%);
+
+  /* Component & Text Colours */
+  --text-color: black;
+  --text-color-contrast: white;
+
+  /* Colours - transparent varients for borders, et */
+  --base-heavy: rgba(0, 0, 0, 0.66);
+  --base-medium: rgba(0, 0, 0, 0.33);
+  --base-light: rgba(0, 0, 0, 0.166);
+  --base-pale: rgba(0, 0, 0, 0.066);
+  --base-heavy-contrast: rgba(255, 255, 255, 0.66);
+  --base-medium-contrast: rgba(255, 255, 255, 0.33);
+  --base-light-contrast: rgba(255, 255, 255, 0.166);
+  --base-pale-contrast: rgba(255, 255, 255, 0.066);
+
+  /* Border radius */
+  --border-radius: 0.275rem;
+  --border-radius-medium: 0.15rem;
+  --border-radius-small: 0.075rem;
+
+  /* Padding/Margin */
+  --padding: 4px;
+  --padding-medium: 3px;
+  --padding-small: 2px;
+
+  /* Whitespace & Dimensions */
+  --horizontal-whitespace: 27.5vw;
+
+  /* Font sizes */
+  --font-lg: 1.5rem;
+  --font-md: min(7vw, 1.066rem);
+  --font-sm: min(5vw, 0.95rem);
+  --font-xs: min(4vw, 0.866rem);
+
+  --cross-background: url(../public/crossbackground.png);
+}
+
+.darkMode {
+  background: #0d0d0d;
+
+  /* Component & layout colours */
+  --foreground: rgb(14, 14, 14);
+  --background: #0d0d0d;
+  --cross-background: url(../public/crossbackground_dark.png);
+
+  --text-color: white;
+  --text-color-contrast: black;
+
+  --base-heavy: rgba(255, 255, 255, 0.666);
+  --base-medium: rgba(255, 255, 255, 0.1);
+  --base-light: rgba(255, 255, 255, 0.05);
+  --base-pale: rgba(255, 255, 255, 0.0166);
+  --base-heavy-contrast: rgba(0, 0, 0, 0.66);
+  --base-medium-contrast: rgba(0, 0, 0, 0.33);
+  --base-light-contrast: rgba(0, 0, 0, 0.166);
+  --base-pale-contrast: rgba(0, 0, 0, 0.066);
+}

@@ -1,0 +1,40 @@
+.container {
+  width: 100%;
+  margin-bottom: var(--padding);
+  display: flex;
+  box-sizing: border-box;
+  .inner {
+    flex-grow: 1;
+    position: relative;
+    display: flex;
+    input {
+      width: 100%;
+    }
+
+    button {
+      background: none;
+      padding: 0 var(--padding);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+    }
+
+    .spinner {
+      animation: spin 700ms linear infinite;
+    }
+
+    .sendIcon {
+      font-size: var(--font-lg);
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotateZ(0deg);
+  }
+  to {
+    transform: rotateZ(360deg);
+  }
+}

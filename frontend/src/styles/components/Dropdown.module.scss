@@ -1,0 +1,16 @@
+.container {
+  width: 100%;
+  .inner {
+    position: relative;
+  }
+
+  button {
+    width: 100%;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--base-medium);
+    padding: var(--padding);
+  }
+}
