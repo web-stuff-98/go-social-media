@@ -431,6 +431,8 @@ func (h handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	tags = helpers.RemoveDuplicates(tags)
+
 	result, err := h.Collections.PostCollection.UpdateByID(r.Context(), post.ID, bson.M{
 		"$set": bson.M{
 			"title":       postInput.Title,
