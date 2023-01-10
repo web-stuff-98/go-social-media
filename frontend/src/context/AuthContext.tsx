@@ -1,4 +1,10 @@
-import { useState, useContext, createContext, useEffect } from "react";
+import {
+  useState,
+  useContext,
+  createContext,
+  useEffect,
+  useCallback,
+} from "react";
 import type { ReactNode } from "react";
 import { makeRequest } from "../services/makeRequest";
 import useSocket from "./SocketContext";
@@ -27,7 +33,8 @@ const AuthContext = createContext<{
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<IUser>();
-  const { reconnectSocket } = useSocket();
+  const { socket, reconnectSocket, openSubscription, closeSubscription } =
+    useSocket();
 
   const login = async (username: string, password: string) => {
     const user = await makeRequest("/api/account/login", {
@@ -100,6 +107,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       clearInterval(i);
     };
   }, [user]);
+
+  const handleSocketOnOpen = useCallback(() => {
+    if (user) openSubscription(`inbox=${user.ID}`);
+  }, [user]);
+
+  useEffect(() => {
+    socket?.addEventListener("open", handleSocketOnOpen);
+    return () => {
+      socket?.removeEventListener("open", handleSocketOnOpen);
+    };
+  }, [socket]);
 
   const updateUserState = (user: Partial<IUser>) =>
     setUser((old) => ({ ...old, ...user } as IUser));

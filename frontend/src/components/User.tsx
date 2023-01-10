@@ -1,9 +1,10 @@
 import { useRef, useLayoutEffect, ReactElement } from "react";
 import IconBtn from "./IconBtn";
-import { IUser } from "../context/AuthContext";
+import { IUser, useAuth } from "../context/AuthContext";
 import { AiOutlineUser } from "react-icons/ai";
 import { useUsers } from "../context/UsersContext";
 import classes from "../styles/components/User.module.scss";
+import { useUserdropdown } from "../context/UserdropdownContext";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: "short",
@@ -28,6 +29,8 @@ export default function User({
   iconBtns?: ReactElement[];
 }) {
   const { userEnteredView, cacheUserData, userLeftView } = useUsers();
+  const { openUserdropdown } = useUserdropdown();
+  const { user: currentUser } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const observer = new IntersectionObserver(([entry]) => {
@@ -77,11 +80,14 @@ export default function User({
               ...(user.base64pfp
                 ? { backgroundImage: `url(${user.base64pfp})` }
                 : {}),
-              ...(onClick ? { cursor: "pointer" } : {}),
+              ...(onClick || (currentUser && currentUser.ID !== user.ID)
+                ? { cursor: "pointer" }
+                : {}),
               ...(light ? { border: "1px solid white" } : {}),
             }}
             onClick={() => {
               if (onClick) onClick();
+              else if(currentUser && currentUser.ID !== user.ID) openUserdropdown(user.ID);
             }}
             className={classes.pfp}
           >

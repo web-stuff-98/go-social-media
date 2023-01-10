@@ -73,6 +73,12 @@ func generateUser(i int, colls *db.Collections) (uid primitive.ObjectID, err err
 	if err != nil {
 		return primitive.NilObjectID, err
 	}
+	var inbox models.Inbox
+	inbox.ID = inserted.InsertedID.(primitive.ObjectID)
+	inbox.Messages = []models.PrivateMessage{}
+	if _, err := colls.InboxCollection.InsertOne(context.TODO(), inbox); err != nil {
+		return primitive.NilObjectID, err
+	}
 	if colls.PfpCollection.InsertOne(context.TODO(), models.Pfp{
 		ID:     inserted.InsertedID.(primitive.ObjectID),
 		Binary: primitive.Binary{Data: buf.Bytes()},
@@ -124,6 +130,8 @@ func generatePost(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid prim
 			break
 		}
 	}
+
+	tags = helpers.RemoveDuplicates(tags)
 
 	r := helpers.DownloadRandomImage(false)
 	var img image.Image

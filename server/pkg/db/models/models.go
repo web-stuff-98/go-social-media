@@ -3,10 +3,27 @@ package models
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type User struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" validate:"required,min=2,max=15"`
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
 	Username  string             `bson:"username,maxlength=15" json:"username" validate:"required,min=2,max=15"`
 	Password  string             `bson:"password" json:"-" validate:"required,min=2,max=100"`
 	Base64pfp string             `bson:"-" json:"base64pfp,omitempty"`
+}
+
+type Inbox struct {
+	ID       primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
+	Messages []PrivateMessage   `bson:"messages" json:"messages"`
+}
+
+type PrivateMessage struct {
+	ID                primitive.ObjectID `bson:"_id,omitempty" json:"ID"` // omitempty to protect against zeroed _id insertion
+	Content           string             `bson:"content,maxlength=200" json:"content"`
+	Uid               primitive.ObjectID `bson:"uid" json:"uid"`
+	CreatedAt         primitive.DateTime `bson:"created_at" json:"created_at"`
+	UpdatedAt         primitive.DateTime `bson:"updated_at" json:"updated_at"`
+	HasAttachment     bool               `bson:"has_attachment" json:"has_attachment"`
+	AttachmentPending bool               `bson:"attachment_pending" json:"attachment_pending"`
+	AttachmentType    string             `bson:"attachment_type" json:"attachment_type"`
+	AttachmentError   bool               `bson:"attachment_error" json:"attachment_error"`
 }
 
 type Pfp struct {
@@ -19,11 +36,12 @@ type Session struct {
 	ExpiresAt primitive.DateTime `bson:"exp"`
 }
 
-type Message struct {
+type RoomMessage struct {
 	ID                primitive.ObjectID `bson:"_id,omitempty" json:"ID"` // omitempty to protect against zeroed _id insertion
 	Content           string             `bson:"content,maxlength=200" json:"content"`
-	Uid               string             `bson:"uid" json:"uid"`
-	Timestamp         primitive.DateTime `bson:"timestamp" json:"timestamp"`
+	Uid               primitive.ObjectID `bson:"uid" json:"uid"`
+	CreatedAt         primitive.DateTime `bson:"created_at" json:"created_at"`
+	UpdatedAt         primitive.DateTime `bson:"updated_at" json:"updated_at"`
 	HasAttachment     bool               `bson:"has_attachment" json:"has_attachment"`
 	AttachmentPending bool               `bson:"attachment_pending" json:"attachment_pending"`
 	AttachmentType    string             `bson:"attachment_type" json:"attachment_type"`
@@ -42,7 +60,7 @@ type Room struct {
 	Author    primitive.ObjectID `bson:"author_id" json:"author_id"`
 	CreatedAt primitive.DateTime `bson:"created_at" json:"created_at"`
 	UpdatedAt primitive.DateTime `bson:"updated_at" json:"updated_at"`
-	Messages  []Message          `bson:"messages" json:"messages"`
+	Messages  []RoomMessage      `bson:"messages" json:"messages"`
 	ImgBlur   string             `bson:"img_blur" json:"img_blur,omitempty"`
 }
 

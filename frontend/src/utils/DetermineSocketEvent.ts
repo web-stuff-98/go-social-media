@@ -1,3 +1,5 @@
+import { IPrivateMessage } from "../components/layout/chat/Chat";
+
 export type ChangeData = {
   TYPE: "CHANGE";
   METHOD: SocketEventChangeMethod;
@@ -5,9 +7,14 @@ export type ChangeData = {
   DATA: object & { ID: string };
 };
 
-export type MessageData = {
-  TYPE: "MESSAGE";
+export type ResponseMessageData = {
+  TYPE: "RESPONSE_MESSAGE";
   DATA: object & { ID: string };
+};
+
+export type PrivateMessageData = {
+  TYPE: "PRIVATE_MESSAGE";
+  DATA: object & IPrivateMessage;
 };
 
 export type SocketEventChangeMethod =
@@ -25,6 +32,14 @@ export type SocketEventChangeEntityType =
 export function instanceOfChangeData(object: any): object is ChangeData {
   return object.TYPE === "CHANGE";
 }
-export function instanceOfMessageData(object: any): object is MessageData {
-  return object.TYPE === "MESSAGE";
+export function instanceOfResponseMessageData(
+  object: any
+): object is ResponseMessageData {
+  return object.TYPE === "RESPONSE_MESSAGE";
+}
+
+export function instanceOfPrivateMessageData(
+  object: any
+): object is PrivateMessageData {
+  return object.TYPE === "PRIVATE_MESSAGE";
 }

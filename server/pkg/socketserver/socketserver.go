@@ -2,6 +2,7 @@ package socketserver
 
 import (
 	"log"
+	"strings"
 
 	"github.com/gorilla/websocket"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -92,17 +93,30 @@ func RunServer(socketServer *SocketServer) {
 			log.Println("UnRegistration")
 		}
 	}()
-	/* ----- Subscription connection registration ----- */
+	/* ----- Subscription connection registration (also check the authorization if subscription requires it) ----- */
 	go func() {
 		for {
 			connData := <-socketServer.RegisterSubscriptionConn
 			if connData.Conn != nil {
-				if socketServer.Subscriptions[connData.Name] == nil {
-					socketServer.Subscriptions[connData.Name] = make(map[*websocket.Conn]primitive.ObjectID)
+				allow := true
+				// Make sure users cannot subscribe to other users inboxes
+				if strings.Contains(connData.Name, "inbox=") {
+					rawUid := strings.ReplaceAll(connData.Name, "inbox=", "")
+					uid, err := primitive.ObjectIDFromHex(rawUid)
+					if err != nil {
+						allow = false
+					}
+					if uid != connData.Uid {
+						allow = false
+					}
 				}
-				socketServer.Subscriptions[connData.Name][connData.Conn] = connData.Uid
+				if allow {
+					if socketServer.Subscriptions[connData.Name] == nil {
+						socketServer.Subscriptions[connData.Name] = make(map[*websocket.Conn]primitive.ObjectID)
+					}
+					socketServer.Subscriptions[connData.Name][connData.Conn] = connData.Uid
+				}
 			}
-			log.Println("Subscription registration")
 		}
 	}()
 	/* ----- Subscription disconnect registration ----- */
@@ -110,7 +124,6 @@ func RunServer(socketServer *SocketServer) {
 		for {
 			connData := <-socketServer.UnregisterSubscriptionConn
 			delete(socketServer.Subscriptions[connData.Name], connData.Conn)
-			log.Println("Subscription deregistration")
 		}
 	}()
 	/* ----- Send data to subscription ----- */

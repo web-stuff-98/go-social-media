@@ -190,7 +190,6 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const handleMessage = useCallback((e: MessageEvent) => {
     const data = JSON.parse(e.data);
     data["DATA"] = JSON.parse(data["DATA"]);
-    console.log(data);
     if (instanceOfChangeData(data)) {
       if (data.ENTITY === "POST") {
         if (data.METHOD === "DELETE") {

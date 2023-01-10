@@ -1,14 +1,18 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 
+	"github.com/web-stuff-98/go-social-media/pkg/db"
+	"github.com/web-stuff-98/go-social-media/pkg/db/models"
 	"github.com/web-stuff-98/go-social-media/pkg/helpers"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 
 	"github.com/gorilla/websocket"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -24,7 +28,7 @@ var upgrader = websocket.Upgrader{
 	that are logged in.
 */
 
-func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid primitive.ObjectID) {
+func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid primitive.ObjectID, colls db.Collections) {
 	for {
 		_, p, err := conn.ReadMessage()
 		if err != nil {
@@ -32,10 +36,11 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 			return
 		}
 
-		log.Println(string(p))
-
 		var data map[string]interface{}
 		json.Unmarshal(p, &data)
+
+		log.Println(data)
+
 		if data["event_type"] != nil {
 			if data["event_type"] == "OPEN_SUBSCRIPTION" {
 				socketServer.RegisterSubscriptionConn <- socketserver.SubscriptionConnectionInfo{
@@ -58,6 +63,58 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 						Name: name.(string),
 						Uid:  uid,
 						Conn: conn,
+					}
+				}
+			}
+			if data["event_type"] == "PRIVATE_MESSAGE" {
+				log.Println("Private message sent by " + uid.Hex() + " to " + data["recipient_id"].(string))
+				socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+					Name: "inbox=" + data["recipient_id"].(string),
+					Data: map[string]string{
+						"content": data["content"].(string),
+					},
+				}
+				recipientId, err := primitive.ObjectIDFromHex(data["recipient_id"].(string))
+				if err != nil {
+					err := conn.WriteJSON(map[string]string{
+						"TYPE": "RESPONSE_MESSAGE",
+						"DATA": `{"msg":"Internal error","err":true}`,
+					})
+					if err != nil {
+						log.Println(err)
+					}
+				} else {
+					msg := &models.PrivateMessage{
+						Content: data["content"].(string),
+						Uid:     uid,
+					}
+					if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, bson.M{"$push": bson.M{"messages": msg}}); err != nil {
+						err := conn.WriteJSON(map[string]string{
+							"TYPE": "RESPONSE_MESSAGE",
+							"DATA": `{"msg":"Internal error","err":true}`,
+						})
+						if err != nil {
+							log.Println(err)
+						}
+					} else {
+						data, err := json.Marshal(msg)
+						if err != nil {
+							err := conn.WriteJSON(map[string]string{
+								"TYPE": "RESPONSE_MESSAGE",
+								"DATA": `{"msg":"Internal error","err":true}`,
+							})
+							if err != nil {
+								log.Println(err)
+							}
+						} else {
+							socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+								Name: "inbox=" + recipientId.Hex(),
+								Data: map[string]string{
+									"TYPE": "PRIVATE_MESSAGE",
+									"DATA": string(data),
+								},
+							}
+						}
 					}
 				}
 			}
@@ -93,5 +150,5 @@ func (h handler) WebSocketEndpoint(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Println("Client Disconnected")
 	}()
-	reader(ws, h.SocketServer, uid)
+	reader(ws, h.SocketServer, uid, h.Collections)
 }

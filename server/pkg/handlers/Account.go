@@ -26,6 +26,7 @@ import (
 
 func (h handler) Register(w http.ResponseWriter, r *http.Request) {
 	user := &models.User{}
+	inbox := &models.Inbox{}
 
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
@@ -55,6 +56,18 @@ func (h handler) Register(w http.ResponseWriter, r *http.Request) {
 	user.Password = string(hash)
 
 	inserted, err := h.Collections.UserCollection.InsertOne(r.Context(), user)
+	if err != nil {
+		responseMessage(w, http.StatusInternalServerError, "Internal error")
+		return
+	}
+
+	inbox.ID = inserted.InsertedID.(primitive.ObjectID)
+	inbox.Messages = []models.PrivateMessage{}
+
+	if _, err := h.Collections.InboxCollection.InsertOne(r.Context(), inbox); err != nil {
+		responseMessage(w, http.StatusInternalServerError, "Internal error")
+		return
+	}
 
 	cookie, err := helpers.GenerateCookieAndSession(inserted.InsertedID.(primitive.ObjectID), h.Collections)
 	http.SetCookie(w, &cookie)

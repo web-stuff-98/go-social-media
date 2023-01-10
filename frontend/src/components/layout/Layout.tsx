@@ -7,6 +7,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { useInterface } from "../../context/InterfaceContext";
 import { useMouse } from "../../context/MouseContext";
 import Header from "./Header";
+import Chat from "./chat/Chat";
 
 export default function Layout() {
   const { state: iState } = useInterface();
@@ -84,6 +85,7 @@ export default function Layout() {
       </div>
       <Header />
       <Nav />
+      <Chat/>
       <main style={getStyle()}>
         <Outlet />
       </main>

@@ -65,6 +65,7 @@ func watchUserDeletes(db *mongo.Database, ss *socketserver.SocketServer) {
 		db.Collection("rooms").DeleteMany(context.TODO(), bson.M{"author_id": uid})
 		db.Collection("pfps").DeleteOne(context.TODO(), bson.M{"id": uid})
 		db.Collection("sessions").DeleteOne(context.TODO(), bson.M{"_uid": uid})
+		db.Collection("inboxes").DeleteOne(context.TODO(), bson.M{"_id": uid})
 	}
 }
 

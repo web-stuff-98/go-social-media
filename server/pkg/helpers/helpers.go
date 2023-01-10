@@ -152,3 +152,22 @@ func DownloadRandomImage(pfp bool) io.ReadCloser {
 		return DownloadImageURL("https://100k-faces.glitch.me/random-image")
 	}
 }
+
+func RemoveDuplicates(strings []string) []string {
+	// Create a map to hold the unique strings
+	uniqueStrings := make(map[string]bool)
+	// Create a new slice to hold the unique strings
+	var unique []string
+
+	// Loop through the input slice of strings
+	for _, str := range strings {
+		// If the string is not in the map, add it to the map
+		// and append it to the unique slice
+		if !uniqueStrings[str] {
+			uniqueStrings[str] = true
+			unique = append(unique, str)
+		}
+	}
+
+	return unique
+}

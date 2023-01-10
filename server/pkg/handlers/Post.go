@@ -496,6 +496,8 @@ func (h handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	tags = helpers.RemoveDuplicates(tags)
+
 	post.ID = primitive.NewObjectIDFromTimestamp(time.Now())
 	post.Author = user.ID
 	post.Slug = slug
