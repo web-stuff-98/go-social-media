@@ -390,7 +390,7 @@ func (h handler) GetConversation(w http.ResponseWriter, r *http.Request) {
 
 	var messages = []models.PrivateMessage{}
 	for cursor.Next(r.Context()) {
-		// Hacky way of getting this to work... took hours
+		// took a couple of hours to figure out
 		elems, err := cursor.Current.Elements()
 		var msg models.PrivateMessage
 		bson.Unmarshal(elems[1].Value().Value, &msg)

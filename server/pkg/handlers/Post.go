@@ -32,6 +32,84 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func (h handler) VoteOnPost(w http.ResponseWriter, r *http.Request) {
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	if err != nil {
+		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	rawId := mux.Vars(r)["id"]
+	postId, err := primitive.ObjectIDFromHex(rawId)
+	if err != nil {
+		responseMessage(w, http.StatusBadRequest, "Bad request")
+		return
+	}
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		responseMessage(w, http.StatusBadRequest, "Bad request")
+		return
+	}
+
+	var voteInput validation.Vote
+	if json.Unmarshal(body, &voteInput); err != nil {
+		responseMessage(w, http.StatusBadRequest, "Bad request")
+		return
+	}
+	validate := validator.New()
+	if err := validate.Struct(voteInput); err != nil {
+		responseMessage(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	votes := &models.PostVotes{}
+	if err := h.Collections.PostVoteCollection.FindOne(r.Context(), bson.M{"_id": postId}).Decode(&votes); err != nil {
+		if err == mongo.ErrNoDocuments {
+			responseMessage(w, http.StatusNotFound, "Not found")
+		} else {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+		}
+		return
+	}
+
+	removeVote := false
+	for _, pv := range votes.Votes {
+		if pv.Uid == user.ID {
+			removeVote = true
+		}
+	}
+
+	if !removeVote {
+		if _, err := h.Collections.PostVoteCollection.UpdateByID(r.Context(), postId, bson.M{
+			"$addToSet": bson.M{
+				"votes": bson.M{
+					"_id":       primitive.NewObjectID(),
+					"uid":       user.ID,
+					"is_upvote": voteInput.IsUpvote,
+				},
+			},
+		}); err != nil {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+			return
+		}
+	} else {
+		if _, err := h.Collections.PostVoteCollection.UpdateByID(r.Context(), postId, bson.M{
+			"$pull": bson.M{
+				"votes": bson.M{
+					"uid": user.ID,
+				},
+			},
+		}); err != nil {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+			return
+		}
+	}
+
+	responseMessage(w, http.StatusOK, "Voted")
+}
+
 func (h handler) CommentOnPost(w http.ResponseWriter, r *http.Request) {
 	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
 	if err != nil {
@@ -244,6 +322,8 @@ func (h handler) UpdatePostComment(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
+	user, _, _ := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+
 	pageNumberString := mux.Vars(r)["page"]
 	pageNumber, err := strconv.Atoi(pageNumberString)
 	if err != nil {
@@ -283,10 +363,52 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 	defer cursor.Close(ctx)
 
 	var posts []models.Post
-	if err = cursor.All(ctx, &posts); err != nil {
-		responseMessage(w, http.StatusInternalServerError, "Internal error")
-		return
+	for cursor.Next(ctx) {
+		var post models.Post
+		err := cursor.Decode(&post)
+		if err != nil {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+			return
+		}
+		var votes models.PostVotes
+		if err := h.Collections.PostVoteCollection.FindOne(r.Context(), bson.M{"_id": post.ID}).Decode(&votes); err != nil {
+			if err != mongo.ErrNoDocuments {
+				responseMessage(w, http.StatusInternalServerError, "Internal error")
+				return
+			}
+		} else {
+			positiveVotes := 0
+			negativeVotes := 0
+			for _, v := range votes.Votes {
+				if user != nil {
+					if user.ID != v.Uid {
+						if v.IsUpvote {
+							positiveVotes++
+						} else {
+							negativeVotes++
+						}
+					} else {
+						post.UsersVote = v
+					}
+				} else {
+					if v.IsUpvote {
+						positiveVotes++
+					} else {
+						negativeVotes++
+					}
+				}
+			}
+			post.PositiveVoteCount = positiveVotes
+			post.NegativeVoteCount = negativeVotes
+		}
+		posts = append(posts, post)
 	}
+
+	//	var posts []models.Post
+	//	if err = cursor.All(ctx, &posts); err != nil {
+	//		responseMessage(w, http.StatusInternalServerError, "Internal error")
+	//		return
+	//}
 
 	count, err := h.Collections.PostCollection.EstimatedDocumentCount(r.Context())
 	if err != nil {
@@ -307,6 +429,8 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) GetPost(w http.ResponseWriter, r *http.Request) {
+	user, _, _ := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+
 	slug := mux.Vars(r)["slug"]
 
 	var post models.Post
@@ -326,8 +450,39 @@ func (h handler) GetPost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		log.Println("Found comments : ", comments.Comments)
 		post.Comments = comments.Comments
+	}
+
+	var votes models.PostVotes
+	if err := h.Collections.PostVoteCollection.FindOne(r.Context(), bson.M{"_id": post.ID}).Decode(&votes); err != nil {
+		if err != mongo.ErrNoDocuments {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+			return
+		}
+	} else {
+		positiveVotes := 0
+		negativeVotes := 0
+		for _, v := range votes.Votes {
+			if user != nil {
+				if user.ID != v.Uid {
+					if v.IsUpvote {
+						positiveVotes++
+					} else {
+						negativeVotes++
+					}
+				} else {
+					post.UsersVote = v
+				}
+			} else {
+				if v.IsUpvote {
+					positiveVotes++
+				} else {
+					negativeVotes++
+				}
+			}
+		}
+		post.PositiveVoteCount = positiveVotes
+		post.NegativeVoteCount = negativeVotes
 	}
 
 	w.Header().Add("Content-Type", "application/json")
@@ -511,7 +666,16 @@ func (h handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	post.ImagePending = true
 	post.Tags = tags
 
-	if _, err := h.Collections.PostCollection.InsertOne(r.Context(), post); err != nil {
+	inserted, err := h.Collections.PostCollection.InsertOne(r.Context(), post)
+	if err != nil {
+		responseMessage(w, http.StatusInternalServerError, "Internal error")
+		return
+	}
+	postVotes := &models.PostVotes{
+		ID:    inserted.InsertedID.(primitive.ObjectID),
+		Votes: []models.PostVote{},
+	}
+	if _, err := h.Collections.PostVoteCollection.InsertOne(r.Context(), postVotes); err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
 	}

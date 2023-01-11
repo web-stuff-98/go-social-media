@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"image"
 	"image/jpeg"
 	"image/png"
@@ -23,7 +24,71 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+func (h handler) GetRoomPage(w http.ResponseWriter, r *http.Request) {
+	pageNumberString := mux.Vars(r)["page"]
+	pageNumber, err := strconv.Atoi(pageNumberString)
+	if err != nil {
+		responseMessage(w, http.StatusBadRequest, "Invalid page")
+		return
+	}
+	pageSize := 20
+	//r.URL.Query().Get("mode")
+	r.URL.Query().Get("order")
+	sortOrder := "DESC"
+	//sortMode := "DATE"
+	//if r.URL.Query().Has("mode") {
+	//	sortMode = r.URL.Query().Get("mode")
+	//}
+	if r.URL.Query().Has("order") {
+		sortOrder = r.URL.Query().Get("order")
+	}
+
+	findOptions := options.Find()
+	findOptions.SetLimit(int64(pageSize))
+	findOptions.SetSkip(int64(pageSize) * (int64(pageNumber) - 1))
+	if sortOrder == "DESC" {
+		findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
+	}
+	if sortOrder == "ASC" {
+		findOptions.SetSort(bson.D{{Key: "created_at", Value: 1}})
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	cursor, err := h.Collections.RoomCollection.Find(ctx, bson.M{}, findOptions)
+	if err != nil {
+		responseMessage(w, http.StatusInternalServerError, "Internal error")
+		return
+	}
+	defer cursor.Close(ctx)
+
+	var rooms []models.Post
+	if err = cursor.All(ctx, &rooms); err != nil {
+		responseMessage(w, http.StatusInternalServerError, "Internal error")
+		return
+	}
+
+	count, err := h.Collections.RoomCollection.EstimatedDocumentCount(r.Context())
+	if err != nil {
+		responseMessage(w, http.StatusInternalServerError, "Internal error")
+		return
+	}
+
+	roomBytes, err := json.Marshal(rooms)
+
+	out := map[string]string{
+		"count": fmt.Sprint(count),
+		"rooms": string(roomBytes),
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(out)
+}
 
 func (h handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)

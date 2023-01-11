@@ -2,7 +2,7 @@ import { useInterface } from "../context/InterfaceContext";
 import { IPostCard } from "../routes/Blog";
 import { useState, useEffect, useRef } from "react";
 import classes from "../styles/components/PostCard.module.scss";
-import { deletePost, getPostThumb } from "../services/posts";
+import { deletePost, getPostThumb, voteOnPost } from "../services/posts";
 import type { CancelToken, CancelTokenSource } from "axios";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +14,15 @@ import { useModal } from "../context/ModalContext";
 import User from "./User";
 import { useUsers } from "../context/UsersContext";
 
-export default function PostCard({ post }: { post: IPostCard }) {
+import { FaChevronUp, FaChevronDown } from "react-icons/fa";
+
+export default function PostCard({
+  post,
+  reverse,
+}: {
+  post: IPostCard;
+  reverse: boolean;
+}) {
   const {
     state: { isMobile },
   } = useInterface();
@@ -60,6 +68,41 @@ export default function PostCard({ post }: { post: IPostCard }) {
     return (
       <User
         light
+        iconBtns={[
+          <IconBtn
+            ariaLabel="Vote up"
+            name="Vote up"
+            style={{ color: "lime" }}
+            Icon={FaChevronUp}
+            type="button"
+            onClick={() =>
+              voteOnPost(post.ID, true).catch((e) => {
+                openModal("Message", {
+                  err: true,
+                  pen: false,
+                  msg: `${e}`,
+                });
+              })
+            }
+          />,
+          <IconBtn
+            ariaLabel="Vote down"
+            name="Vote down"
+            style={{ color: "red" }}
+            Icon={FaChevronDown}
+            type="button"
+            onClick={() =>
+              voteOnPost(post.ID, false).catch((e) => {
+                openModal("Message", {
+                  err: true,
+                  pen: false,
+                  msg: `${e}`,
+                });
+              })
+            }
+          />,
+        ]}
+        reverse={reverse}
         date={new Date(post.created_at || 0)}
         uid={uid}
         user={getUserData(uid)}
@@ -99,7 +142,14 @@ export default function PostCard({ post }: { post: IPostCard }) {
                 src={imgURL}
               />
               {
-                <div className={classes.userContainer}>
+                <div
+                  style={
+                    reverse
+                      ? { right: "var(--padding)" }
+                      : { left: "var(--padding)" }
+                  }
+                  className={classes.userContainer}
+                >
                   {renderUser(post.author_id)}
                 </div>
               }
@@ -149,15 +199,24 @@ export default function PostCard({ post }: { post: IPostCard }) {
               }
             </div>
             <div ref={textContainerRef} className={classes.textTags}>
+              <h1>
+                POSVOTES :{post.vote_pos_count} | NEGVOTES :
+                {post.vote_neg_count} | OWNVOTE :
+                {post.my_vote
+                  ? post.my_vote?.is_upvote
+                    ? "UPVOTE"
+                    : "DOWNVOTE"
+                  : "NO VOTE"}
+              </h1>
               <h1>{post.title}</h1>
               <h3>{post.description}</h3>
               <div className={classes.tags}>
                 {post.tags.map((t) => (
                   <button
-                  key={t}
-                    aria-label={`Tag ${t}`}
-                    id={`Tag ${t}`}
-                    name={`Tag ${t}`}
+                    key={t}
+                    aria-label={`Tag: ${t}`}
+                    id={`Tag: ${t}`}
+                    name={`Tag: ${t}`}
                     className={classes.tag}
                   >
                     {t}

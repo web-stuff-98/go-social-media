@@ -104,7 +104,17 @@ const deletePost = (slug: string) =>
     withCredentials: true,
   });
 
+const voteOnPost = (id: string, isUpvote: boolean) =>
+  makeRequest(`/api/posts/${id}/vote`, {
+    withCredentials: true,
+    method: "PUT",
+    data: {
+      is_upvote: isUpvote,
+    },
+  });
+
 export {
+  voteOnPost,
   getPost,
   createPost,
   updatePost,

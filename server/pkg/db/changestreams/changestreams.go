@@ -50,11 +50,11 @@ func WatchCollections(DB *mongo.Database, ss *socketserver.SocketServer) {
 }
 
 func watchUserDeletes(db *mongo.Database, ss *socketserver.SocketServer) {
-	cs, err := db.Collection("users").Watch(context.TODO(), mongo.Pipeline{deletePipeline})
+	cs, err := db.Collection("users").Watch(context.Background(), mongo.Pipeline{deletePipeline})
 	if err != nil {
 		log.Panicln("CS ERR : ", err.Error())
 	}
-	for cs.Next(context.TODO()) {
+	for cs.Next(context.Background()) {
 		var changeEv bson.M
 		err := cs.Decode(&changeEv)
 		if err != nil {
@@ -70,11 +70,11 @@ func watchUserDeletes(db *mongo.Database, ss *socketserver.SocketServer) {
 }
 
 func watchUserPfpUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
-	cs, err := db.Collection("pfps").Watch(context.TODO(), mongo.Pipeline{updatePipeline}, options.ChangeStream().SetFullDocument(options.UpdateLookup))
+	cs, err := db.Collection("pfps").Watch(context.Background(), mongo.Pipeline{updatePipeline}, options.ChangeStream().SetFullDocument(options.UpdateLookup))
 	if err != nil {
 		log.Panicln("CS ERR : ", err.Error())
 	}
-	for cs.Next(context.TODO()) {
+	for cs.Next(context.Background()) {
 		var changeEv struct {
 			DocumentKey struct {
 				ID primitive.ObjectID `bson:"_id"`
@@ -118,19 +118,20 @@ func watchUserPfpUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
 }
 
 func watchPostDeletes(db *mongo.Database, ss *socketserver.SocketServer) {
-	cs, err := db.Collection("posts").Watch(context.TODO(), mongo.Pipeline{deletePipeline})
+	cs, err := db.Collection("posts").Watch(context.Background(), mongo.Pipeline{deletePipeline})
 	if err != nil {
 		log.Panicln("CS ERR : ", err.Error())
 	}
-	for cs.Next(context.TODO()) {
+	for cs.Next(context.Background()) {
 		var changeEv bson.M
 		err := cs.Decode(&changeEv)
 		if err != nil {
 			log.Fatal(err)
 		}
 		postId := changeEv["documentKey"].(bson.M)["_id"].(primitive.ObjectID)
-		db.Collection("post_images").DeleteMany(context.TODO(), bson.M{"_id": postId})
-		db.Collection("post_thumbs").DeleteMany(context.TODO(), bson.M{"_id": postId})
+		db.Collection("post_images").DeleteOne(context.TODO(), bson.M{"_id": postId})
+		db.Collection("post_thumbs").DeleteOne(context.TODO(), bson.M{"_id": postId})
+		db.Collection("post_votes").DeleteOne(context.TODO(), bson.M{"_id": postId})
 		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "post_card=" + postId.Hex(),
 			Data: map[string]string{
@@ -141,15 +142,16 @@ func watchPostDeletes(db *mongo.Database, ss *socketserver.SocketServer) {
 			},
 		}
 		ss.DestroySubscription <- "post_card=" + postId.Hex()
+		ss.DestroySubscription <- "post_page=" + postId.Hex()
 	}
 }
 
 func watchPostImageInserts(db *mongo.Database, ss *socketserver.SocketServer) {
-	cs, err := db.Collection("post_images").Watch(context.TODO(), mongo.Pipeline{insertPipeline})
+	cs, err := db.Collection("post_images").Watch(context.Background(), mongo.Pipeline{insertPipeline})
 	if err != nil {
 		log.Panicln("CS ERR : ", err.Error())
 	}
-	for cs.Next(context.TODO()) {
+	for cs.Next(context.Background()) {
 		var changeEv bson.M
 		err := cs.Decode(&changeEv)
 		if err != nil {
@@ -179,11 +181,11 @@ func watchPostImageInserts(db *mongo.Database, ss *socketserver.SocketServer) {
 }
 
 func watchPostImageUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
-	cs, err := db.Collection("post_images").Watch(context.TODO(), mongo.Pipeline{updatePipeline})
+	cs, err := db.Collection("post_images").Watch(context.Background(), mongo.Pipeline{updatePipeline})
 	if err != nil {
 		log.Panicln("CS ERR : ", err.Error())
 	}
-	for cs.Next(context.TODO()) {
+	for cs.Next(context.Background()) {
 		var changeEv bson.M
 		err := cs.Decode(&changeEv)
 		if err != nil {
@@ -212,11 +214,11 @@ func watchPostImageUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
 }
 
 func watchPostUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
-	cs, err := db.Collection("posts").Watch(context.TODO(), mongo.Pipeline{updatePipeline}, options.ChangeStream().SetFullDocument("updateLookup"))
+	cs, err := db.Collection("posts").Watch(context.Background(), mongo.Pipeline{updatePipeline}, options.ChangeStream().SetFullDocument("updateLookup"))
 	if err != nil {
 		log.Panicln("CS ERR : ", err.Error())
 	}
-	for cs.Next(context.TODO()) {
+	for cs.Next(context.Background()) {
 		var changeEv struct {
 			DocumentKey struct {
 				ID primitive.ObjectID `bson:"_id"`
@@ -257,11 +259,11 @@ func watchPostUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
 }
 
 /*func watchPostInserts(db *mongo.Database, ss *socketserver.SocketServer) {
-	cs, err := db.Collection("posts").Watch(context.TODO(), mongo.Pipeline{insertPipeline})
+	cs, err := db.Collection("posts").Watch(context.Background(), mongo.Pipeline{insertPipeline})
 	if err != nil {
 		log.Panicln("CS ERR : ", err.Error())
 	}
-	for cs.Next(context.TODO()) {
+	for cs.Next(context.Background()) {
 		var changeEv bson.M
 		err := cs.Decode(&changeEv)
 		if err != nil {
@@ -283,11 +285,11 @@ func watchPostUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
 }*/
 
 func watchRoomDeletes(db *mongo.Database, ss *socketserver.SocketServer) {
-	cs, err := db.Collection("rooms").Watch(context.TODO(), mongo.Pipeline{deletePipeline})
+	cs, err := db.Collection("rooms").Watch(context.Background(), mongo.Pipeline{deletePipeline})
 	if err != nil {
 		log.Panicln("CS ERR : ", err.Error())
 	}
-	for cs.Next(context.TODO()) {
+	for cs.Next(context.Background()) {
 		var changeEv bson.M
 		err := cs.Decode(&changeEv)
 		if err != nil {
@@ -295,5 +297,8 @@ func watchRoomDeletes(db *mongo.Database, ss *socketserver.SocketServer) {
 		}
 		roomId := changeEv["documentKey"].(bson.M)["_id"].(primitive.ObjectID)
 		db.Collection("room_images").DeleteOne(context.TODO(), bson.M{"_id": roomId})
+		db.Collection("room_messages").DeleteOne(context.TODO(), bson.M{"_id": roomId})
+		ss.DestroySubscription <- "room=" + roomId.Hex()
+		ss.DestroySubscription <- "room_card=" + roomId.Hex()
 	}
 }

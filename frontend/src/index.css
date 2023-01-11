@@ -94,10 +94,10 @@ button {
   --text-color-contrast: white;
 
   /* Colours - transparent varients for borders, et */
-  --base-heavy: rgba(0, 0, 0, 0.66);
-  --base-medium: rgba(0, 0, 0, 0.33);
-  --base-light: rgba(0, 0, 0, 0.166);
-  --base-pale: rgba(0, 0, 0, 0.066);
+  --base-heavy: rgba(0, 0, 0, 0.75);
+  --base-medium: rgba(0, 0, 0, 0.5);
+  --base-light: rgba(0, 0, 0, 0.25);
+  --base-pale: rgba(0, 0, 0, 0.166);
   --base-heavy-contrast: rgba(255, 255, 255, 0.66);
   --base-medium-contrast: rgba(255, 255, 255, 0.33);
   --base-light-contrast: rgba(255, 255, 255, 0.166);

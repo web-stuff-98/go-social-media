@@ -75,6 +75,9 @@ export default function User({
     >
       {user && (
         <>
+          {iconBtns && (
+            <div className={classes.iconBtns}>{iconBtns.map((btn) => btn)}</div>
+          )}
           <span
             style={{
               ...(user.base64pfp
@@ -87,7 +90,8 @@ export default function User({
             }}
             onClick={() => {
               if (onClick) onClick();
-              else if(currentUser && currentUser.ID !== user.ID) openUserdropdown(user.ID);
+              else if (currentUser && currentUser.ID !== user.ID)
+                openUserdropdown(user.ID);
             }}
             className={classes.pfp}
           >
@@ -98,9 +102,6 @@ export default function User({
               />
             )}
           </span>
-          {iconBtns && (
-            <div className={classes.iconBtns}>{iconBtns.map((btn) => btn)}</div>
-          )}
           <div
             style={{
               ...(light ? { color: "white" } : {}),

@@ -197,6 +197,12 @@ func generatePost(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid prim
 	}); err != nil {
 		return primitive.NilObjectID, err
 	}
+	if colls.PostVoteCollection.InsertOne(context.TODO(), models.PostVotes{
+		ID:    inserted.InsertedID.(primitive.ObjectID),
+		Votes: []models.PostVote{},
+	}); err != nil {
+		return primitive.NilObjectID, err
+	}
 
 	return inserted.InsertedID.(primitive.ObjectID), nil
 }

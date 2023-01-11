@@ -9,6 +9,7 @@ const IconBtn = ({
   ariaLabel,
   disabled,
   style,
+  svgStyle = {},
   onClick = () => {},
   type = "button",
   ...props
@@ -18,6 +19,7 @@ const IconBtn = ({
   name: string;
   ariaLabel: string;
   style?: CSSProperties;
+  svgStyle?: CSSProperties;
   onClick?: Function;
   disabled?: boolean;
   type?: string;
@@ -36,7 +38,10 @@ const IconBtn = ({
     onClick={() => onClick()}
   >
     <Icon
-      style={style && style.color ? { fill: style.color } : {}}
+      style={{
+        ...svgStyle,
+        ...(style && style.color ? { fill: style.color } : {}),
+      }}
       className={classes.icon}
     />
     {children && children}

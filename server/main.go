@@ -38,7 +38,7 @@ func main() {
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{origin},
 		AllowCredentials: true,
-		AllowedMethods:   []string{"GET", "HEAD", "POST", "PATCH", "DELETE"},
+		AllowedMethods:   []string{"GET", "HEAD", "POST", "PATCH", "DELETE", "PUT"},
 	})
 
 	router.HandleFunc("/api/users/{id}", h.GetUser).Methods(http.MethodGet)
@@ -64,9 +64,12 @@ func main() {
 	router.HandleFunc("/api/posts/{slug}/image", h.UploadPostImage).Methods(http.MethodPost)
 	router.HandleFunc("/api/posts/{id}/image", h.GetPostImage).Methods(http.MethodGet)
 	router.HandleFunc("/api/posts/{id}/thumb", h.GetPostThumb).Methods(http.MethodGet)
+	router.HandleFunc("/api/posts/{id}/vote", h.VoteOnPost).Methods(http.MethodPut)
 
 	router.HandleFunc("/api/rooms", h.CreateRoom).Methods(http.MethodPost)
 	router.HandleFunc("/api/rooms/{id}", h.GetRoom).Methods(http.MethodGet)
+	router.HandleFunc("/api/rooms/{id}/update", h.UpdateRoom).Methods(http.MethodPatch)
+	router.HandleFunc("/api/rooms/{id}/delete", h.DeleteRoom).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/ws", h.WebSocketEndpoint)
 

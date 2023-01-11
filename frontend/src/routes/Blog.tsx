@@ -17,6 +17,11 @@ export interface IPostCard {
   updated_at: string;
   slug: string;
   img_blur: string;
+  vote_pos_count: number; // Excludes users own vote
+  vote_neg_count: number; // Excludes users own vote
+  my_vote: null | {
+    is_upvote: boolean;
+  };
   img_url: string; //img_url is stored here so that rerender can be triggered when the image is updated by modifying the query string
 }
 
@@ -43,8 +48,8 @@ export default function Blog() {
   return (
     <div className={classes.container}>
       <div className={classes.feed}>
-        {posts.map((p) => (
-          <PostCard key={p.ID} post={p} />
+        {posts.map((p, i) => (
+          <PostCard reverse={!Boolean(i % 2)} key={p.ID} post={p} />
         ))}
         <ResMsg resMsg={resMsg} />
       </div>

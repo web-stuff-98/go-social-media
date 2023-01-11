@@ -17,6 +17,7 @@ type Collections struct {
 	SessionCollection      *mongo.Collection
 	PfpCollection          *mongo.Collection
 	PostCollection         *mongo.Collection
+	PostVoteCollection     *mongo.Collection
 	PostImageCollection    *mongo.Collection
 	PostThumbCollection    *mongo.Collection
 	PostCommentsCollection *mongo.Collection
@@ -47,6 +48,7 @@ func Init() (*mongo.Database, Collections) {
 		SessionCollection:      DB.Collection("sessions"),
 		PfpCollection:          DB.Collection("pfps"),
 		PostCollection:         DB.Collection("posts"),
+		PostVoteCollection:     DB.Collection("post_votes"),
 		PostImageCollection:    DB.Collection("post_images"),
 		PostThumbCollection:    DB.Collection("post_thumbs"),
 		PostCommentsCollection: DB.Collection("post_comments"),

@@ -12,6 +12,10 @@ type Post struct {
 	Tags        string `json:"tags"`
 }
 
+type Vote struct {
+	IsUpvote bool `json:"is_upvote"`
+}
+
 type Room struct {
 	Name string `json:"name" validate:"required,min=2,max=16"`
 }
