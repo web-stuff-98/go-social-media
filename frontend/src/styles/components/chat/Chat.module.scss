@@ -14,9 +14,9 @@
     display: flex;
     justify-content: space-between;
     padding: var(--padding);
-    padding-bottom: 0;
     border-radius: var(--border-radius-medium);
     color:grey;
+    border-bottom: 1px solid var(--base-light);
 
     .icons {
         display: flex;
@@ -29,5 +29,6 @@
     gap: var(--padding);
     flex-grow: 1;
     padding: var(--padding);
+
   }
 }

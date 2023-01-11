@@ -1,4 +1,4 @@
-import { IPrivateMessage } from "../components/layout/chat/Chat";
+import { IPrivateMessage } from "../components/layout/chat/Conversations";
 
 export type ChangeData = {
   TYPE: "CHANGE";

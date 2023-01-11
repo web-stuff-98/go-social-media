@@ -318,3 +318,22 @@ func (h handler) UploadPfp(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(user)
 }
+
+// Get all messages from conversations (except for own messages)
+func (h handler) GetConversations(w http.ResponseWriter, r *http.Request) {
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	if err != nil {
+		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	inbox := &models.Inbox{}
+	if err := h.Collections.InboxCollection.FindOne(r.Context(), bson.M{"_id": user.ID}).Decode(&inbox); err != nil {
+		responseMessage(w, http.StatusInternalServerError, "Internal error")
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(inbox)
+}

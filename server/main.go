@@ -52,6 +52,7 @@ func main() {
 	router.HandleFunc("/api/account/refresh", h.RefreshToken).Methods(http.MethodPost)
 	router.HandleFunc("/api/account/delete", h.DeleteAccount).Methods(http.MethodPost)
 	router.HandleFunc("/api/account/pfp", h.UploadPfp).Methods(http.MethodPost)
+	router.HandleFunc("/api/account/conversations", h.GetConversations).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/posts/page/{page}", h.GetPage).Methods(http.MethodGet)
 	router.HandleFunc("/api/posts/{postId}/comment", h.CommentOnPost).Methods(http.MethodPost)

@@ -2,11 +2,26 @@
   height: calc(100% - 2px);
   flex-grow: 1;
   display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
   min-height: 15rem;
   width: 3rem;
+  min-width: fit-content;
   border-radius: var(--border-radius-medium);
   border: 1px solid var(--base-medium);
   box-sizing: border-box;
+  overflow-y: auto;
+
+  .user {
+    box-sizing: border-box;
+    padding: var(--padding);
+    border: none;
+    background: none;
+    margin: 0;
+    border-radius: 0;
+    width: 100%;
+  }
 }
 
 .right {
@@ -17,15 +32,18 @@
   height: 100%;
   gap: var(--padding);
   flex-grow: 1;
-  max-width: min(66.66vw,66.66%);
+  max-width: min(66.66vw, 66.66%);
 
   .messages {
     width: 100%;
     border-radius: var(--border-radius-medium);
     border: 1px solid var(--base-medium);
     flex-grow: 1;
-    height: 100%;
+    height: 10rem;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
   }
   .messageForm {
     display: flex;

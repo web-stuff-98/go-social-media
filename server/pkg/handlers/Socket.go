@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/web-stuff-98/go-social-media/pkg/db"
 	"github.com/web-stuff-98/go-social-media/pkg/db/models"
@@ -85,8 +86,11 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 					}
 				} else {
 					msg := &models.PrivateMessage{
-						Content: data["content"].(string),
-						Uid:     uid,
+						ID:        primitive.NewObjectIDFromTimestamp(time.Now()),
+						Content:   data["content"].(string),
+						Uid:       uid,
+						CreatedAt: primitive.NewDateTimeFromTime(time.Now()),
+						UpdatedAt: primitive.NewDateTimeFromTime(time.Now()),
 					}
 					if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, bson.M{"$push": bson.M{"messages": msg}}); err != nil {
 						err := conn.WriteJSON(map[string]string{
@@ -109,6 +113,14 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 						} else {
 							socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 								Name: "inbox=" + recipientId.Hex(),
+								Data: map[string]string{
+									"TYPE": "PRIVATE_MESSAGE",
+									"DATA": string(data),
+								},
+							}
+							// Also send the message to the sender because they need to be able to see their own message
+							socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+								Name: "inbox=" + uid.Hex(),
 								Data: map[string]string{
 									"TYPE": "PRIVATE_MESSAGE",
 									"DATA": string(data),

@@ -32,7 +32,7 @@ type Pfp struct {
 }
 
 type Session struct {
-	UID       primitive.ObjectID `bson:"_uid"`
+	UID       primitive.ObjectID `bson:"_uid"` // I dont know why i put an underscore here but it doesn't matter
 	ExpiresAt primitive.DateTime `bson:"exp"`
 }
 
