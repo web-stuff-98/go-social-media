@@ -86,13 +86,20 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 					}
 				} else {
 					msg := &models.PrivateMessage{
-						ID:        primitive.NewObjectIDFromTimestamp(time.Now()),
-						Content:   data["content"].(string),
-						Uid:       uid,
-						CreatedAt: primitive.NewDateTimeFromTime(time.Now()),
-						UpdatedAt: primitive.NewDateTimeFromTime(time.Now()),
+						ID:          primitive.NewObjectIDFromTimestamp(time.Now()),
+						Content:     data["content"].(string),
+						Uid:         uid,
+						CreatedAt:   primitive.NewDateTimeFromTime(time.Now()),
+						UpdatedAt:   primitive.NewDateTimeFromTime(time.Now()),
+						RecipientId: recipientId,
 					}
-					if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, bson.M{"$push": bson.M{"messages": msg}}); err != nil {
+					log.Println("Send message from " + uid.Hex() + " to " + recipientId.Hex())
+					if _, err := colls.InboxCollection.UpdateByID(context.TODO(), uid, bson.M{
+						"$addToSet": bson.M{
+							"messages_sent_to": recipientId,
+						},
+					}); err != nil {
+						log.Println("A ERR,", err)
 						err := conn.WriteJSON(map[string]string{
 							"TYPE": "RESPONSE_MESSAGE",
 							"DATA": `{"msg":"Internal error","err":true}`,
@@ -101,8 +108,14 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 							log.Println(err)
 						}
 					} else {
-						data, err := json.Marshal(msg)
-						if err != nil {
+						log.Println("Added sent messages")
+						if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, bson.M{
+							"$push": bson.M{
+								"messages": msg,
+							},
+						}); err != nil {
+							log.Println("B ERR,", err)
+
 							err := conn.WriteJSON(map[string]string{
 								"TYPE": "RESPONSE_MESSAGE",
 								"DATA": `{"msg":"Internal error","err":true}`,
@@ -111,20 +124,32 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 								log.Println(err)
 							}
 						} else {
-							socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-								Name: "inbox=" + recipientId.Hex(),
-								Data: map[string]string{
-									"TYPE": "PRIVATE_MESSAGE",
-									"DATA": string(data),
-								},
-							}
-							// Also send the message to the sender because they need to be able to see their own message
-							socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-								Name: "inbox=" + uid.Hex(),
-								Data: map[string]string{
-									"TYPE": "PRIVATE_MESSAGE",
-									"DATA": string(data),
-								},
+							log.Println("Wrote message to recipient inbox")
+							data, err := json.Marshal(msg)
+							if err != nil {
+								err := conn.WriteJSON(map[string]string{
+									"TYPE": "RESPONSE_MESSAGE",
+									"DATA": `{"msg":"Internal error","err":true}`,
+								})
+								if err != nil {
+									log.Println(err)
+								}
+							} else {
+								socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+									Name: "inbox=" + recipientId.Hex(),
+									Data: map[string]string{
+										"TYPE": "PRIVATE_MESSAGE",
+										"DATA": string(data),
+									},
+								}
+								// Also send the message to the sender because they need to be able to see their own message
+								socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+									Name: "inbox=" + uid.Hex(),
+									Data: map[string]string{
+										"TYPE": "PRIVATE_MESSAGE",
+										"DATA": string(data),
+									},
+								}
 							}
 						}
 					}

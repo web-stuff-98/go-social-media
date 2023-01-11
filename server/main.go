@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,7 +9,6 @@ import (
 	"github.com/web-stuff-98/go-social-media/pkg/db"
 	"github.com/web-stuff-98/go-social-media/pkg/db/changestreams"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers"
-	"github.com/web-stuff-98/go-social-media/pkg/seed"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 
 	"github.com/gorilla/mux"
@@ -53,6 +51,7 @@ func main() {
 	router.HandleFunc("/api/account/delete", h.DeleteAccount).Methods(http.MethodPost)
 	router.HandleFunc("/api/account/pfp", h.UploadPfp).Methods(http.MethodPost)
 	router.HandleFunc("/api/account/conversations", h.GetConversations).Methods(http.MethodGet)
+	router.HandleFunc("/api/account/conversation/{id}", h.GetConversation).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/posts/page/{page}", h.GetPage).Methods(http.MethodGet)
 	router.HandleFunc("/api/posts/{postId}/comment", h.CommentOnPost).Methods(http.MethodPost)
@@ -71,8 +70,8 @@ func main() {
 	log.Println("Creating changestreams")
 	changestreams.WatchCollections(DB, SocketServer)
 
-	DB.Drop(context.TODO())
-	go seed.SeedDB(&Collections, 3, 5)
+	//DB.Drop(context.TODO())
+	//go seed.SeedDB(&Collections, 3, 5)
 
 	log.Println("API open on port", os.Getenv("PORT"))
 	log.Fatal(http.ListenAndServe(fmt.Sprint(":", os.Getenv("PORT")), c.Handler(router)))

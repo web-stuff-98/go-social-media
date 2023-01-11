@@ -61,7 +61,6 @@ export default function PostCard({ post }: { post: IPostCard }) {
       <User
         light
         date={new Date(post.created_at || 0)}
-        reverse
         uid={uid}
         user={getUserData(uid)}
       />

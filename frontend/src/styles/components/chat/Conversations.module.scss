@@ -6,15 +6,13 @@
   justify-content: flex-start;
   align-items: flex-start;
   min-height: 15rem;
-  width: 3rem;
-  min-width: fit-content;
+  width: 8rem;
   border-radius: var(--border-radius-medium);
   border: 1px solid var(--base-medium);
   box-sizing: border-box;
   overflow-y: auto;
 
   .user {
-    box-sizing: border-box;
     padding: var(--padding);
     border: none;
     background: none;

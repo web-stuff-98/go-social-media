@@ -108,16 +108,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [user]);
 
-  const handleSocketOnOpen = useCallback(() => {
+  const handleSocketOnOpen = () => {
     if (user) openSubscription(`inbox=${user.ID}`);
-  }, [user]);
+  };
 
   useEffect(() => {
     socket?.addEventListener("open", handleSocketOnOpen);
     return () => {
       socket?.removeEventListener("open", handleSocketOnOpen);
     };
-  }, [socket]);
+  }, [socket, user]);
 
   const updateUserState = (user: Partial<IUser>) =>
     setUser((old) => ({ ...old, ...user } as IUser));

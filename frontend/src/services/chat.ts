@@ -5,4 +5,7 @@ const getConversations = () =>
     withCredentials: true,
   });
 
-export { getConversations };
+const getConversation = (uid: string) =>
+  makeRequest(`/api/account/conversation/${uid}`, { withCredentials: true });
+
+export { getConversations, getConversation };

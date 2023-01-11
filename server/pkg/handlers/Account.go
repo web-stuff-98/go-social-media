@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/gorilla/mux"
 	"github.com/web-stuff-98/go-social-media/pkg/db/models"
 	"github.com/web-stuff-98/go-social-media/pkg/helpers"
 	"github.com/web-stuff-98/go-social-media/pkg/validation"
@@ -63,6 +64,7 @@ func (h handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	inbox.ID = inserted.InsertedID.(primitive.ObjectID)
 	inbox.Messages = []models.PrivateMessage{}
+	inbox.MessagesSentTo = []primitive.ObjectID{}
 
 	if _, err := h.Collections.InboxCollection.InsertOne(r.Context(), inbox); err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
@@ -319,7 +321,7 @@ func (h handler) UploadPfp(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
-// Get all messages from conversations (except for own messages)
+// Get uids of all conversations (excluding the messages - getConversation will be used to retrieve messages when the conversation is opened)
 func (h handler) GetConversations(w http.ResponseWriter, r *http.Request) {
 	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
 	if err != nil {
@@ -327,13 +329,89 @@ func (h handler) GetConversations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	inbox := &models.Inbox{}
+	var inbox = &models.Inbox{}
 	if err := h.Collections.InboxCollection.FindOne(r.Context(), bson.M{"_id": user.ID}).Decode(&inbox); err != nil {
+		responseMessage(w, http.StatusInternalServerError, "Internal error")
+		return
+	}
+
+	var uids = []primitive.ObjectID{}
+
+	for _, v := range inbox.MessagesSentTo {
+		uids = append(uids, v)
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(uids)
+}
+
+func (h handler) GetConversation(w http.ResponseWriter, r *http.Request) {
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	if err != nil {
+		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+	rawRecipientId := mux.Vars(r)["id"]
+	recipientId, err := primitive.ObjectIDFromHex(rawRecipientId)
+	if err != nil {
+		responseMessage(w, http.StatusBadRequest, "Invalid ID")
+		return
+	}
+
+	match := bson.M{
+		"$match": bson.M{
+			"_id": bson.M{
+				"$in": []primitive.ObjectID{user.ID, recipientId},
+			},
+		},
+	}
+	lookup := bson.M{
+		"$lookup": bson.M{
+			"from":         "messages",
+			"localField":   "recipient_id",
+			"foreignField": "_id",
+			"as":           "recipient",
+		},
+	}
+	unwind := bson.M{
+		"$unwind": bson.M{
+			"path": "$messages",
+		},
+	}
+	sort := bson.M{
+		"$sort": bson.M{
+			"messages.created_at": -1,
+		},
+	}
+
+	cursor, err := h.Collections.InboxCollection.Aggregate(r.Context(), []bson.M{match, lookup, unwind, sort})
+	defer cursor.Close(r.Context())
+
+	var messages = []models.PrivateMessage{}
+	for cursor.Next(r.Context()) {
+		// Hacky way of getting this to work... took hours
+		elems, err := cursor.Current.Elements()
+		var msg models.PrivateMessage
+		bson.Unmarshal(elems[1].Value().Value, &msg)
+		if msg.Uid == user.ID {
+			msg.RecipientId = recipientId
+		} else {
+			msg.RecipientId = user.ID
+		}
+		if err != nil {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+			return
+		}
+		messages = append(messages, msg)
+	}
+
+	if err := cursor.Err(); err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(inbox)
+	json.NewEncoder(w).Encode(messages)
 }

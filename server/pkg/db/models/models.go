@@ -10,6 +10,12 @@ type User struct {
 }
 
 type Inbox struct {
+	ID             primitive.ObjectID   `bson:"_id,omitempty" json:"ID"`
+	Messages       []PrivateMessage     `bson:"messages" json:"messages"`
+	MessagesSentTo []primitive.ObjectID `bson:"messages_sent_to" json:"-"` // list of all the people the user has messaged, needed to join both users messages together for display
+}
+
+type InboxMessagesQuery struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
 	Messages []PrivateMessage   `bson:"messages" json:"messages"`
 }
@@ -24,6 +30,7 @@ type PrivateMessage struct {
 	AttachmentPending bool               `bson:"attachment_pending" json:"attachment_pending"`
 	AttachmentType    string             `bson:"attachment_type" json:"attachment_type"`
 	AttachmentError   bool               `bson:"attachment_error" json:"attachment_error"`
+	RecipientId       primitive.ObjectID `bson:"-" json:"recipient_id"`
 }
 
 type Pfp struct {

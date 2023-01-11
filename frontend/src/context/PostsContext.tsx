@@ -145,7 +145,8 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
             : []
         );
         setPostsCount(p.count);
-        p?.posts.forEach((p: IPostCard) => cacheUserData(p.author_id));
+        if (p.posts)
+          p?.posts.forEach((p: IPostCard) => cacheUserData(p.author_id));
         setResMsg({ msg: "", err: false, pen: false });
       })
       .catch((e) => {

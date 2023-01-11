@@ -72,10 +72,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         name: subscriptionName,
       })
     );
-    setOpenSubscriptions((o) => [
-      ...o.filter((o) => o !== subscriptionName),
-      subscriptionName,
-    ]);
+    if (!subscriptionName.includes("inbox="))
+      setOpenSubscriptions((o) => [
+        ...o.filter((o) => o !== subscriptionName),
+        subscriptionName,
+      ]);
   };
   const closeSubscription = (subscriptionName: string) => {
     socket?.send(

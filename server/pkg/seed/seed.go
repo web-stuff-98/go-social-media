@@ -76,6 +76,7 @@ func generateUser(i int, colls *db.Collections) (uid primitive.ObjectID, err err
 	var inbox models.Inbox
 	inbox.ID = inserted.InsertedID.(primitive.ObjectID)
 	inbox.Messages = []models.PrivateMessage{}
+	inbox.MessagesSentTo = []primitive.ObjectID{}
 	if _, err := colls.InboxCollection.InsertOne(context.TODO(), inbox); err != nil {
 		return primitive.NilObjectID, err
 	}

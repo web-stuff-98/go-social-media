@@ -10,7 +10,7 @@ import PrivateMessage from "./PrivateMessage";
 import useSocket from "../../../context/SocketContext";
 import { instanceOfPrivateMessageData } from "../../../utils/DetermineSocketEvent";
 import { useModal } from "../../../context/ModalContext";
-import { getConversations } from "../../../services/chat";
+import { getConversations, getConversation } from "../../../services/chat";
 
 export interface IPrivateMessage {
   ID: string;
@@ -22,6 +22,7 @@ export interface IPrivateMessage {
   attachment_pending: boolean;
   attachment_type: string;
   attachment_error: boolean;
+  recipient_id: string;
 }
 export type Conversation = {
   uid: string;
@@ -35,25 +36,18 @@ export default function Conversations() {
   const { openModal } = useModal();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState("");
+  const selectedConversationRef = useRef("");
+  const [selectedConversationIndex, setSelectedConversationIndex] =
+    useState(-1);
+  const selectedConversationIndexRef = useRef(-1);
 
   useEffect(() => {
     if (!currentUser) return;
     getConversations()
-      .then((data) => {
-        const group: any = {};
-        data.messages.forEach((msg: IPrivateMessage) => {
-          if (group[msg.uid]) {
-            group[msg.uid] = [...group[msg.uid], msg];
-          } else {
-            group[msg.uid] = [msg];
-          }
-        });
-        Object.keys(group).forEach((k) => {
-          setConversations((conversations) => [
-            ...conversations,
-            { uid: k, messages: group[k] },
-          ]);
-        });
+      .then((uids) => {
+        if (uids)
+          setConversations(uids.map((uid: string) => ({ uid, messages: [] })));
       })
       .catch((e) => {
         openModal("Message", {
@@ -64,15 +58,39 @@ export default function Conversations() {
       });
   }, [currentUser]);
 
-  const [selectedConversation, setSelectedConversation] = useState("");
-  const [selectedConversationIndex, setSelectedConversationIndex] =
-    useState(-1);
-  const selectedConversationIndexRef = useRef(-1);
+  const openConversation = (uid: string) => {
+    selectedConversationRef.current = uid;
+    const i = conversations.findIndex((c) => c.uid === uid);
+    selectedConversationIndexRef.current = i;
+    setSelectedConversationIndex(i);
+    setSelectedConversation(uid);
+    getConversation(uid)
+      .then((messages) => {
+        setConversations((convs) => {
+          let newConvs = convs;
+          const i = convs.findIndex((c) => c.uid === uid);
+          if (i === -1) {
+            newConvs.push({ uid, messages });
+          } else {
+            newConvs[i] = { uid, messages };
+          }
+          return [...newConvs];
+        });
+      })
+      .catch((e) => {
+        openModal("Message", {
+          msg: `${e}`,
+          err: true,
+          pen: false,
+        });
+      });
+  };
 
   const handleMessage = (e: MessageEvent) => {
     const data = JSON.parse(e.data);
     data["DATA"] = JSON.parse(data["DATA"]);
     if (instanceOfPrivateMessageData(data)) {
+      console.log(data["DATA"]);
       if (data.DATA.uid !== currentUser?.ID) {
         cacheUserData(data.DATA.uid);
         setConversations((conversations) => {
@@ -94,17 +112,29 @@ export default function Conversations() {
           return [...newConversations];
         });
       } else {
-        // If receiving own messages then put the
-        // message inside the current conversation
-        if (selectedConversationIndexRef.current === -1) return;
-        setConversations((conversations) => {
-          let newConversations = conversations;
-          newConversations[selectedConversationIndexRef.current].messages = [
-            ...newConversations[selectedConversationIndexRef.current].messages,
-            data.DATA,
-          ];
-          return [...newConversations];
-        });
+        if (selectedConversationRef.current === data.DATA.recipient_id) {
+          // If receiving own messages then put the
+          // message inside the current conversation
+          setConversations((conversations) => {
+            let newConversations = conversations;
+            newConversations[selectedConversationIndexRef.current].messages = [
+              ...newConversations[selectedConversationIndexRef.current]
+                .messages,
+              data.DATA,
+            ];
+            return [...newConversations];
+          });
+        } else {
+          // If there's no current conversation create one
+          setConversations((conversations) => {
+            let newConversations = conversations;
+            newConversations.push({
+              uid: data.DATA.recipient_id,
+              messages: [data.DATA],
+            });
+            return [...newConversations];
+          });
+        }
       }
     }
   };
@@ -121,30 +151,30 @@ export default function Conversations() {
     setMessageInput(e.target.value);
 
   const renderConversee = (user: IUser) => (
-    <button
-      key={user.ID}
-      onClick={() => {
-        setSelectedConversation(user.ID);
-        setSelectedConversationIndex(
-          conversations.findIndex((c) => c.uid === user.ID)
-        );
-        selectedConversationIndexRef.current = conversations.findIndex(
-          (c) => c.uid === user.ID
-        );
-      }}
-      name={`Open conversation with ${user.ID}`}
-      aria-label={`Open conversation with ${user.ID}`}
-      style={
-        selectedConversation === user.ID
-          ? {
-              background: "rgba(32,64,96,0.1666)",
-            }
-          : {}
-      }
-      className={classes.user}
-    >
-      <User uid={user.ID} user={user} />
-    </button>
+    <>
+      {user ? (
+        <button
+          key={user.ID}
+          onClick={() => {
+            openConversation(user.ID);
+          }}
+          name={`Open conversation with ${user.ID}`}
+          aria-label={`Open conversation with ${user.ID}`}
+          style={
+            selectedConversation === user.ID
+              ? {
+                  background: "rgba(32,64,96,0.1666)",
+                }
+              : {}
+          }
+          className={classes.user}
+        >
+          <User uid={user.ID} user={user} />
+        </button>
+      ) : (
+        <></>
+      )}
+    </>
   );
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {

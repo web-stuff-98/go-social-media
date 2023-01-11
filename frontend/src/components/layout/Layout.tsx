@@ -21,16 +21,15 @@ export default function Layout() {
         const properties: CSSProperties = {
           width: "calc(100% - var(--horizontal-whitespace) * 2)",
           background: iState.isMobile ? "none" : "var(--foreground)",
-          minHeight:"100%",
-          height: pathname.includes("/blog") ? "100%" : "max-content",
+          minHeight: "max-content",
           margin: "auto",
-          display:"flex",
+          display: "flex",
           ...(iState.isMobile
             ? {}
             : {
                 borderLeft: "1px solid var(--base-pale)",
                 borderRight: "1px solid var(--base-pale)",
-                boxShadow:"0px 0px 3px rgba(0,0,0,0.166)"
+                boxShadow: "0px 0px 3px rgba(0,0,0,0.166)",
               }),
         };
         return properties;
@@ -85,7 +84,7 @@ export default function Layout() {
       </div>
       <Header />
       <Nav />
-      <Chat/>
+      <Chat />
       <main style={getStyle()}>
         <Outlet />
       </main>

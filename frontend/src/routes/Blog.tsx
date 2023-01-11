@@ -42,10 +42,12 @@ export default function Blog() {
 
   return (
     <div className={classes.container}>
-      {posts.map((p) => (
-        <PostCard key={p.ID} post={p} />
-      ))}
-      <ResMsg resMsg={resMsg} />
+      <div className={classes.feed}>
+        {posts.map((p) => (
+          <PostCard key={p.ID} post={p} />
+        ))}
+        <ResMsg resMsg={resMsg} />
+      </div>
       <div className={classes.paginationControls}>
         <button onClick={() => prevPage()}>
           <BsChevronLeft />
