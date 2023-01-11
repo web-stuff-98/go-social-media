@@ -65,6 +65,9 @@ func main() {
 	router.HandleFunc("/api/posts/{id}/image", h.GetPostImage).Methods(http.MethodGet)
 	router.HandleFunc("/api/posts/{id}/thumb", h.GetPostThumb).Methods(http.MethodGet)
 
+	router.HandleFunc("/api/rooms", h.CreateRoom).Methods(http.MethodPost)
+	router.HandleFunc("/api/rooms/{id}", h.GetRoom).Methods(http.MethodGet)
+
 	router.HandleFunc("/api/ws", h.WebSocketEndpoint)
 
 	log.Println("Creating changestreams")

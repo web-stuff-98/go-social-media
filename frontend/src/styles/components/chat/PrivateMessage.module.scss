@@ -6,6 +6,8 @@
   padding: var(--padding);
   .content {
     flex-grow: 1;
+    font-size: var(--font-xs);
+    line-height: 1;
   }
 
   .date {
@@ -15,7 +17,10 @@
 
     span {
       line-height: 0.9;
-      font-size: 0.785rem;
+      font-size: 0.866rem;
+      font-weight: 300;
+      letter-spacing: -1px;
+      color:var(--base-heavy);
     }
   }
 }

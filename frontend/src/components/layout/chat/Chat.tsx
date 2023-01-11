@@ -7,6 +7,7 @@ import { useState, createContext, useContext } from "react";
 import Menu from "./Menu";
 import RoomEditor from "./RoomEditor";
 import Rooms from "./Rooms";
+import { useLocation } from "react-router-dom";
 
 export enum ChatSection {
   "MENU" = "Menu",
@@ -28,9 +29,10 @@ export const useChat = () => useContext(ChatContext);
 
 export default function Chat() {
   const [section, setSection] = useState<ChatSection>(ChatSection.MENU);
+  const { pathname } = useLocation();
 
   return (
-    <div className={classes.container}>
+    <div style={pathname.includes("/blog") ? {bottom:"calc(var(--pagination-controls) + var(--padding))"} : {}} className={classes.container}>
       <div className={classes.topTray}>
         {section}
         <div className={classes.icons}>

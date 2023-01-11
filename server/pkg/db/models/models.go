@@ -2,6 +2,12 @@ package models
 
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
+/*
+	Private messages are kept in Inbox collection, and room messages are kept
+	in RoomMessage collection because then when querying for Rooms or Users
+	the messages aren't returned also, which is slower.
+*/
+
 type User struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
 	Username  string             `bson:"username,maxlength=15" json:"username" validate:"required,min=2,max=15"`
@@ -13,11 +19,6 @@ type Inbox struct {
 	ID             primitive.ObjectID   `bson:"_id,omitempty" json:"ID"`
 	Messages       []PrivateMessage     `bson:"messages" json:"messages"`
 	MessagesSentTo []primitive.ObjectID `bson:"messages_sent_to" json:"-"` // list of all the people the user has messaged, needed to join both users messages together for display
-}
-
-type InboxMessagesQuery struct {
-	ID       primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
-	Messages []PrivateMessage   `bson:"messages" json:"messages"`
 }
 
 type PrivateMessage struct {
@@ -55,20 +56,19 @@ type RoomMessage struct {
 	AttachmentError   bool               `bson:"attachment_error" json:"attachment_error"`
 }
 
-//socket message JSON from the client
-type MessageEvent struct {
-	Content       string `json:"content"`
-	HasAttachment bool   `json:"has_attachment"`
-}
-
 type Room struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"ID"` // omitempty to protect against zeroed _id insertion
 	Name      string             `bson:"name,maxlength=24" json:"name"`
 	Author    primitive.ObjectID `bson:"author_id" json:"author_id"`
 	CreatedAt primitive.DateTime `bson:"created_at" json:"created_at"`
 	UpdatedAt primitive.DateTime `bson:"updated_at" json:"updated_at"`
-	Messages  []RoomMessage      `bson:"messages" json:"messages"`
 	ImgBlur   string             `bson:"img_blur" json:"img_blur,omitempty"`
+	Messages  []PrivateMessage   `bson:"-" json:"messages"`
+}
+
+type RoomMessages struct {
+	ID       primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
+	Messages []PrivateMessage   `bson:"messages" json:"messages"`
 }
 
 type RoomImage struct {

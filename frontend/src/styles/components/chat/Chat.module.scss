@@ -1,7 +1,7 @@
 .container {
   position: fixed;
-  right: calc(var(--padding) + var(--horizontal-whitespace));
-  bottom: calc(0% + var(--padding));
+  left: calc(var(--padding) + calc(100% - var(--horizontal-whitespace)));
+  bottom: var(--padding);
   border: 1px solid var(--base-medium);
   background: var(--foreground);
   z-index: 99;

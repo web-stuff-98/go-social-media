@@ -13,6 +13,7 @@ import { useState } from "react";
 import { FaReply } from "react-icons/fa";
 import ErrorTip from "../ErrorTip";
 import { CommentForm } from "./CommentForm";
+import { useModal } from "../../context/ModalContext";
 
 export interface IComment {
   ID: string;
@@ -37,6 +38,7 @@ export default function Comment({
   getReplies: (parentId: string) => IComment[];
 }) {
   const { getUserData } = useUsers();
+  const { openModal } = useModal();
   const [err, setErr] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [repliesOpen, setRepliesOpen] = useState(false);
@@ -60,7 +62,16 @@ export default function Comment({
               name="delete"
               style={{ color: "red" }}
               onClick={() =>
-                deleteComment(postId, comment.ID).catch((e) => setErr(`${e}`))
+                openModal("Confirm", {
+                  msg: "Are you sure you want to delete this comment?",
+                  err: false,
+                  pen: false,
+                  confirmationCallback: () =>
+                    deleteComment(postId, comment.ID).catch((e) =>
+                      setErr(`${e}`)
+                    ),
+                  cancellationCallback: () => {},
+                })
               }
               Icon={MdDelete}
             />,
