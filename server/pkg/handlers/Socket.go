@@ -44,6 +44,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 
 		if data["event_type"] != nil {
 			if data["event_type"] == "OPEN_SUBSCRIPTION" {
+				// Authorization check for private subscriptions is done inside socketserver
 				socketServer.RegisterSubscriptionConn <- socketserver.SubscriptionConnectionInfo{
 					Name: data["name"].(string),
 					Uid:  uid,
@@ -68,7 +69,6 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 				}
 			}
 			if data["event_type"] == "PRIVATE_MESSAGE" {
-				log.Println("Private message sent by " + uid.Hex() + " to " + data["recipient_id"].(string))
 				socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 					Name: "inbox=" + data["recipient_id"].(string),
 					Data: map[string]string{
