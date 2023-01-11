@@ -81,7 +81,7 @@ type Post struct {
 }
 
 type PostVotes struct {
-	ID    primitive.ObjectID `bson:"id,omitempty" json:"id"`
+	ID    primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
 	Votes []PostVote         `bson:"votes" json:"votes"`
 }
 

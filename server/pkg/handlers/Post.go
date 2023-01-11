@@ -370,7 +370,7 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 			responseMessage(w, http.StatusInternalServerError, "Internal error")
 			return
 		}
-		var votes models.PostVotes
+		var votes = &models.PostVotes{}
 		if err := h.Collections.PostVoteCollection.FindOne(r.Context(), bson.M{"_id": post.ID}).Decode(&votes); err != nil {
 			if err != mongo.ErrNoDocuments {
 				responseMessage(w, http.StatusInternalServerError, "Internal error")
