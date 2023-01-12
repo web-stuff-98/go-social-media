@@ -94,40 +94,6 @@ func GetUserAndSessionFromRequest(r *http.Request, collections db.Collections) (
 	return &user, &session, nil
 }
 
-/*func ValidateBodyMiddleware(model struct{}) func(http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			data := &model
-			defer r.Body.Close()
-			if err := json.NewDecoder(r.Body).Decode(data); err != nil {
-				w.Header().Add("Content-Type", "application/json")
-				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(map[string]string{"msg": "Bad request"})
-				return
-			}
-			v := validator.New()
-			if err := v.Struct(data); err != nil {
-				w.Header().Add("Content-Type", "application/json")
-				w.WriteHeader(http.StatusBadRequest)
-				_, ok := err.(validator.ValidationErrors)
-				if !ok {
-					json.NewEncoder(w).Encode(map[string]string{"msg": "Bad request"})
-					return
-				}
-				msg, err := fmt.Print(err)
-				if err != nil {
-					json.NewEncoder(w).Encode(map[string]string{"msg": "Bad request"})
-					return
-				}
-				json.NewEncoder(w).Encode(map[string]string{"msg": string(msg)})
-				return
-			}
-
-			h.ServeHTTP(w, r)
-		})
-	}
-}*/
-
 func DownloadImageURL(inputURL string) io.ReadCloser {
 	_, err := url.Parse(inputURL)
 	if err != nil {

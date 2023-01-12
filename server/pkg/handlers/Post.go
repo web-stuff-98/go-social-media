@@ -107,6 +107,24 @@ func (h handler) VoteOnPost(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	h.SocketServer.SendDataToSubscriptionExclusive <- socketserver.ExclusiveSubscriptionDataMessage{
+		Name: "post_card=" + postId.Hex(),
+		Data: map[string]string{
+			"TYPE": "POST_VOTE",
+			"DATA": `{"ID":"` + postId.Hex() + `","is_upvote":` + strconv.FormatBool(voteInput.IsUpvote) + `,"remove":` + strconv.FormatBool(removeVote) + `}`,
+		},
+		Exclude: map[primitive.ObjectID]bool{user.ID: true},
+	}
+
+	h.SocketServer.SendDataToSubscriptionExclusive <- socketserver.ExclusiveSubscriptionDataMessage{
+		Name: "post_page=" + postId.Hex(),
+		Data: map[string]string{
+			"TYPE": "POST_VOTE",
+			"DATA": `{"ID":"` + postId.Hex() + `","is_upvote":` + strconv.FormatBool(voteInput.IsUpvote) + `,"remove":` + strconv.FormatBool(removeVote) + `}`,
+		},
+		Exclude: map[primitive.ObjectID]bool{user.ID: true},
+	}
+
 	responseMessage(w, http.StatusOK, "Voted")
 }
 

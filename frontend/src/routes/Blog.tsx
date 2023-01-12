@@ -20,6 +20,7 @@ export interface IPostCard {
   vote_pos_count: number; // Excludes users own vote
   vote_neg_count: number; // Excludes users own vote
   my_vote: null | {
+    uid: string;
     is_upvote: boolean;
   };
   img_url: string; //img_url is stored here so that rerender can be triggered when the image is updated by modifying the query string

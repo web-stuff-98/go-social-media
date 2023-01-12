@@ -3,7 +3,7 @@ import Nav from "./Nav";
 
 import type { CSSProperties } from "react";
 
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { useInterface } from "../../context/InterfaceContext";
 import { useMouse } from "../../context/MouseContext";
 import Header from "./Header";
@@ -11,7 +11,6 @@ import Chat from "./chat/Chat";
 
 export default function Layout() {
   const { state: iState } = useInterface();
-  const { pathname } = useLocation();
 
   const mousePos = useMouse();
 

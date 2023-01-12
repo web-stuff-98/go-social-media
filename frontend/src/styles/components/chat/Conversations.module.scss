@@ -13,7 +13,7 @@
   overflow-y: auto;
 
   .user {
-    padding: var(--padding);
+    padding: var(--padding-medium);
     border: none;
     background: none;
     margin: 0;
@@ -28,7 +28,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: var(--padding);
+  gap: var(--padding-medium);
   flex-grow: 1;
   max-width: min(66.66vw, 66.66%);
 

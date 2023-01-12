@@ -32,6 +32,11 @@ type SubscriptionDataMessage struct {
 	Name string
 	Data map[string]string
 }
+type ExclusiveSubscriptionDataMessage struct {
+	Name    string
+	Data    map[string]string
+	Exclude map[primitive.ObjectID]bool
+}
 
 type SocketServer struct {
 	Connections   map[*websocket.Conn]primitive.ObjectID
@@ -43,21 +48,23 @@ type SocketServer struct {
 	RegisterSubscriptionConn   chan SubscriptionConnectionInfo
 	UnregisterSubscriptionConn chan SubscriptionConnectionInfo
 
-	SendDataToSubscription chan SubscriptionDataMessage
+	SendDataToSubscription          chan SubscriptionDataMessage
+	SendDataToSubscriptionExclusive chan ExclusiveSubscriptionDataMessage
 
 	DestroySubscription chan string
 }
 
 func Init() (*SocketServer, error) {
 	socketServer := &SocketServer{
-		Connections:                make(map[*websocket.Conn]primitive.ObjectID),
-		Subscriptions:              make(map[string]map[*websocket.Conn]primitive.ObjectID),
-		RegisterConn:               make(chan ConnectionInfo),
-		UnregisterConn:             make(chan ConnectionInfo),
-		RegisterSubscriptionConn:   make(chan SubscriptionConnectionInfo),
-		UnregisterSubscriptionConn: make(chan SubscriptionConnectionInfo),
-		SendDataToSubscription:     make(chan SubscriptionDataMessage),
-		DestroySubscription:        make(chan string),
+		Connections:                     make(map[*websocket.Conn]primitive.ObjectID),
+		Subscriptions:                   make(map[string]map[*websocket.Conn]primitive.ObjectID),
+		RegisterConn:                    make(chan ConnectionInfo),
+		UnregisterConn:                  make(chan ConnectionInfo),
+		RegisterSubscriptionConn:        make(chan SubscriptionConnectionInfo),
+		UnregisterSubscriptionConn:      make(chan SubscriptionConnectionInfo),
+		SendDataToSubscription:          make(chan SubscriptionDataMessage),
+		SendDataToSubscriptionExclusive: make(chan ExclusiveSubscriptionDataMessage),
+		DestroySubscription:             make(chan string),
 	}
 	RunServer(socketServer)
 	return socketServer, nil
@@ -134,6 +141,22 @@ func RunServer(socketServer *SocketServer) {
 				if k == subsData.Name {
 					for conn := range s {
 						conn.WriteJSON(subsData.Data)
+					}
+					break
+				}
+			}
+		}
+	}()
+	/* ----- Send data to subscription excluding uids ----- */
+	go func() {
+		for {
+			subsData := <-socketServer.SendDataToSubscriptionExclusive
+			for k, s := range socketServer.Subscriptions {
+				if k == subsData.Name {
+					for conn, oid := range s {
+						if subsData.Exclude[oid] != true {
+							conn.WriteJSON(subsData.Data)
+						}
 					}
 					break
 				}

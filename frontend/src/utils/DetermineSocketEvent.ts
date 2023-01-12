@@ -17,6 +17,11 @@ export type PrivateMessageData = {
   DATA: object & IPrivateMessage;
 };
 
+export type PostVoteData = {
+  TYPE: "POST_VOTE";
+  DATA: object & { ID: string; is_upvote: boolean; remove: boolean };
+};
+
 export type SocketEventChangeMethod =
   | "UPDATE"
   | "INSERT"
@@ -32,6 +37,7 @@ export type SocketEventChangeEntityType =
 export function instanceOfChangeData(object: any): object is ChangeData {
   return object.TYPE === "CHANGE";
 }
+
 export function instanceOfResponseMessageData(
   object: any
 ): object is ResponseMessageData {
@@ -42,4 +48,8 @@ export function instanceOfPrivateMessageData(
   object: any
 ): object is PrivateMessageData {
   return object.TYPE === "PRIVATE_MESSAGE";
+}
+
+export function instanceOfPostVoteData(object: any): object is PostVoteData {
+  return object.TYPE === "POST_VOTE";
 }

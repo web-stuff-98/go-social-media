@@ -10,7 +10,10 @@ import { IPostCard } from "../routes/Blog";
 import { IResMsg } from "../components/ResMsg";
 import { getPage, SortMode, SortOrder } from "../services/posts";
 import useSocket from "./SocketContext";
-import { instanceOfChangeData } from "../utils/DetermineSocketEvent";
+import {
+  instanceOfChangeData,
+  instanceOfPostVoteData,
+} from "../utils/DetermineSocketEvent";
 import { baseURL } from "../services/makeRequest";
 import { useUsers } from "./UsersContext";
 import {
@@ -141,6 +144,10 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
             ? JSON.parse(p.posts).map((p: IPostCard) => ({
                 ...p,
                 img_url: `${baseURL}/api/posts/${p.ID}/image?v=1`,
+                my_vote:
+                  p.my_vote?.uid === "000000000000000000000000"
+                    ? null
+                    : p.my_vote,
               }))
             : []
         );
@@ -236,6 +243,19 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
           }
         }
       }
+    }
+    if (instanceOfPostVoteData(data)) {
+      setPosts((p) => {
+        let newPosts = p;
+        const i = p.findIndex((p) => p.ID === data.DATA.ID);
+        if (i === -1) return p;
+        if (data.DATA.is_upvote) {
+          newPosts[i].vote_pos_count += data.DATA.remove ? -1 : 1;
+        } else {
+          newPosts[i].vote_neg_count += data.DATA.remove ? -1 : 1;
+        }
+        return [...newPosts];
+      });
     }
   }, []);
 

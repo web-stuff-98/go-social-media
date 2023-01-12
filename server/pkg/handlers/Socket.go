@@ -22,6 +22,10 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
+/*
+	This is where most socket event are triggered from, some are triggered from API routes, like voting
+*/
+
 func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid primitive.ObjectID, colls db.Collections) {
 	for {
 		_, p, err := conn.ReadMessage()

@@ -5,7 +5,10 @@ import { getPost, submitComment } from "../services/posts";
 import { useNavigate, useParams } from "react-router-dom";
 import ResMsg, { IResMsg } from "../components/ResMsg";
 import useSocket from "../context/SocketContext";
-import { instanceOfChangeData } from "../utils/DetermineSocketEvent";
+import {
+  instanceOfChangeData,
+  instanceOfPostVoteData,
+} from "../utils/DetermineSocketEvent";
 import { baseURL } from "../services/makeRequest";
 import { CommentForm } from "../components/comments/CommentForm";
 import { IComment } from "../components/comments/Comment";
@@ -49,7 +52,11 @@ export default function Page() {
     setResMsg({ msg: "", err: false, pen: true });
     getPost(slug)
       .then((p) => {
-        setPost(p as Omit<IPost, "comments">);
+        setPost({
+          ...(p as Omit<IPost, "comments">),
+          my_vote:
+            p.my_vote?.uid === "000000000000000000000000" ? null : p.my_vote,
+        });
         setComments(p.comments || []);
         setResMsg({ msg: "", err: false, pen: false });
         setImgURL(`${baseURL}/api/posts/${p.ID}/image?v=1`);
@@ -99,6 +106,18 @@ export default function Page() {
           });
         }
       }
+    }
+    if (instanceOfPostVoteData(data)) {
+      setPost((p) => {
+        let newPost = p;
+        if (!newPost) return;
+        if (data.DATA.is_upvote) {
+          newPost.vote_pos_count += data.DATA.remove ? -1 : 1;
+        } else {
+          newPost.vote_neg_count += data.DATA.remove ? -1 : 1;
+        }
+        return { ...newPost };
+      });
     }
   }, []);
 

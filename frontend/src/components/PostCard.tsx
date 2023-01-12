@@ -15,6 +15,7 @@ import User from "./User";
 import { useUsers } from "../context/UsersContext";
 
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
+import { useAuth } from "../context/AuthContext";
 
 export default function PostCard({
   post,
@@ -27,9 +28,10 @@ export default function PostCard({
     state: { isMobile },
   } = useInterface();
   const navigate = useNavigate();
-  const { postEnteredView, postLeftView } = usePosts();
+  const { postEnteredView, postLeftView, updatePostCard } = usePosts();
   const { openModal } = useModal();
   const { getUserData } = useUsers();
+  const { user } = useAuth();
 
   const textContainerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -73,34 +75,71 @@ export default function PostCard({
             <IconBtn
               ariaLabel="Vote up"
               name="Vote up"
-              style={{ color: "lime" }}
+              style={{
+                color: "lime",
+                ...(post.my_vote && post.my_vote.is_upvote
+                  ? { stroke: "1px" }
+                  : { filter: "opacity(0.5)" }),
+              }}
               Icon={FaChevronUp}
               type="button"
               onClick={() =>
-                voteOnPost(post.ID, true).catch((e) => {
-                  openModal("Message", {
-                    err: true,
-                    pen: false,
-                    msg: `${e}`,
-                  });
-                })
+                voteOnPost(post.ID, true)
+                  .catch((e) => {
+                    openModal("Message", {
+                      err: true,
+                      pen: false,
+                      msg: `${e}`,
+                    });
+                  })
+                  .then(() => {
+                    updatePostCard({
+                      ID: post.ID,
+                      my_vote: post.my_vote
+                        ? null
+                        : {
+                            uid: user?.ID as string,
+                            is_upvote: true,
+                          },
+                    });
+                  })
               }
             />
-            {post.vote_pos_count - post.vote_neg_count}
+            {post.vote_pos_count +
+              (post.my_vote ? (post.my_vote.is_upvote ? 1 : 0) : 0) -
+              (post.vote_neg_count +
+                (post.my_vote ? (post.my_vote.is_upvote ? 0 : 1) : 0))}
             <IconBtn
               ariaLabel="Vote down"
               name="Vote down"
-              style={{ color: "red" }}
+              style={{
+                color: "red",
+                ...(post.my_vote && !post.my_vote.is_upvote
+                  ? { stroke: "1px" }
+                  : { filter: "opacity(0.5)" }),
+              }}
               Icon={FaChevronDown}
               type="button"
               onClick={() =>
-                voteOnPost(post.ID, false).catch((e) => {
-                  openModal("Message", {
-                    err: true,
-                    pen: false,
-                    msg: `${e}`,
-                  });
-                })
+                voteOnPost(post.ID, false)
+                  .catch((e) => {
+                    openModal("Message", {
+                      err: true,
+                      pen: false,
+                      msg: `${e}`,
+                    });
+                  })
+                  .then(() => {
+                    updatePostCard({
+                      ID: post.ID,
+                      my_vote: post.my_vote
+                        ? null
+                        : {
+                            uid: user?.ID as string,
+                            is_upvote: false,
+                          },
+                    });
+                  })
               }
             />
           </div>,

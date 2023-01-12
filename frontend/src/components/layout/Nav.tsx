@@ -1,12 +1,8 @@
 import classes from "./Layout.module.scss";
-
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-
-import User from "../User";
 import { useState } from "react";
 import { useInterface } from "../../context/InterfaceContext";
-
 import { MdMenu } from "react-icons/md";
 import Dropdown from "../Dropdown";
 import usePosts from "../../context/PostsContext";
