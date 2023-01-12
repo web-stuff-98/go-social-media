@@ -1,6 +1,7 @@
 package socketserver
 
 import (
+	"log"
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -74,6 +75,12 @@ func RunServer(socketServer *SocketServer) {
 	/* ----- Websocket connection registration ----- */
 	go func() {
 		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in WS registration : ", r)
+				}
+			}()
 			connData := <-socketServer.RegisterConn
 			if connData.Conn != nil {
 				socketServer.Connections[connData.Conn] = connData.Uid
@@ -83,6 +90,12 @@ func RunServer(socketServer *SocketServer) {
 	/* ----- Websocket disconnect registration ----- */
 	go func() {
 		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in WS deregistration : ", r)
+				}
+			}()
 			connData := <-socketServer.UnregisterConn
 			for conn, _ := range socketServer.Connections {
 				if conn == connData.Conn {
@@ -103,6 +116,12 @@ func RunServer(socketServer *SocketServer) {
 	/* ----- Subscription connection registration (also check the authorization if subscription requires it) ----- */
 	go func() {
 		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in subscription registration : ", r)
+				}
+			}()
 			connData := <-socketServer.RegisterSubscriptionConn
 			if connData.Conn != nil {
 				allow := true
@@ -129,6 +148,12 @@ func RunServer(socketServer *SocketServer) {
 	/* ----- Subscription disconnect registration ----- */
 	go func() {
 		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in subscription disconnect registration : ", r)
+				}
+			}()
 			connData := <-socketServer.UnregisterSubscriptionConn
 			delete(socketServer.Subscriptions[connData.Name], connData.Conn)
 		}
@@ -136,6 +161,12 @@ func RunServer(socketServer *SocketServer) {
 	/* ----- Send data to subscription ----- */
 	go func() {
 		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in subscription data channel : ", r)
+				}
+			}()
 			subsData := <-socketServer.SendDataToSubscription
 			for k, s := range socketServer.Subscriptions {
 				if k == subsData.Name {
@@ -150,6 +181,12 @@ func RunServer(socketServer *SocketServer) {
 	/* ----- Send data to subscription excluding uids ----- */
 	go func() {
 		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in exclusive subscription data channel : ", r)
+				}
+			}()
 			subsData := <-socketServer.SendDataToSubscriptionExclusive
 			for k, s := range socketServer.Subscriptions {
 				if k == subsData.Name {

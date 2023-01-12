@@ -90,7 +90,6 @@ export default function Conversations() {
     const data = JSON.parse(e.data);
     data["DATA"] = JSON.parse(data["DATA"]);
     if (instanceOfPrivateMessageData(data)) {
-      console.log(data["DATA"]);
       if (data.DATA.uid !== currentUser?.ID) {
         cacheUserData(data.DATA.uid);
         setConversations((conversations) => {
@@ -169,7 +168,7 @@ export default function Conversations() {
           }
           className={classes.user}
         >
-          <User uid={user.ID} user={user} />
+          <User small uid={user.ID} user={user} />
         </button>
       ) : (
         <></>

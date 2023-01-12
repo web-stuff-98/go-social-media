@@ -67,7 +67,10 @@ func main() {
 	router.HandleFunc("/api/posts/{id}/vote", h.VoteOnPost).Methods(http.MethodPatch)
 
 	router.HandleFunc("/api/rooms", h.CreateRoom).Methods(http.MethodPost)
+	router.HandleFunc("/api/rooms/page/{page}", h.GetRoomPage).Methods(http.MethodGet)
 	router.HandleFunc("/api/rooms/{id}", h.GetRoom).Methods(http.MethodGet)
+	router.HandleFunc("/api/rooms/{id}/image", h.UploadRoomImage).Methods(http.MethodPost)
+	router.HandleFunc("/api/rooms/{id}/image", h.GetRoomImage).Methods(http.MethodGet)
 	router.HandleFunc("/api/rooms/{id}/update", h.UpdateRoom).Methods(http.MethodPatch)
 	router.HandleFunc("/api/rooms/{id}/delete", h.DeleteRoom).Methods(http.MethodDelete)
 

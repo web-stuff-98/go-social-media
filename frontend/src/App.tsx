@@ -4,7 +4,6 @@ import { InterfaceProvider } from "./context/InterfaceContext";
 import { ModalProvider } from "./context/ModalContext";
 import { MouseProvider } from "./context/MouseContext";
 import { PostsProvider } from "./context/PostsContext";
-import { RoomsProvider } from "./context/RoomsContext";
 import { SocketProvider } from "./context/SocketContext";
 import { UserdropdownProvider } from "./context/UserdropdownContext";
 import { UsersProvider } from "./context/UsersContext";
@@ -18,11 +17,9 @@ function App() {
             <AuthProvider>
               <ModalProvider>
                 <PostsProvider>
-                  <RoomsProvider>
-                    <UsersProvider>
-                      <Layout />
-                    </UsersProvider>
-                  </RoomsProvider>
+                  <UsersProvider>
+                    <Layout />
+                  </UsersProvider>
                 </PostsProvider>
               </ModalProvider>
             </AuthProvider>

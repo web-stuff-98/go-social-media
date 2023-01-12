@@ -13,4 +13,14 @@
   input[type=file] {
     display: none;
   }
+
+  button:nth-child(1) {
+    margin-top: var(--padding);
+  }
+
+  .imgPreview {
+    border-radius: var(--border-radius-medium);
+    width: 100%;
+    max-width: 12rem;
+  }
 }

@@ -1,4 +1,5 @@
 import { IPrivateMessage } from "../components/layout/chat/Conversations";
+import { IRoomMessage } from "../components/layout/chat/Room";
 
 export type ChangeData = {
   TYPE: "CHANGE";
@@ -15,6 +16,11 @@ export type ResponseMessageData = {
 export type PrivateMessageData = {
   TYPE: "PRIVATE_MESSAGE";
   DATA: object & IPrivateMessage;
+};
+
+export type RoomMessageData = {
+  TYPE: "ROOM_MESSAGE";
+  DATA: object & IRoomMessage;
 };
 
 export type PostVoteData = {
@@ -48,6 +54,12 @@ export function instanceOfPrivateMessageData(
   object: any
 ): object is PrivateMessageData {
   return object.TYPE === "PRIVATE_MESSAGE";
+}
+
+export function instanceOfRoomMessageData(
+  object: any
+): object is RoomMessageData {
+  return object.TYPE === "ROOM_MESSAGE";
 }
 
 export function instanceOfPostVoteData(object: any): object is PostVoteData {

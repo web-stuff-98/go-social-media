@@ -8,6 +8,7 @@ import Menu from "./Menu";
 import RoomEditor from "./RoomEditor";
 import Rooms from "./Rooms";
 import { useLocation } from "react-router-dom";
+import Room from "./Room";
 
 export enum ChatSection {
   "MENU" = "Menu",
@@ -20,19 +21,35 @@ export enum ChatSection {
 const ChatContext = createContext<{
   section: ChatSection;
   setSection: (to: ChatSection) => void;
+  openRoom: (id: string) => void;
+  roomId: string;
 }>({
   section: ChatSection.MENU,
   setSection: () => {},
+  openRoom: () => {},
+  roomId: "",
 });
 
 export const useChat = () => useContext(ChatContext);
 
 export default function Chat() {
-  const [section, setSection] = useState<ChatSection>(ChatSection.MENU);
   const { pathname } = useLocation();
+  const [section, setSection] = useState<ChatSection>(ChatSection.MENU);
+  const [roomId, setRoomId] = useState("");
+  const openRoom = (id: string) => {
+    setRoomId(id);
+    setSection(ChatSection.ROOM);
+  };
 
   return (
-    <div style={pathname.includes("/blog") ? {bottom:"calc(var(--pagination-controls) + var(--padding))"} : {}} className={classes.container}>
+    <div
+      style={
+        pathname.includes("/blog")
+          ? { bottom: "calc(var(--pagination-controls) + var(--padding))" }
+          : {}
+      }
+      className={classes.container}
+    >
       <div className={classes.topTray}>
         {section}
         <div className={classes.icons}>
@@ -49,6 +66,8 @@ export default function Chat() {
         value={{
           section,
           setSection,
+          roomId,
+          openRoom,
         }}
       >
         <div className={classes.inner}>
@@ -56,7 +75,7 @@ export default function Chat() {
             {
               ["Conversations"]: <Conversations />,
               ["Rooms"]: <Rooms />,
-              ["Room"]: <Conversations />,
+              ["Room"]: <Room />,
               ["Room editor"]: <RoomEditor />,
               ["Menu"]: <Menu />,
             }[section]

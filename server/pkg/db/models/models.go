@@ -5,7 +5,8 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 /*
 	Private messages are kept in Inbox collection, and room messages are kept
 	in RoomMessage collection because then when querying for Rooms or Users
-	the messages aren't returned also, which is slower.
+	the messages aren't returned also, which is slower, also messages shouldn't
+	trigger changestream events so they shouldn't be stored inside the same collection.
 */
 
 type User struct {
@@ -22,7 +23,7 @@ type Inbox struct {
 }
 
 type PrivateMessage struct {
-	ID                primitive.ObjectID `bson:"_id,omitempty" json:"ID"` // omitempty to protect against zeroed _id insertion
+	ID                primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
 	Content           string             `bson:"content,maxlength=200" json:"content"`
 	Uid               primitive.ObjectID `bson:"uid" json:"uid"`
 	CreatedAt         primitive.DateTime `bson:"created_at" json:"created_at"`
@@ -45,7 +46,7 @@ type Session struct {
 }
 
 type RoomMessage struct {
-	ID                primitive.ObjectID `bson:"_id,omitempty" json:"ID"` // omitempty to protect against zeroed _id insertion
+	ID                primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
 	Content           string             `bson:"content,maxlength=200" json:"content"`
 	Uid               primitive.ObjectID `bson:"uid" json:"uid"`
 	CreatedAt         primitive.DateTime `bson:"created_at" json:"created_at"`
@@ -116,13 +117,14 @@ type PostComment struct {
 }
 
 type Room struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"ID"` // omitempty to protect against zeroed _id insertion
-	Name      string             `bson:"name,maxlength=24" json:"name"`
-	Author    primitive.ObjectID `bson:"author_id" json:"author_id"`
-	CreatedAt primitive.DateTime `bson:"created_at" json:"created_at"`
-	UpdatedAt primitive.DateTime `bson:"updated_at" json:"updated_at"`
-	ImgBlur   string             `bson:"img_blur" json:"img_blur,omitempty"`
-	Messages  []PrivateMessage   `bson:"-" json:"messages"`
+	ID           primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
+	Name         string             `bson:"name,maxlength=24" json:"name"`
+	Author       primitive.ObjectID `bson:"author_id" json:"author_id"`
+	CreatedAt    primitive.DateTime `bson:"created_at" json:"created_at"`
+	UpdatedAt    primitive.DateTime `bson:"updated_at" json:"updated_at"`
+	ImgBlur      string             `bson:"img_blur" json:"img_blur,omitempty"`
+	Messages     []PrivateMessage   `bson:"-" json:"messages"`
+	ImagePending bool               `bson:"image_pending" json:"image_pending"`
 }
 type RoomMessages struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty" json:"ID"`

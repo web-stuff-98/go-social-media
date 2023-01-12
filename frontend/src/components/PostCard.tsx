@@ -81,6 +81,9 @@ export default function PostCard({
                   ? { stroke: "1px" }
                   : { filter: "opacity(0.5)" }),
               }}
+              svgStyle={{
+                transform:"scale(1.166)",
+              }}
               Icon={FaChevronUp}
               type="button"
               onClick={() =>
@@ -117,6 +120,9 @@ export default function PostCard({
                 ...(post.my_vote && !post.my_vote.is_upvote
                   ? { stroke: "1px" }
                   : { filter: "opacity(0.5)" }),
+              }}
+              svgStyle={{
+                transform:"scale(1.166)"
               }}
               Icon={FaChevronDown}
               type="button"

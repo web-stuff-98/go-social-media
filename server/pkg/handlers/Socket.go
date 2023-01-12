@@ -37,6 +37,13 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 		var data map[string]interface{}
 		json.Unmarshal(p, &data)
 
+		defer func() {
+			r := recover()
+			if r != nil {
+				log.Println("Recovered from panic in WS reader loop : ", r)
+			}
+		}()
+
 		if data["event_type"] != nil {
 			if data["event_type"] == "OPEN_SUBSCRIPTION" {
 				// Authorization check for private subscriptions is done inside socketserver
@@ -106,8 +113,6 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 								"messages": msg,
 							},
 						}); err != nil {
-							log.Println("B ERR,", err)
-
 							err := conn.WriteJSON(map[string]string{
 								"TYPE": "RESPONSE_MESSAGE",
 								"DATA": `{"msg":"Internal error","err":true}`,
@@ -140,6 +145,82 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 										"TYPE": "PRIVATE_MESSAGE",
 										"DATA": string(data),
 									},
+								}
+							}
+						}
+					}
+				}
+			}
+			if data["event_type"] == "ROOM_MESSAGE" {
+				if uid == primitive.NilObjectID {
+					err := conn.WriteJSON(map[string]string{
+						"TYPE": "RESPONSE_MESSAGE",
+						"DATA": `{"msg":"Unauthorized","err":true}`,
+					})
+					if err != nil {
+						log.Println(err)
+					}
+				} else {
+					if data["content"] == nil {
+						err := conn.WriteJSON(map[string]string{
+							"TYPE": "RESPONSE_MESSAGE",
+							"DATA": `{"msg":"Bad request","err":true}`,
+						})
+						if err != nil {
+							log.Println(err)
+						}
+					} else {
+						roomId, err := primitive.ObjectIDFromHex(data["room_id"].(string))
+						if err != nil {
+							err := conn.WriteJSON(map[string]string{
+								"TYPE": "RESPONSE_MESSAGE",
+								"DATA": `{"msg":"Invalid ID","err":true}`,
+							})
+							if err != nil {
+								log.Println(err)
+							}
+						} else {
+							msg := &models.RoomMessage{
+								ID:                primitive.NewObjectID(),
+								Content:           data["content"].(string),
+								Uid:               uid,
+								CreatedAt:         primitive.NewDateTimeFromTime(time.Now()),
+								UpdatedAt:         primitive.NewDateTimeFromTime(time.Now()),
+								HasAttachment:     false,
+								AttachmentPending: false,
+								AttachmentType:    "",
+								AttachmentError:   false,
+							}
+							if _, err := colls.RoomMessagesCollection.UpdateByID(context.TODO(), roomId, bson.M{
+								"$push": bson.M{
+									"messages": msg,
+								},
+							}); err != nil {
+								err := conn.WriteJSON(map[string]string{
+									"TYPE": "RESPONSE_MESSAGE",
+									"DATA": `{"msg":"Internal error","err":true}`,
+								})
+								if err != nil {
+									log.Println(err)
+								}
+							} else {
+								data, err := json.Marshal(msg)
+								if err != nil {
+									err := conn.WriteJSON(map[string]string{
+										"TYPE": "RESPONSE_MESSAGE",
+										"DATA": `{"msg":"Internal error","err":true}`,
+									})
+									if err != nil {
+										log.Println(err)
+									}
+								} else {
+									socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+										Name: "room=" + roomId.Hex(),
+										Data: map[string]string{
+											"TYPE": "ROOM_MESSAGE",
+											"DATA": string(data),
+										},
+									}
 								}
 							}
 						}

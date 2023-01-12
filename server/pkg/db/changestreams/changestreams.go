@@ -46,6 +46,11 @@ func WatchCollections(DB *mongo.Database, ss *socketserver.SocketServer) {
 	go watchPostDeletes(DB, ss)
 	go watchPostUpdates(DB, ss)
 
+	go watchRoomInserts(DB, ss)
+	go watchRoomImageUpdates(DB, ss)
+	go watchRoomDeletes(DB, ss)
+	go watchRoomUpdates(DB, ss)
+
 	go watchRoomDeletes(DB, ss)
 }
 
@@ -146,6 +151,7 @@ func watchPostDeletes(db *mongo.Database, ss *socketserver.SocketServer) {
 	}
 }
 
+/* Watch for post image inserts instead of post inserts, because the image is required*/
 func watchPostImageInserts(db *mongo.Database, ss *socketserver.SocketServer) {
 	cs, err := db.Collection("post_images").Watch(context.Background(), mongo.Pipeline{insertPipeline})
 	if err != nil {
@@ -258,32 +264,6 @@ func watchPostUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
 	}
 }
 
-/*func watchPostInserts(db *mongo.Database, ss *socketserver.SocketServer) {
-	cs, err := db.Collection("posts").Watch(context.Background(), mongo.Pipeline{insertPipeline})
-	if err != nil {
-		log.Panicln("CS ERR : ", err.Error())
-	}
-	for cs.Next(context.Background()) {
-		var changeEv bson.M
-		err := cs.Decode(&changeEv)
-		if err != nil {
-			log.Fatal(err)
-		}
-		postId := changeEv["documentKey"].(bson.M)["_id"].(primitive.ObjectID)
-		log.Println("POST", postId, "WAS CREATED")
-		data, err := bson.MarshalExtJSON(changeEv["fullDocument"].(bson.M), true, true)
-		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-			Name: "post_feed",
-			Data: map[string]string{
-				"TYPE":   "CHANGE",
-				"METHOD": "INSERT",
-				"ENTITY": "POST",
-				"DATA":   string(data),
-			},
-		}
-	}
-}*/
-
 func watchRoomDeletes(db *mongo.Database, ss *socketserver.SocketServer) {
 	cs, err := db.Collection("rooms").Watch(context.Background(), mongo.Pipeline{deletePipeline})
 	if err != nil {
@@ -300,5 +280,108 @@ func watchRoomDeletes(db *mongo.Database, ss *socketserver.SocketServer) {
 		db.Collection("room_messages").DeleteOne(context.TODO(), bson.M{"_id": roomId})
 		ss.DestroySubscription <- "room=" + roomId.Hex()
 		ss.DestroySubscription <- "room_card=" + roomId.Hex()
+		ss.DestroySubscription <- "room_feed" + roomId.Hex()
+	}
+}
+
+func watchRoomImageUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
+	cs, err := db.Collection("room_images").Watch(context.Background(), mongo.Pipeline{updatePipeline})
+	if err != nil {
+		log.Panicln("CS ERR : ", err.Error())
+	}
+	for cs.Next(context.Background()) {
+		var changeEv bson.M
+		err := cs.Decode(&changeEv)
+		if err != nil {
+			log.Fatal(err)
+		}
+		roomId := changeEv["documentKey"].(bson.M)["_id"].(primitive.ObjectID)
+		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+			Name: "room_card=" + roomId.Hex(),
+			Data: map[string]string{
+				"TYPE":   "CHANGE",
+				"METHOD": "UPDATE_IMAGE",
+				"ENTITY": "ROOM",
+				"DATA":   `{"ID":"` + roomId.Hex() + `"}`,
+			},
+		}
+		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+			Name: "room=" + roomId.Hex(),
+			Data: map[string]string{
+				"TYPE":   "CHANGE",
+				"METHOD": "UPDATE_IMAGE",
+				"ENTITY": "ROOM",
+				"DATA":   `{"ID":"` + roomId.Hex() + `"}`,
+			},
+		}
+	}
+}
+
+func watchRoomUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
+	cs, err := db.Collection("rooms").Watch(context.Background(), mongo.Pipeline{updatePipeline}, options.ChangeStream().SetFullDocument("updateLookup"))
+	if err != nil {
+		log.Panicln("CS ERR : ", err.Error())
+	}
+	for cs.Next(context.Background()) {
+		var changeEv struct {
+			DocumentKey struct {
+				ID primitive.ObjectID `bson:"_id"`
+			} `bson:"documentKey"`
+			FullDocument models.Room `bson:"fullDocument"`
+		}
+		err := cs.Decode(&changeEv)
+		if err != nil {
+			log.Println("CS DECODE ERROR : ", err)
+			return
+		}
+		roomId := changeEv.DocumentKey.ID
+		room := &changeEv.FullDocument
+		data, err := json.Marshal(room)
+		if err != nil {
+			log.Println("CS JSON MARSHAL ERROR : ", err)
+			return
+		}
+		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+			Name: "room_card=" + roomId.Hex(),
+			Data: map[string]string{
+				"TYPE":   "CHANGE",
+				"METHOD": "UPDATE",
+				"ENTITY": "ROOM",
+				"DATA":   string(data),
+			},
+		}
+		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+			Name: "room=" + roomId.Hex(),
+			Data: map[string]string{
+				"TYPE":   "CHANGE",
+				"METHOD": "UPDATE",
+				"ENTITY": "ROOM",
+				"DATA":   string(data),
+			},
+		}
+	}
+}
+
+func watchRoomInserts(db *mongo.Database, ss *socketserver.SocketServer) {
+	cs, err := db.Collection("rooms").Watch(context.Background(), mongo.Pipeline{insertPipeline}, options.ChangeStream().SetFullDocument("updateLookup"))
+	if err != nil {
+		log.Panicln("CS ERR : ", err.Error())
+	}
+	for cs.Next(context.Background()) {
+		var changeEv bson.M
+		err := cs.Decode(&changeEv)
+		if err != nil {
+			log.Fatal(err)
+		}
+		data, err := bson.MarshalExtJSON(changeEv["fullDocument"].(bson.M), true, true)
+		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+			Name: "room_feed",
+			Data: map[string]string{
+				"TYPE":   "CHANGE",
+				"METHOD": "INSERT",
+				"ENTITY": "ROOM",
+				"DATA":   string(data),
+			},
+		}
 	}
 }

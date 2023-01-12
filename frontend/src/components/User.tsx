@@ -19,6 +19,7 @@ export default function User({
   reverse,
   light,
   additionalStuff,
+  small,
 }: {
   user?: IUser;
   uid: string;
@@ -27,6 +28,7 @@ export default function User({
   reverse?: boolean;
   light?: boolean;
   additionalStuff?: ReactElement[];
+  small?: boolean;
 }) {
   const { userEnteredView, cacheUserData, userLeftView } = useUsers();
   const { openUserdropdown } = useUserdropdown();
@@ -76,7 +78,9 @@ export default function User({
       {user && (
         <>
           {additionalStuff && (
-            <div className={classes.additionalStuff}>{additionalStuff.map((btn) => btn)}</div>
+            <div className={classes.additionalStuff}>
+              {additionalStuff.map((btn) => btn)}
+            </div>
           )}
           <span
             style={{
@@ -87,6 +91,14 @@ export default function User({
                 ? { cursor: "pointer" }
                 : {}),
               ...(light ? { border: "1px solid white" } : {}),
+              ...(small
+                ? {
+                    width: "1.866rem",
+                    height: "1.866rem",
+                    minWidth: "1.866rem",
+                    minHeight: "1.866rem",
+                  }
+                : {}),
             }}
             onClick={() => {
               if (onClick) onClick();
@@ -112,7 +124,15 @@ export default function User({
             className={classes.text}
           >
             <div
-              style={light ? { color: "white" } : {}}
+              style={{
+                ...(light ? { color: "white" } : {}),
+                ...(small
+                  ? {
+                      fontSize: "0.833rem",
+                      lineHeight:"0.7"
+                    }
+                  : {}),
+              }}
               className={classes.name}
             >
               {user.username}

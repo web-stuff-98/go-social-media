@@ -35,26 +35,11 @@ func (h handler) GetRoomPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pageSize := 20
-	//r.URL.Query().Get("mode")
-	r.URL.Query().Get("order")
-	sortOrder := "DESC"
-	//sortMode := "DATE"
-	//if r.URL.Query().Has("mode") {
-	//	sortMode = r.URL.Query().Get("mode")
-	//}
-	if r.URL.Query().Has("order") {
-		sortOrder = r.URL.Query().Get("order")
-	}
 
 	findOptions := options.Find()
 	findOptions.SetLimit(int64(pageSize))
 	findOptions.SetSkip(int64(pageSize) * (int64(pageNumber) - 1))
-	if sortOrder == "DESC" {
-		findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
-	}
-	if sortOrder == "ASC" {
-		findOptions.SetSort(bson.D{{Key: "created_at", Value: 1}})
-	}
+	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -66,7 +51,7 @@ func (h handler) GetRoomPage(w http.ResponseWriter, r *http.Request) {
 	}
 	defer cursor.Close(ctx)
 
-	var rooms []models.Post
+	var rooms []models.Room
 	if err = cursor.All(ctx, &rooms); err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
@@ -133,12 +118,13 @@ func (h handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var room = &models.Room{
-		ID:        primitive.NewObjectIDFromTimestamp(time.Now()),
-		Name:      roomInput.Name,
-		Author:    user.ID,
-		CreatedAt: primitive.NewDateTimeFromTime(time.Now()),
-		UpdatedAt: primitive.NewDateTimeFromTime(time.Now()),
-		ImgBlur:   "",
+		ID:           primitive.NewObjectIDFromTimestamp(time.Now()),
+		Name:         roomInput.Name,
+		Author:       user.ID,
+		CreatedAt:    primitive.NewDateTimeFromTime(time.Now()),
+		UpdatedAt:    primitive.NewDateTimeFromTime(time.Now()),
+		ImgBlur:      "",
+		ImagePending: true,
 	}
 
 	inserted, err := h.Collections.RoomCollection.InsertOne(r.Context(), room)
@@ -157,7 +143,9 @@ func (h handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseMessage(w, http.StatusCreated, "Room created")
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(inserted.InsertedID.(primitive.ObjectID).Hex())
 }
 
 func (h handler) GetRoom(w http.ResponseWriter, r *http.Request) {
@@ -462,7 +450,8 @@ func (h handler) UploadRoomImage(w http.ResponseWriter, r *http.Request) {
 
 	if h.Collections.RoomCollection.UpdateByID(r.Context(), room.ID, bson.M{
 		"$set": bson.M{
-			"img_blur": "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(blurBuf.Bytes()),
+			"img_blur":      "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(blurBuf.Bytes()),
+			"image_pending": false,
 		},
 	}); err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")

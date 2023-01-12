@@ -1,0 +1,39 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 16rem;
+
+  .messages {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    .message {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      padding: var(--padding-small) 0;
+
+      .content {
+        flex-grow: 1;
+        font-size: var(--font-xs);
+        padding: var(--padding);
+      }
+    }
+  }
+
+  .messageForm {
+    display: flex;
+    align-items: center;
+
+    input {
+      flex-grow: 1;
+    }
+    width: 100%;
+    box-sizing: border-box;
+    gap: 3px;
+  }
+}
