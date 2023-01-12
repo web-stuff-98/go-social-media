@@ -109,24 +109,24 @@ export default function Nav() {
           )}
         </div>
       )}
-        <div className={classes.dropdownsContainer}>
-          <Dropdown
-            index={getSortOrderFromParams() === "DESC" ? 0 : 1}
-            setIndex={setSortOrderInParams}
-            items={[
-              { name: "DESC", node: "Desc" },
-              { name: "ASC", node: "Asc" },
-            ]}
-          />
-          <Dropdown
-            index={getSortModeFromParams() === "DATE" ? 0 : 1}
-            setIndex={setSortModeInParams}
-            items={[
-              { name: "DATE", node: "Date" },
-              { name: "POPULARITY", node: "Popularity" },
-            ]}
-          />
-        </div>
+      <div className={classes.dropdownsContainer}>
+        <Dropdown
+          index={getSortOrderFromParams() === "DESC" ? 0 : 1}
+          setIndex={setSortOrderInParams}
+          items={[
+            { name: "DESC", node: "Desc" },
+            { name: "ASC", node: "Asc" },
+          ]}
+        />
+        <Dropdown
+          index={getSortModeFromParams() === "DATE" ? 0 : 1}
+          setIndex={setSortModeInParams}
+          items={[
+            { name: "DATE", node: "Date" },
+            { name: "POPULARITY", node: "Popularity" },
+          ]}
+        />
+      </div>
     </nav>
   );
 }

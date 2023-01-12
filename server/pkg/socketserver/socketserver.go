@@ -1,7 +1,6 @@
 package socketserver
 
 import (
-	"log"
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -9,6 +8,9 @@ import (
 )
 
 /*
+	This facilitiates connection registrations and subscriptions. The socket handler
+	file handles messages from the client.
+
 	Uid can always be left as primitive.NilObjectID, users are not required
 	to be authenticated to connect to the socket, join subscriptions or recieve
 	messages. Uid is stored with the connection so it's easy to identify users
@@ -69,7 +71,6 @@ func RunServer(socketServer *SocketServer) {
 			if connData.Conn != nil {
 				socketServer.Connections[connData.Conn] = connData.Uid
 			}
-			log.Println("Registration")
 		}
 	}()
 	/* ----- Websocket disconnect registration ----- */
@@ -90,7 +91,6 @@ func RunServer(socketServer *SocketServer) {
 					break
 				}
 			}
-			log.Println("UnRegistration")
 		}
 	}()
 	/* ----- Subscription connection registration (also check the authorization if subscription requires it) ----- */
@@ -138,7 +138,6 @@ func RunServer(socketServer *SocketServer) {
 					break
 				}
 			}
-			log.Println("Subscription data sent")
 		}
 	}()
 	/* ----- Destroy subscription (for when a post is deleted for example) ----- */

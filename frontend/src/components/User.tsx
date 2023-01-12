@@ -18,7 +18,7 @@ export default function User({
   date,
   reverse,
   light,
-  iconBtns,
+  additionalStuff,
 }: {
   user?: IUser;
   uid: string;
@@ -26,7 +26,7 @@ export default function User({
   date?: Date;
   reverse?: boolean;
   light?: boolean;
-  iconBtns?: ReactElement[];
+  additionalStuff?: ReactElement[];
 }) {
   const { userEnteredView, cacheUserData, userLeftView } = useUsers();
   const { openUserdropdown } = useUserdropdown();
@@ -75,8 +75,8 @@ export default function User({
     >
       {user && (
         <>
-          {iconBtns && (
-            <div className={classes.iconBtns}>{iconBtns.map((btn) => btn)}</div>
+          {additionalStuff && (
+            <div className={classes.additionalStuff}>{additionalStuff.map((btn) => btn)}</div>
           )}
           <span
             style={{

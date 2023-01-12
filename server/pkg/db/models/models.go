@@ -75,9 +75,9 @@ type Post struct {
 	Tags              []string           `bson:"tags" json:"tags"`
 	ImgBlur           string             `bson:"img_blur" json:"img_blur"`
 	Comments          []PostComment      `bson:"-" json:"comments"`
-	NegativeVoteCount int                `bson:"-" json:"vote_pos_count"` // The vote count is sent to the client (excluding the users own vote)
-	PositiveVoteCount int                `bson:"-" json:"vote_neg_count"` // The vote count is sent to the client (excluding the users own vote)
-	UsersVote         PostVote           `bson:"-" json:"my_vote"`        // The clients own vote is sent to the client
+	PositiveVoteCount int                `bson:"-" json:"vote_pos_count"` // The vote count is sent to the client (excluding the users own vote)
+	NegativeVoteCount int                `bson:"-" json:"vote_neg_count"` // The vote count is sent to the client (excluding the users own vote)
+	UsersVote         PostVote           `bson:"-" json:"my_vote"`        // The clients own vote is sent to the client... the client checks if uid of own vote is 0000000000000, to make sure that the client actually voted
 }
 
 type PostVotes struct {

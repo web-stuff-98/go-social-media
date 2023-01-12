@@ -68,39 +68,42 @@ export default function PostCard({
     return (
       <User
         light
-        iconBtns={[
-          <IconBtn
-            ariaLabel="Vote up"
-            name="Vote up"
-            style={{ color: "lime" }}
-            Icon={FaChevronUp}
-            type="button"
-            onClick={() =>
-              voteOnPost(post.ID, true).catch((e) => {
-                openModal("Message", {
-                  err: true,
-                  pen: false,
-                  msg: `${e}`,
-                });
-              })
-            }
-          />,
-          <IconBtn
-            ariaLabel="Vote down"
-            name="Vote down"
-            style={{ color: "red" }}
-            Icon={FaChevronDown}
-            type="button"
-            onClick={() =>
-              voteOnPost(post.ID, false).catch((e) => {
-                openModal("Message", {
-                  err: true,
-                  pen: false,
-                  msg: `${e}`,
-                });
-              })
-            }
-          />,
+        additionalStuff={[
+          <div className={classes.votesContainer}>
+            <IconBtn
+              ariaLabel="Vote up"
+              name="Vote up"
+              style={{ color: "lime" }}
+              Icon={FaChevronUp}
+              type="button"
+              onClick={() =>
+                voteOnPost(post.ID, true).catch((e) => {
+                  openModal("Message", {
+                    err: true,
+                    pen: false,
+                    msg: `${e}`,
+                  });
+                })
+              }
+            />
+            {post.vote_pos_count - post.vote_neg_count}
+            <IconBtn
+              ariaLabel="Vote down"
+              name="Vote down"
+              style={{ color: "red" }}
+              Icon={FaChevronDown}
+              type="button"
+              onClick={() =>
+                voteOnPost(post.ID, false).catch((e) => {
+                  openModal("Message", {
+                    err: true,
+                    pen: false,
+                    msg: `${e}`,
+                  });
+                })
+              }
+            />
+          </div>,
         ]}
         reverse={reverse}
         date={new Date(post.created_at || 0)}
@@ -199,15 +202,6 @@ export default function PostCard({
               }
             </div>
             <div ref={textContainerRef} className={classes.textTags}>
-              <h1>
-                POSVOTES :{post.vote_pos_count} | NEGVOTES :
-                {post.vote_neg_count} | OWNVOTE :
-                {post.my_vote
-                  ? post.my_vote?.is_upvote
-                    ? "UPVOTE"
-                    : "DOWNVOTE"
-                  : "NO VOTE"}
-              </h1>
               <h1>{post.title}</h1>
               <h3>{post.description}</h3>
               <div className={classes.tags}>

@@ -22,13 +22,6 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-/*
-	Uid can always be left as primitive.NilObjectID, users are not required
-	to be authenticated to connect to the socket, join subscriptions or recieve
-	messages. Uid is stored with the connection so it's easy to identify users
-	that are logged in.
-*/
-
 func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid primitive.ObjectID, colls db.Collections) {
 	for {
 		_, p, err := conn.ReadMessage()
@@ -39,8 +32,6 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 
 		var data map[string]interface{}
 		json.Unmarshal(p, &data)
-
-		log.Println(data)
 
 		if data["event_type"] != nil {
 			if data["event_type"] == "OPEN_SUBSCRIPTION" {
@@ -93,13 +84,11 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 						UpdatedAt:   primitive.NewDateTimeFromTime(time.Now()),
 						RecipientId: recipientId,
 					}
-					log.Println("Send message from " + uid.Hex() + " to " + recipientId.Hex())
 					if _, err := colls.InboxCollection.UpdateByID(context.TODO(), uid, bson.M{
 						"$addToSet": bson.M{
 							"messages_sent_to": recipientId,
 						},
 					}); err != nil {
-						log.Println("A ERR,", err)
 						err := conn.WriteJSON(map[string]string{
 							"TYPE": "RESPONSE_MESSAGE",
 							"DATA": `{"msg":"Internal error","err":true}`,
@@ -108,7 +97,6 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 							log.Println(err)
 						}
 					} else {
-						log.Println("Added sent messages")
 						if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, bson.M{
 							"$push": bson.M{
 								"messages": msg,
@@ -124,7 +112,6 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 								log.Println(err)
 							}
 						} else {
-							log.Println("Wrote message to recipient inbox")
 							data, err := json.Marshal(msg)
 							if err != nil {
 								err := conn.WriteJSON(map[string]string{
@@ -156,11 +143,6 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 				}
 			}
 		}
-
-		/*if err := conn.WriteMessage(msgType, p); err != nil {
-			log.Println(err)
-			return
-		}*/
 	}
 }
 

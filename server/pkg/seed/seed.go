@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
-	"log"
 	"math"
 	"math/rand"
 	"regexp"
@@ -95,9 +94,6 @@ func generatePost(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid prim
 	minWordsInDescription := 8
 	maxWordsInTitle := int(math.Max(float64(minWordsInTitle+1), float64(rand.Intn(20))))
 	maxWordsInDescription := int(math.Max(float64(minWordsInDescription+1), float64(rand.Intn(20))))
-
-	log.Println(maxWordsInTitle)
-	log.Println(maxWordsInDescription)
 
 	wordsInTitle := rand.Intn(maxWordsInTitle-minWordsInTitle) + minWordsInTitle
 	wordsInDescription := rand.Intn(maxWordsInDescription-minWordsInDescription) + minWordsInDescription

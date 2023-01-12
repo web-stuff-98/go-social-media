@@ -109,8 +109,8 @@ button {
   --border-radius-small: 0.075rem;
 
   /* Padding/Margin */
-  --padding: 4px;
-  --padding-medium: 3px;
+  --padding: 6px;
+  --padding-medium: 4px;
   --padding-small: 2px;
 
   /* Whitespace & Dimensions */

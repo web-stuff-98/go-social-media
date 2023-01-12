@@ -370,19 +370,22 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 			responseMessage(w, http.StatusInternalServerError, "Internal error")
 			return
 		}
-		var votes = &models.PostVotes{}
+		var votes models.PostVotes
 		if err := h.Collections.PostVoteCollection.FindOne(r.Context(), bson.M{"_id": post.ID}).Decode(&votes); err != nil {
 			if err != mongo.ErrNoDocuments {
 				responseMessage(w, http.StatusInternalServerError, "Internal error")
 				return
+			} else {
+				responseMessage(w, http.StatusNotFound, "Not found")
+				return
 			}
 		} else {
-			positiveVotes := 0
-			negativeVotes := 0
+			var positiveVotes int = 0
+			var negativeVotes int = 0
 			for _, v := range votes.Votes {
 				if user != nil {
 					if user.ID != v.Uid {
-						if v.IsUpvote {
+						if v.IsUpvote == true {
 							positiveVotes++
 						} else {
 							negativeVotes++
@@ -391,7 +394,7 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 						post.UsersVote = v
 					}
 				} else {
-					if v.IsUpvote {
+					if v.IsUpvote == true {
 						positiveVotes++
 					} else {
 						negativeVotes++
@@ -403,12 +406,6 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 		}
 		posts = append(posts, post)
 	}
-
-	//	var posts []models.Post
-	//	if err = cursor.All(ctx, &posts); err != nil {
-	//		responseMessage(w, http.StatusInternalServerError, "Internal error")
-	//		return
-	//}
 
 	count, err := h.Collections.PostCollection.EstimatedDocumentCount(r.Context())
 	if err != nil {
@@ -460,12 +457,12 @@ func (h handler) GetPost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		positiveVotes := 0
-		negativeVotes := 0
+		var positiveVotes int = 0
+		var negativeVotes int = 0
 		for _, v := range votes.Votes {
 			if user != nil {
 				if user.ID != v.Uid {
-					if v.IsUpvote {
+					if v.IsUpvote == true {
 						positiveVotes++
 					} else {
 						negativeVotes++
@@ -474,7 +471,7 @@ func (h handler) GetPost(w http.ResponseWriter, r *http.Request) {
 					post.UsersVote = v
 				}
 			} else {
-				if v.IsUpvote {
+				if v.IsUpvote == true {
 					positiveVotes++
 				} else {
 					negativeVotes++

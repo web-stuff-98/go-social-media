@@ -17,18 +17,20 @@ export default function Header() {
         />
         Go-Social-Media
       </div>
-      <button
-        aria-label="Toggle dark mode"
-        onClick={() => iDispatch({ darkMode: !iState.darkMode })}
-        className={classes.darkToggle}
-      >
-        {iState.darkMode ? "Dark mode" : "Light mode"}
-      </button>
-      {user && (
-        <div className={classes.userContainer}>
-          <User light reverse uid={user.ID} user={user} />
-        </div>
-      )}
+      <div className={classes.right}>
+        <button
+          aria-label="Toggle dark mode"
+          onClick={() => iDispatch({ darkMode: !iState.darkMode })}
+          className={classes.darkToggle}
+        >
+          {iState.darkMode ? "Dark mode" : "Light mode"}
+        </button>
+        {user && (
+          <div className={classes.userContainer}>
+            <User light reverse uid={user.ID} user={user} />
+          </div>
+        )}
+      </div>
     </header>
   );
 }

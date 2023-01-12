@@ -48,7 +48,7 @@ export default function Comment({
     <div className={classes.container}>
       <div className={classes.top}>
         <User
-          iconBtns={[
+          additionalStuff={[
             <IconBtn
               type="button"
               ariaLabel="Edit comment"
