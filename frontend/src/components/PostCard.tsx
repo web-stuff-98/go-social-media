@@ -13,7 +13,6 @@ import IconBtn from "./IconBtn";
 import { useModal } from "../context/ModalContext";
 import User from "./User";
 import { useUsers } from "../context/UsersContext";
-
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 

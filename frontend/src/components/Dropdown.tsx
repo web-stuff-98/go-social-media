@@ -77,7 +77,6 @@ export default function Dropdown({
             : {
                 ...(dropdownOpen && isStartItem
                   ? {
-                      borderBottom: "none",
                       borderBottomLeftRadius: "0",
                       borderBottomRightRadius: "0",
                     }

@@ -86,6 +86,7 @@ export default function Blog() {
                   { name: "ASC", node: "Asc" },
                 ]}
               />
+              <div className={classes.sortMode}>
               <Dropdown
                 light
                 index={getSortModeFromParams === "DATE" ? 0 : 1}
@@ -95,6 +96,7 @@ export default function Blog() {
                   { name: "POPULARITY", node: "Popularity" },
                 ]}
               />
+              </div>
             </div>
             <input
               name="Search input"

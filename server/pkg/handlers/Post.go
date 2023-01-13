@@ -405,7 +405,6 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 				tags = append(tags, v)
 			}
 		}
-		log.Println("TAG LENGTH ", len(tags))
 	}
 
 	findOptions := options.Find()

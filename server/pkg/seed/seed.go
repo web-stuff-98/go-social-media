@@ -19,19 +19,21 @@ import (
 
 	"github.com/lucsky/cuid"
 	"github.com/nfnt/resize"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"gopkg.in/loremipsum.v1"
 )
 
-func SeedDB(colls *db.Collections, numUsers int, numPosts int) (uids map[primitive.ObjectID]struct{}, pids map[primitive.ObjectID]struct{}, err error) {
+func SeedDB(colls *db.Collections, numUsers int, numPosts int, numRooms int) (uids map[primitive.ObjectID]struct{}, pids map[primitive.ObjectID]struct{}, rids map[primitive.ObjectID]struct{}, err error) {
 	uids = make(map[primitive.ObjectID]struct{})
 	pids = make(map[primitive.ObjectID]struct{})
+	rids = make(map[primitive.ObjectID]struct{})
 
 	// Generate users
 	for i := 0; i < numUsers; i++ {
 		uid, err := generateUser(i, colls)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 		uids[uid] = struct{}{}
 	}
@@ -43,12 +45,27 @@ func SeedDB(colls *db.Collections, numUsers int, numPosts int) (uids map[primiti
 		uid := randomKey(uids)
 		pid, err := generatePost(colls, lipsum, uid)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 		pids[pid] = struct{}{}
 	}
 
-	return uids, pids, err
+	// Generate rooms
+	for i := 0; i < numPosts; i++ {
+		uid := randomKey(uids)
+		rid, err := generateRoom(colls, lipsum, uid, i)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		rids[rid] = struct{}{}
+	}
+
+	// Generate post votes
+	for pid := range pids {
+		generatePostVotes(colls, pid, uids)
+	}
+
+	return uids, pids, rids, err
 }
 
 func generateUser(i int, colls *db.Collections) (uid primitive.ObjectID, err error) {
@@ -197,6 +214,92 @@ func generatePost(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid prim
 	if colls.PostVoteCollection.InsertOne(context.TODO(), models.PostVotes{
 		ID:    inserted.InsertedID.(primitive.ObjectID),
 		Votes: []models.PostVote{},
+	}); err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	return inserted.InsertedID.(primitive.ObjectID), nil
+}
+
+func generatePostVotes(colls *db.Collections, pid primitive.ObjectID, uids map[primitive.ObjectID]struct{}) error {
+	uidsArray := []primitive.ObjectID{}
+	for id := range uids {
+		uidsArray = append(uidsArray, id)
+	}
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(uidsArray), func(i, j int) { uidsArray[i], uidsArray[j] = uidsArray[j], uidsArray[i] })
+
+	positiveVotes := 0
+	negativeVotes := 0
+
+	votes := models.PostVotes{ID: pid, Votes: []models.PostVote{}}
+	for i := 0; i < len(uidsArray); i++ {
+		pos := rand.Float32() > 0.5
+		vote := &models.PostVote{
+			ID:       primitive.NewObjectID(),
+			Uid:      uidsArray[i],
+			IsUpvote: pos,
+		}
+		if pos {
+			positiveVotes++
+		} else {
+			negativeVotes++
+		}
+		votes.Votes = append(votes.Votes, *vote)
+	}
+
+	_, err := colls.PostVoteCollection.UpdateByID(context.TODO(), pid, bson.M{"$set": bson.M{"votes": votes.Votes}})
+	if err != nil {
+		return err
+	}
+
+	if colls.PostCollection.UpdateByID(context.TODO(), pid, bson.M{"$set": bson.M{"sort_vote_count": positiveVotes - negativeVotes}}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func generateRoom(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid primitive.ObjectID, i int) (primitive.ObjectID, error) {
+	name := "ExampleRoom" + string(rune(i))
+
+	r := helpers.DownloadRandomImage(false)
+	var img image.Image
+	var imgBlur image.Image
+	var decodeErr error
+	defer r.Close()
+	img, decodeErr = jpeg.Decode(r)
+	if decodeErr != nil {
+		return primitive.NilObjectID, decodeErr
+	}
+	img = resize.Resize(400, 0, img, resize.Lanczos2)
+	imgBlur = resize.Resize(10, 0, img, resize.Lanczos2)
+	buf := &bytes.Buffer{}
+	blurBuf := &bytes.Buffer{}
+	if err := jpeg.Encode(buf, img, nil); err != nil {
+		return primitive.NilObjectID, err
+	}
+	if err := jpeg.Encode(blurBuf, imgBlur, nil); err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	room := models.Room{
+		Name:         name,
+		Author:       uid,
+		ImagePending: false,
+		CreatedAt:    primitive.NewDateTimeFromTime(time.Now()),
+		UpdatedAt:    primitive.NewDateTimeFromTime(time.Now()),
+		ImgBlur:      "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(blurBuf.Bytes()),
+	}
+
+	inserted, err := colls.RoomCollection.InsertOne(context.TODO(), room)
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	if colls.RoomImageCollection.InsertOne(context.TODO(), models.RoomImage{
+		ID:     inserted.InsertedID.(primitive.ObjectID),
+		Binary: primitive.Binary{Data: buf.Bytes()},
 	}); err != nil {
 		return primitive.NilObjectID, err
 	}

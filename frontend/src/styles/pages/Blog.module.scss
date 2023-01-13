@@ -53,8 +53,11 @@
             display: flex;
             gap:2px;
             button {
-                padding: 2px 3px;
+                padding: 2px 4px;
                 font-size: var(--font-xs);
+            }
+            .sortMode {
+                min-width: 4.5rem;
             }
         }
       }

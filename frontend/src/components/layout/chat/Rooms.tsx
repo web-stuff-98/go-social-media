@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import type { ChangeEvent } from "react";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import { FaSearch } from "react-icons/fa";
@@ -9,6 +9,7 @@ import { instanceOfChangeData } from "../../../utils/DetermineSocketEvent";
 import IconBtn from "../../IconBtn";
 import ResMsg, { IResMsg } from "../../ResMsg";
 import RoomCard from "./RoomCard";
+import { debounce } from "lodash";
 
 export interface IRoomCard {
   ID: string;
@@ -33,8 +34,13 @@ export default function Rooms() {
 
   useEffect(() => {
     setResMsg({ msg: "", err: false, pen: true });
-    updatePage();
+    handleSearch();
   }, [pageNum, searchInput]);
+
+  const handleSearch = useMemo(
+    () => debounce(() => updatePage(), 300),
+    [searchInput, page]
+  );
 
   const updatePage = () => {
     getRoomPage(pageNum, searchInput)

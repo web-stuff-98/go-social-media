@@ -97,7 +97,7 @@ func RunServer(socketServer *SocketServer) {
 				}
 			}()
 			connData := <-socketServer.UnregisterConn
-			for conn, _ := range socketServer.Connections {
+			for conn := range socketServer.Connections {
 				if conn == connData.Conn {
 					delete(socketServer.Connections, conn)
 					for _, r := range socketServer.Subscriptions {

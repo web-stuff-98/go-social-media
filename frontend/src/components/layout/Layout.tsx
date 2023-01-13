@@ -3,7 +3,7 @@ import Nav from "./Nav";
 
 import type { CSSProperties } from "react";
 
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { useInterface } from "../../context/InterfaceContext";
 import { useMouse } from "../../context/MouseContext";
 import Header from "./Header";
@@ -11,7 +11,7 @@ import Chat from "./chat/Chat";
 
 export default function Layout() {
   const { state: iState } = useInterface();
-
+  const { pathname } = useLocation();
   const mousePos = useMouse();
 
   const getStyle = () => {
@@ -19,12 +19,20 @@ export default function Layout() {
       case "Feed": {
         const properties: CSSProperties = {
           width: "calc(100% - var(--horizontal-whitespace) * 2)",
-          background: "none",
+          minHeight: "max-content",
           margin: "auto",
           display: "flex",
-          position:"absolute",
-          height:"calc(100% - var(--header-height) - var(--nav-height) - var(--pagination-controls))",
-          left:"var(--horizontal-whitespace)",
+          position: "absolute",
+          background: pathname.includes("/blog") ? "none" : "var(--foreground)",
+          height: pathname.includes("/blog")
+            ? "calc(100% - var(--header-height) - var(--nav-height) - var(--pagination-controls))"
+            : "100%",
+          left: "var(--horizontal-whitespace)",
+          ...(!pathname.includes("/blog") ? {
+            borderLeft:"1px solid var(--base-pale)",
+            borderRight:"1px solid var(--base-pale)",
+            boxShadow:"0px 0px 6px rgba(0,0,0,0.1)"
+          } : {})
         };
         return properties;
       }
