@@ -52,7 +52,7 @@ export default function Blog() {
 
   useEffect(() => {
     openSubscription("post_feed");
-    getPageWithParams()
+    getPageWithParams();
     return () => {
       closeSubscription("post_feed");
     };
@@ -79,7 +79,7 @@ export default function Blog() {
             <div className={classes.dropdownsContainer}>
               <Dropdown
                 light
-                index={getSortOrderFromParams() === "DESC" ? 0 : 1}
+                index={getSortOrderFromParams === "DESC" ? 0 : 1}
                 setIndex={setSortOrderInParams}
                 items={[
                   { name: "DESC", node: "Desc" },
@@ -88,7 +88,7 @@ export default function Blog() {
               />
               <Dropdown
                 light
-                index={getSortModeFromParams() === "DATE" ? 0 : 1}
+                index={getSortModeFromParams === "DATE" ? 0 : 1}
                 setIndex={setSortModeInParams}
                 items={[
                   { name: "DATE", node: "Date" },
@@ -101,7 +101,7 @@ export default function Blog() {
               id="Search input"
               aria-label="Search"
               type="text"
-              value={getTermFromParams()}
+              value={getTermFromParams}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setTermInParams(e.target.value)
               }
@@ -110,7 +110,7 @@ export default function Blog() {
             <IconBtn name="Search" ariaLabel="Search" Icon={FaSearch} />
           </form>
           <div className={classes.searchTags}>
-            {getTagsFromParams().map((t) => (
+            {getTagsFromParams.map((t) => (
               <button onClick={() => addOrRemoveTagInParams(t)}>{t}</button>
             ))}
           </div>

@@ -37,11 +37,11 @@ const PostsContext = createContext<{
   updatePostCard: (data: Partial<IPostCard>) => void;
   removePostCard: (id: string) => void;
 
-  getSortOrderFromParams: () => SortOrder;
-  getSortModeFromParams: () => SortMode;
-  getTagsFromParams: () => string[];
+  getSortOrderFromParams: SortOrder;
+  getSortModeFromParams: SortMode;
+  getTagsFromParams: string[];
+  getTermFromParams: string;
   addOrRemoveTagInParams: (tag: string) => void;
-  getTermFromParams: () => string;
 
   nextPage: () => void;
   prevPage: () => void;
@@ -63,11 +63,11 @@ const PostsContext = createContext<{
   updatePostCard: () => {},
   removePostCard: () => {},
 
-  getSortOrderFromParams: () => "DESC",
-  getSortModeFromParams: () => "DATE",
-  getTagsFromParams: () => [],
+  getSortOrderFromParams: "DESC",
+  getSortModeFromParams: "DATE",
+  getTagsFromParams: [],
+  getTermFromParams: "",
   addOrRemoveTagInParams: () => {},
-  getTermFromParams: () => "",
 
   setSortOrderInParams: () => {},
   setSortModeInParams: () => {},
@@ -106,25 +106,25 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     navigate(`${outStr}`.replace("/blog/1&", "/blog/1?"));
   };
 
-  const getSortOrderFromParams = () => {
+  const getSortOrderFromParams = useMemo(() => {
     const order = searchParams.get("order");
     if (!order) return "DESC";
     return order.toUpperCase() as SortOrder;
-  };
-  const getSortModeFromParams = () => {
+  }, [searchParams]);
+  const getSortModeFromParams = useMemo(() => {
     const mode = searchParams.get("mode");
     if (!mode) return "DATE";
     return mode.toUpperCase() as SortMode;
-  };
-  const getTagsFromParams = () => {
+  }, [searchParams]);
+  const getTagsFromParams = useMemo(() => {
     const tags = searchParams.get("tags");
     if (!tags) return [];
     return tags.split(" ").filter((t) => t);
-  };
-  const getTermFromParams = () => {
+  }, [searchParams]);
+  const getTermFromParams = useMemo(() => {
     const term = searchParams.get("term");
     return term || "";
-  };
+  }, [searchParams]);
 
   const setSortOrderInParams = (index: number) => {
     addUpdateOrRemoveParamsAndNavigateToUrl(
@@ -141,11 +141,9 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const addOrRemoveTagInParams = (tag: string) => {
     addUpdateOrRemoveParamsAndNavigateToUrl(
       "tags",
-      (getTagsFromParams().includes(tag)
-        ? getTagsFromParams()
-            .filter((t) => t !== tag)
-            .sort()
-        : [...getTagsFromParams(), tag].sort()
+      (getTagsFromParams.includes(tag)
+        ? getTagsFromParams.filter((t) => t !== tag).sort()
+        : [...getTagsFromParams, tag].sort()
       ).join("+")
     );
   };
@@ -182,10 +180,10 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     setResMsg({ msg: "", err: false, pen: true });
     getPage(
       page ? Number(page) : 1,
-      getSortOrderFromParams(),
-      getSortModeFromParams(),
-      getTagsFromParams(),
-      getTermFromParams()
+      getSortOrderFromParams,
+      getSortModeFromParams,
+      getTagsFromParams,
+      getTermFromParams
     )
       .then((p: any) => {
         const posts = JSON.parse(p.posts) || [];
@@ -255,8 +253,8 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
           updatePostCardImage({ ID: data.DATA.ID });
         }
         if (data.METHOD === "INSERT") {
-          if (getSortModeFromParams() === "DATE") {
-            if (getSortOrderFromParams() === "DESC" && page === "1") {
+          if (getSortModeFromParams === "DATE") {
+            if (getSortOrderFromParams === "DESC" && page === "1") {
               /* If sorting by most recent posts and
               on the first page, add the post to the top
           of the feed */
@@ -267,10 +265,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
               if (posts[0]) {
                 removePostCard(posts[0].ID);
               }
-            } else if (
-              getSortOrderFromParams() === "ASC" &&
-              posts.length < 30
-            ) {
+            } else if (getSortOrderFromParams === "ASC" && posts.length < 30) {
               /* If sorting by oldest posts and there are less than 30
           posts (the maximum number of posts on a page) it means the
           user is on the last page, so add the post to the end of

@@ -242,7 +242,7 @@ export default function PostCard({
                     id={`Tag: ${t}`}
                     name={`Tag: ${t}`}
                     className={
-                      getTagsFromParams().includes(t)
+                      getTagsFromParams.includes(t)
                         ? classes.tagSelected
                         : classes.tag
                     }
