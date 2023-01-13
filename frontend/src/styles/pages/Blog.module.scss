@@ -22,11 +22,11 @@
         var(--header-height) - 2px
     );
     position: fixed;
-    padding: var(--padding);
+    padding: calc(var(--padding) + 1px) var(--padding);
     box-sizing: border-box;
     right: calc(1px + var(--horizontal-whitespace));
     .inner {
-      padding: var(--padding-small);
+      padding: var(--padding-medium);
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
