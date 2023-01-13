@@ -98,7 +98,7 @@ func main() {
 	changestreams.WatchCollections(DB, SocketServer)
 
 	DB.Drop(context.TODO())
-	go seed.SeedDB(&Collections, 20, 50)
+	go seed.SeedDB(&Collections, 30, 100, 50)
 
 	log.Println("API open on port", os.Getenv("PORT"))
 	log.Fatal(http.ListenAndServe(fmt.Sprint(":", os.Getenv("PORT")), c.Handler(router)))
