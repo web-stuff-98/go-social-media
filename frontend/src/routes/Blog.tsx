@@ -35,12 +35,12 @@ export default function Blog() {
   const {
     resMsg,
     getTagsFromParams,
-    getPageWithParams,
     getTermFromParams,
     posts,
     postsCount,
     nextPage,
     prevPage,
+    getPageWithParams,
     addOrRemoveTagInParams,
     setTermInParams,
     getSortModeFromParams,
@@ -49,20 +49,14 @@ export default function Blog() {
     setSortOrderInParams,
   } = usePosts();
   const { page } = useParams();
-  let [searchParams] = useSearchParams();
 
   useEffect(() => {
     openSubscription("post_feed");
+    getPageWithParams()
     return () => {
       closeSubscription("post_feed");
     };
   }, []);
-
-  useEffect(() => {
-    if (page) {
-      getPageWithParams(Number(page));
-    }
-  }, [page, searchParams]);
 
   return (
     <div className={classes.container}>

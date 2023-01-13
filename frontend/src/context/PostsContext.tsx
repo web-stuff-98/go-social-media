@@ -4,6 +4,7 @@ import {
   createContext,
   useEffect,
   useCallback,
+  useMemo,
 } from "react";
 import type { ReactNode } from "react";
 import { IPostCard } from "../routes/Blog";
@@ -22,6 +23,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
+import debounce from "lodash/debounce";
 
 const PostsContext = createContext<{
   posts: IPostCard[];
@@ -30,7 +32,7 @@ const PostsContext = createContext<{
   postEnteredView: (id: string) => void;
   postLeftView: (id: string) => void;
 
-  getPageWithParams: (pageNum: number) => void;
+  getPageWithParams: () => void;
 
   updatePostCard: (data: Partial<IPostCard>) => void;
   removePostCard: (id: string) => void;
@@ -104,25 +106,25 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     navigate(`${outStr}`.replace("/blog/1&", "/blog/1?"));
   };
 
-  const getSortOrderFromParams = useCallback(() => {
+  const getSortOrderFromParams = () => {
     const order = searchParams.get("order");
     if (!order) return "DESC";
     return order.toUpperCase() as SortOrder;
-  }, [searchParams]);
-  const getSortModeFromParams = useCallback(() => {
+  };
+  const getSortModeFromParams = () => {
     const mode = searchParams.get("mode");
     if (!mode) return "DATE";
     return mode.toUpperCase() as SortMode;
-  }, [searchParams]);
-  const getTagsFromParams = useCallback(() => {
+  };
+  const getTagsFromParams = () => {
     const tags = searchParams.get("tags");
     if (!tags) return [];
     return tags.split(" ").filter((t) => t);
-  }, [searchParams]);
-  const getTermFromParams = useCallback(() => {
+  };
+  const getTermFromParams = () => {
     const term = searchParams.get("term");
     return term || "";
-  }, [searchParams]);
+  };
 
   const setSortOrderInParams = (index: number) => {
     addUpdateOrRemoveParamsAndNavigateToUrl(
@@ -167,10 +169,19 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     closeSubscription(`post_card=${id}`);
   };
 
-  const getPageWithParams = (pageNum: number) => {
+  const handleSearch = useMemo(
+    () => debounce(() => getPageWithParams(), 600),
+    [searchParams, page]
+  );
+
+  useEffect(() => {
+    handleSearch();
+  }, [page, searchParams]);
+
+  const getPageWithParams = () => {
     setResMsg({ msg: "", err: false, pen: true });
     getPage(
-      pageNum,
+      page ? Number(page) : 1,
       getSortOrderFromParams(),
       getSortModeFromParams(),
       getTagsFromParams(),
@@ -269,11 +280,11 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
               createPostCard(data.DATA as IPostCard);
             } else {
               // Otherwise just refresh the page...
-              getPageWithParams(Number(page));
+              getPageWithParams();
             }
           } else {
             // Otherwise just refresh the page...
-            getPageWithParams(Number(page));
+            getPageWithParams();
           }
         }
       }
