@@ -278,6 +278,24 @@ func watchRoomDeletes(db *mongo.Database, ss *socketserver.SocketServer) {
 		roomId := changeEv["documentKey"].(bson.M)["_id"].(primitive.ObjectID)
 		db.Collection("room_images").DeleteOne(context.TODO(), bson.M{"_id": roomId})
 		db.Collection("room_messages").DeleteOne(context.TODO(), bson.M{"_id": roomId})
+		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+			Name: "room_card=" + roomId.Hex(),
+			Data: map[string]string{
+				"TYPE":   "CHANGE",
+				"METHOD": "DELETE",
+				"ENTITY": "ROOM",
+				"DATA":   `{"ID":"` + roomId.Hex() + `"}`,
+			},
+		}
+		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+			Name: "room=" + roomId.Hex(),
+			Data: map[string]string{
+				"TYPE":   "CHANGE",
+				"METHOD": "DELETE",
+				"ENTITY": "ROOM",
+				"DATA":   `{"ID":"` + roomId.Hex() + `"}`,
+			},
+		}
 		ss.DestroySubscription <- "room=" + roomId.Hex()
 		ss.DestroySubscription <- "room_card=" + roomId.Hex()
 		ss.DestroySubscription <- "room_feed" + roomId.Hex()

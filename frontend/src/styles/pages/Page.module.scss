@@ -6,6 +6,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
+  min-height: max-content;
 
   .imageTitleContainer {
     width: 100%;
@@ -14,6 +15,16 @@
     position: relative;
     background-size: cover;
     background-position: center;
+
+    .votesContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color:white;
+      font-weight: 600;
+      line-height: 0.75;
+    }
 
     .image {
       width: 100%;
@@ -29,10 +40,10 @@
       width: 100%;
       height: 100%;
       display: flex;
-      flex-direction: column;
-      align-items: space-between;
-      justify-content: flex-end;
-      padding: var(--padding);
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: calc(2 * var(--padding));
       box-sizing: border-box;
       filter: drop-shadow(0px 2px 2px rgba(0, 0, 0, 0.66));
 
@@ -59,21 +70,28 @@
   }
 
   .html {
-    padding: var(--padding);
-    background: var(--foreground);
+    padding: calc(2 * var(--padding));
     width: 100%;
     box-sizing: border-box;
     * {
-        margin: 0;
+      margin: 0;
     }
-    ul, ol {
-        margin-bottom: 1rem;
+    ul,
+    ol {
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      font-size: 1.166rem;
+    }
+    h3 {
+      font-size: 1.075rem;
     }
   }
 
   .comments {
     box-sizing: border-box;
-    padding: var(--padding);
+    padding: calc(2 * var(--padding));
     width: 100%;
   }
 }

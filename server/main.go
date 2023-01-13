@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,6 +11,9 @@ import (
 	"github.com/web-stuff-98/go-social-media/pkg/db/changestreams"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -27,6 +31,19 @@ func main() {
 	}
 	h := handlers.New(DB, Collections, SocketServer)
 	router := mux.NewRouter()
+
+	Collections.PostCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys: bson.M{
+			"title": "text",
+		},
+		Options: options.Index().SetName("title_text"),
+	})
+	Collections.RoomCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys: bson.M{
+			"name": "text",
+		},
+		Options: options.Index().SetName("name_text"),
+	})
 
 	var origin string
 	if os.Getenv("PRODUCTION") == "true" {
@@ -80,7 +97,7 @@ func main() {
 	changestreams.WatchCollections(DB, SocketServer)
 
 	//DB.Drop(context.TODO())
-	//go seed.SeedDB(&Collections, 3, 5)
+	//go seed.SeedDB(&Collections, 20, 50)
 
 	log.Println("API open on port", os.Getenv("PORT"))
 	log.Fatal(http.ListenAndServe(fmt.Sprint(":", os.Getenv("PORT")), c.Handler(router)))

@@ -1,6 +1,6 @@
 .container {
   position: fixed;
-  left: calc(var(--padding-medium) + calc(100% - var(--horizontal-whitespace)));
+  right: calc(var(--padding-medium) + var(--horizontal-whitespace));
   bottom: var(--padding-medium);
   border: 1px solid var(--base-medium);
   background: var(--foreground);

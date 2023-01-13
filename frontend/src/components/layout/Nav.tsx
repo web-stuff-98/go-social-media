@@ -6,6 +6,7 @@ import { useInterface } from "../../context/InterfaceContext";
 import { MdMenu } from "react-icons/md";
 import Dropdown from "../Dropdown";
 import usePosts from "../../context/PostsContext";
+import User from "../User";
 
 export default function Nav() {
   const { user, logout } = useAuth();
@@ -23,8 +24,8 @@ export default function Nav() {
 
   return (
     <nav
-      style={
-        isMobile
+      style={{
+        ...(isMobile
           ? {
               justifyContent: "flex-end",
               alignItems: "center",
@@ -37,8 +38,8 @@ export default function Nav() {
                   }
                 : {}),
             }
-          : {}
-      }
+          : {}),
+      }}
     >
       {isMobile && (
         <button
@@ -105,24 +106,7 @@ export default function Nav() {
           )}
         </div>
       )}
-      <div className={classes.dropdownsContainer}>
-        <Dropdown
-          index={getSortOrderFromParams() === "DESC" ? 0 : 1}
-          setIndex={setSortOrderInParams}
-          items={[
-            { name: "DESC", node: "Desc" },
-            { name: "ASC", node: "Asc" },
-          ]}
-        />
-        <Dropdown
-          index={getSortModeFromParams() === "DATE" ? 0 : 1}
-          setIndex={setSortModeInParams}
-          items={[
-            { name: "DATE", node: "Date" },
-            { name: "POPULARITY", node: "Popularity" },
-          ]}
-        />
-      </div>
+      {user && <User reverse light small uid={user.ID} user={user}/>}
     </nav>
   );
 }

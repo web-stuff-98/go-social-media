@@ -37,12 +37,16 @@ const PostsContext = createContext<{
 
   getSortOrderFromParams: () => SortOrder;
   getSortModeFromParams: () => SortMode;
+  getTagsFromParams: () => string[];
+  addOrRemoveTagInParams: (tag: string) => void;
+  getTermFromParams: () => string;
 
   nextPage: () => void;
   prevPage: () => void;
 
   setSortOrderInParams: (to: number) => void;
   setSortModeInParams: (to: number) => void;
+  setTermInParams: (to: string) => void;
 
   resMsg: IResMsg;
 }>({
@@ -59,9 +63,13 @@ const PostsContext = createContext<{
 
   getSortOrderFromParams: () => "DESC",
   getSortModeFromParams: () => "DATE",
+  getTagsFromParams: () => [],
+  addOrRemoveTagInParams: () => {},
+  getTermFromParams: () => "",
 
   setSortOrderInParams: () => {},
   setSortModeInParams: () => {},
+  setTermInParams: () => {},
 
   nextPage: () => {},
   prevPage: () => {},
@@ -106,6 +114,16 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     if (!mode) return "DATE";
     return mode.toUpperCase() as SortMode;
   }, [searchParams]);
+  const getTagsFromParams = useCallback(() => {
+    const tags = searchParams.get("tags");
+    if (!tags) return [];
+    return tags.split(" ").filter((t) => t);
+  }, [searchParams]);
+  const getTermFromParams = useCallback(() => {
+    const term = searchParams.get("term");
+    return term || "";
+  }, [searchParams]);
+
   const setSortOrderInParams = (index: number) => {
     addUpdateOrRemoveParamsAndNavigateToUrl(
       "order",
@@ -117,6 +135,20 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
       "mode",
       index === 0 ? "DATE" : "POPULARITY"
     );
+  };
+  const addOrRemoveTagInParams = (tag: string) => {
+    addUpdateOrRemoveParamsAndNavigateToUrl(
+      "tags",
+      (getTagsFromParams().includes(tag)
+        ? getTagsFromParams()
+            .filter((t) => t !== tag)
+            .sort()
+        : [...getTagsFromParams(), tag].sort()
+      ).join("+")
+    );
+  };
+  const setTermInParams = (term: string) => {
+    addUpdateOrRemoveParamsAndNavigateToUrl("term", term.replaceAll(" ", "+"));
   };
 
   const [posts, setPosts] = useState<IPostCard[]>([]);
@@ -136,24 +168,26 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getPageWithParams = (pageNum: number) => {
-    getPage(pageNum, getSortOrderFromParams(), getSortModeFromParams())
+    setResMsg({ msg: "", err: false, pen: true });
+    getPage(
+      pageNum,
+      getSortOrderFromParams(),
+      getSortModeFromParams(),
+      getTagsFromParams(),
+      getTermFromParams()
+    )
       .then((p: any) => {
-        setResMsg({ msg: "", err: false, pen: true });
+        const posts = JSON.parse(p.posts) || [];
         setPosts(
-          p.posts
-            ? JSON.parse(p.posts).map((p: IPostCard) => ({
-                ...p,
-                img_url: `${baseURL}/api/posts/${p.ID}/image?v=1`,
-                my_vote:
-                  p.my_vote?.uid === "000000000000000000000000"
-                    ? null
-                    : p.my_vote,
-              }))
-            : []
+          posts.map((p: IPostCard) => ({
+            ...p,
+            img_url: `${baseURL}/api/posts/${p.ID}/image?v=1`,
+            my_vote:
+              p.my_vote?.uid === "000000000000000000000000" ? null : p.my_vote,
+          }))
         );
         setPostsCount(p.count);
-        if (p.posts)
-          p?.posts.forEach((p: IPostCard) => cacheUserData(p.author_id));
+        posts.forEach((p: IPostCard) => cacheUserData(p.author_id));
         setResMsg({ msg: "", err: false, pen: false });
       })
       .catch((e) => {
@@ -191,8 +225,8 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const createPostCard = (data: IPostCard, addToStart?: boolean) => {
-    if (addToStart) setPosts((o) => [data, ...o].slice(0, 20));
-    else setPosts((o) => [...o, data].slice(0, 20));
+    if (addToStart) setPosts((o) => [data, ...o].slice(0, 30));
+    else setPosts((o) => [...o, data].slice(0, 30));
   };
 
   const handleMessage = useCallback((e: MessageEvent) => {
@@ -224,9 +258,9 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
               }
             } else if (
               getSortOrderFromParams() === "ASC" &&
-              posts.length < 20
+              posts.length < 30
             ) {
-              /* If sorting by oldest posts and there are less than 20
+              /* If sorting by oldest posts and there are less than 30
           posts (the maximum number of posts on a page) it means the
           user is on the last page, so add the post to the end of
           the list */
@@ -262,7 +296,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const nextPage = () =>
     navigate(
       "/blog/" +
-        Math.min(Number(page) + 1, Math.ceil(postsCount / 20)) +
+        Math.min(Number(page) + 1, Math.ceil(postsCount / 30)) +
         queryString
     );
 
@@ -288,11 +322,15 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
         removePostCard,
         setSortModeInParams,
         setSortOrderInParams,
+        setTermInParams,
+        getTagsFromParams,
         getSortOrderFromParams,
         getSortModeFromParams,
+        getTermFromParams,
         nextPage,
         prevPage,
         resMsg,
+        addOrRemoveTagInParams,
       }}
     >
       {children}

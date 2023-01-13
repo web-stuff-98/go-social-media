@@ -61,5 +61,8 @@
   .searchContainer {
     display: flex;
     gap: 3px;
+    input {
+      width: 100%;
+    }
   }
 }

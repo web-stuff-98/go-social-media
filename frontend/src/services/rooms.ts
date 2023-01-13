@@ -33,8 +33,8 @@ const deleteRoom = (id: string) =>
     method: "DELETE",
   });
 
-const getRoomPage = (page: number) =>
-  makeRequest(`/api/rooms/page/${page}`, {
+const getRoomPage = (page: number, term: string) =>
+  makeRequest(`/api/rooms/page/${page}${term ? `?term=${term.replaceAll(" ", "+")}` : ""}`, {
     withCredentials: true,
   });
 

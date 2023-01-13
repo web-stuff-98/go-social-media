@@ -28,6 +28,12 @@ import (
 )
 
 func (h handler) GetRoomPage(w http.ResponseWriter, r *http.Request) {
+	_, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	if err != nil {
+		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
 	pageNumberString := mux.Vars(r)["page"]
 	pageNumber, err := strconv.Atoi(pageNumberString)
 	if err != nil {
@@ -41,10 +47,22 @@ func (h handler) GetRoomPage(w http.ResponseWriter, r *http.Request) {
 	findOptions.SetSkip(int64(pageSize) * (int64(pageNumber) - 1))
 	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
 
+	filter := bson.M{}
+	if r.URL.Query().Has("term") {
+		if r.URL.Query().Get("term") != " " {
+			filter = bson.M{
+				"$text": bson.M{
+					"$search":        r.URL.Query().Get("term"),
+					"$caseSensitive": false,
+				},
+			}
+		}
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cursor, err := h.Collections.RoomCollection.Find(ctx, bson.M{}, findOptions)
+	cursor, err := h.Collections.RoomCollection.Find(ctx, filter, findOptions)
 	if err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return

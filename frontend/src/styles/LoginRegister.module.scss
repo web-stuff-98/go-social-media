@@ -4,10 +4,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  
+
   gap: var(--padding);
   padding: var(--padding);
   width: calc(100% - var(--padding) * 2);
+
+  input {
+    box-sizing: border-box;
+    width: 100%;
+  }
 
   * {
     text-align: center;

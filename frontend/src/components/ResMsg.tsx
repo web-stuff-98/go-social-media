@@ -8,15 +8,21 @@ export interface IResMsg {
   pen: boolean;
 }
 
-export default function ResMsg({ resMsg }: { resMsg: IResMsg }) {
+export default function ResMsg({
+  resMsg,
+  large
+}: {
+  resMsg: IResMsg;
+  large?: boolean;
+}) {
   return (
     <>
       {(resMsg.msg || resMsg.pen) && (
         <div
-        style={resMsg.pen ? {paddingTop:"var(--padding)"} : {}}
+          style={resMsg.pen ? { paddingTop: "var(--padding)" } : {}}
           className={resMsg.err ? formClasses.resMsgErr : formClasses.resMsg}
         >
-          {resMsg.pen && <ImSpinner8 className={formClasses.loadingSpinner} />}
+          {resMsg.pen && <ImSpinner8 style={large ? { width: "2rem", height:"2rem"} : {}} className={formClasses.loadingSpinner} />}
           {resMsg.msg}
         </div>
       )}

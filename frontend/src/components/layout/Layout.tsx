@@ -19,17 +19,12 @@ export default function Layout() {
       case "Feed": {
         const properties: CSSProperties = {
           width: "calc(100% - var(--horizontal-whitespace) * 2)",
-          background: iState.isMobile ? "none" : "var(--foreground)",
-          minHeight: "max-content",
+          background: "none",
           margin: "auto",
           display: "flex",
-          ...(iState.isMobile
-            ? {}
-            : {
-                borderLeft: "1px solid var(--base-pale)",
-                borderRight: "1px solid var(--base-pale)",
-                boxShadow: "0px 0px 3px rgba(0,0,0,0.166)",
-              }),
+          position:"absolute",
+          height:"calc(100% - var(--header-height) - var(--nav-height) - var(--pagination-controls))",
+          left:"var(--horizontal-whitespace)",
         };
         return properties;
       }

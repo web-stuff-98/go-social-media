@@ -1,7 +1,7 @@
 import classes from "../styles/pages/Page.module.scss";
 import { IPostCard } from "./Blog";
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { getPost, submitComment } from "../services/posts";
+import { getPost, submitComment, voteOnPost } from "../services/posts";
 import { useNavigate, useParams } from "react-router-dom";
 import ResMsg, { IResMsg } from "../components/ResMsg";
 import useSocket from "../context/SocketContext";
@@ -14,6 +14,12 @@ import { CommentForm } from "../components/comments/CommentForm";
 import { IComment } from "../components/comments/Comment";
 import Comments from "../components/comments/Comments";
 import { useUsers } from "../context/UsersContext";
+import User from "../components/User";
+
+import { FaChevronUp, FaChevronDown } from "react-icons/fa";
+import IconBtn from "../components/IconBtn";
+import { useModal } from "../context/ModalContext";
+import { useAuth } from "../context/AuthContext";
 
 export interface IPost extends IPostCard {
   body: string;
@@ -22,8 +28,10 @@ export interface IPost extends IPostCard {
 export default function Page() {
   const { openSubscription, closeSubscription, socket } = useSocket();
   const { slug } = useParams();
-  const { cacheUserData } = useUsers();
+  const { openModal } = useModal();
+  const { cacheUserData, getUserData } = useUsers();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [resMsg, setResMsg] = useState<IResMsg>({
     msg: "",
@@ -59,6 +67,7 @@ export default function Page() {
         });
         setComments(p.comments || []);
         setResMsg({ msg: "", err: false, pen: false });
+        cacheUserData(p.author_id);
         setImgURL(`${baseURL}/api/posts/${p.ID}/image?v=1`);
         openSubscription(`post_page=${p.ID}`);
       })
@@ -144,6 +153,99 @@ export default function Page() {
                 <h1>{post.title}</h1>
                 <h2>{post.description}</h2>
               </div>
+              <User
+              reverse
+                light
+                additionalStuff={[
+                  <div className={classes.votesContainer}>
+                    <IconBtn
+                      ariaLabel="Vote up"
+                      name="Vote up"
+                      style={{
+                        color: "lime",
+                        ...(post.my_vote && post.my_vote.is_upvote
+                          ? { stroke: "1px" }
+                          : { filter: "opacity(0.5)" }),
+                      }}
+                      svgStyle={{
+                        transform: "scale(1.166)",
+                      }}
+                      Icon={FaChevronUp}
+                      type="button"
+                      onClick={() =>
+                        voteOnPost(post.ID, true)
+                          .catch((e) => {
+                            openModal("Message", {
+                              err: true,
+                              pen: false,
+                              msg: `${e}`,
+                            });
+                          })
+                          .then(() => {
+                            setPost(
+                              (o) =>
+                                ({
+                                  ...o,
+                                  my_vote: post.my_vote
+                                    ? null
+                                    : {
+                                        uid: user?.ID as string,
+                                        is_upvote: true,
+                                      },
+                                } as IPost)
+                            );
+                          })
+                      }
+                    />
+                    {post.vote_pos_count +
+                      (post.my_vote ? (post.my_vote.is_upvote ? 1 : 0) : 0) -
+                      (post.vote_neg_count +
+                        (post.my_vote ? (post.my_vote.is_upvote ? 0 : 1) : 0))}
+                    <IconBtn
+                      ariaLabel="Vote down"
+                      name="Vote down"
+                      style={{
+                        color: "red",
+                        ...(post.my_vote && !post.my_vote.is_upvote
+                          ? { stroke: "1px" }
+                          : { filter: "opacity(0.5)" }),
+                      }}
+                      svgStyle={{
+                        transform: "scale(1.166)",
+                      }}
+                      Icon={FaChevronDown}
+                      type="button"
+                      onClick={() =>
+                        voteOnPost(post.ID, false)
+                          .catch((e) => {
+                            openModal("Message", {
+                              err: true,
+                              pen: false,
+                              msg: `${e}`,
+                            });
+                          })
+                          .then(() => {
+                            setPost(
+                              (o) =>
+                                ({
+                                  ...o,
+                                  my_vote: post.my_vote
+                                    ? null
+                                    : {
+                                        uid: user?.ID as string,
+                                        is_upvote: false,
+                                      },
+                                } as IPost)
+                            );
+                          })
+                      }
+                    />
+                  </div>,
+                ]}
+                date={new Date(post.created_at || 0)}
+                uid={post.author_id}
+                user={getUserData(post.author_id)}
+              />
             </div>
           </div>
           <div

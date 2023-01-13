@@ -4,6 +4,7 @@
   align-items: center;
   justify-content: center;
   width: 16rem;
+  gap:var(--padding-medium);
 
   .messages {
     display: flex;
@@ -11,6 +12,17 @@
     align-items: center;
     justify-content: flex-start;
     width: 100%;
+    padding: 0 var(--padding-small);
+    border: 1px solid var(--base-medium);
+    box-sizing: border-box;
+    border-radius: var(--border-radius-medium);
+
+    p {
+        text-align: center;
+        margin: auto;
+        padding: var(--padding);
+    }
+
     .message {
       display: flex;
       align-items: center;

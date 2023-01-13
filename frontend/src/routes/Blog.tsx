@@ -1,6 +1,10 @@
 import { useEffect } from "react";
+import { ChangeEvent } from "react";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import { FaSearch } from "react-icons/fa";
 import { useParams, useSearchParams } from "react-router-dom";
+import Dropdown from "../components/Dropdown";
+import IconBtn from "../components/IconBtn";
 import PostCard from "../components/PostCard";
 import ResMsg from "../components/ResMsg";
 import usePosts from "../context/PostsContext";
@@ -28,8 +32,22 @@ export interface IPostCard {
 
 export default function Blog() {
   const { openSubscription, closeSubscription } = useSocket();
-  const { resMsg, getPageWithParams, posts, postsCount, nextPage, prevPage } =
-    usePosts();
+  const {
+    resMsg,
+    getTagsFromParams,
+    getPageWithParams,
+    getTermFromParams,
+    posts,
+    postsCount,
+    nextPage,
+    prevPage,
+    addOrRemoveTagInParams,
+    setTermInParams,
+    getSortModeFromParams,
+    getSortOrderFromParams,
+    setSortModeInParams,
+    setSortOrderInParams,
+  } = usePosts();
   const { page } = useParams();
   let [searchParams] = useSearchParams();
 
@@ -49,18 +67,68 @@ export default function Blog() {
   return (
     <div className={classes.container}>
       <div className={classes.feed}>
-        {posts.map((p, i) => (
-          <PostCard reverse={!Boolean(i % 2)} key={p.ID} post={p} />
-        ))}
-        <ResMsg resMsg={resMsg} />
+        {!resMsg.pen && (
+          <>
+            {posts.map((p, i) => (
+              <PostCard reverse={false} key={p.ID} post={p} />
+            ))}
+            <div className={classes.endFix} />
+          </>
+        )}
+        <div style={{ margin: "auto" }}>
+          <ResMsg large resMsg={resMsg} />
+        </div>
       </div>
+      <aside>
+        <div className={classes.inner}>
+          <form className={classes.searchForm}>
+            <div className={classes.dropdownsContainer}>
+              <Dropdown
+                light
+                index={getSortOrderFromParams() === "DESC" ? 0 : 1}
+                setIndex={setSortOrderInParams}
+                items={[
+                  { name: "DESC", node: "Desc" },
+                  { name: "ASC", node: "Asc" },
+                ]}
+              />
+              <Dropdown
+                light
+                index={getSortModeFromParams() === "DATE" ? 0 : 1}
+                setIndex={setSortModeInParams}
+                items={[
+                  { name: "DATE", node: "Date" },
+                  { name: "POPULARITY", node: "Popularity" },
+                ]}
+              />
+            </div>
+            <input
+              name="Search input"
+              id="Search input"
+              aria-label="Search"
+              type="text"
+              value={getTermFromParams()}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setTermInParams(e.target.value)
+              }
+              required
+            />
+            <IconBtn name="Search" ariaLabel="Search" Icon={FaSearch} />
+          </form>
+          <div className={classes.searchTags}>
+            {getTagsFromParams().map((t) => (
+              <button onClick={() => addOrRemoveTagInParams(t)}>{t}</button>
+            ))}
+          </div>
+        </div>
+      </aside>
       <div className={classes.paginationControls}>
         <button onClick={() => prevPage()}>
           <BsChevronLeft />
         </button>
         <div className={classes.text}>
           <span aria-label="Page number">
-            {page}/{Math.ceil(postsCount / 20)}
+            {page}/{Math.ceil(postsCount / 30)}
           </span>
           <span aria-label="Number of posts">
             {posts?.length}/{postsCount}

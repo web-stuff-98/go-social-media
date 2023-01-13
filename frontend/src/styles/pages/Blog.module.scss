@@ -1,55 +1,116 @@
 .container {
-    width: 100%;
-    height: 100%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+
+  .feed {
     display: flex;
-    flex-direction: row;
-    flex-grow: 1;
-    position: relative;
-
-    .feed {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        padding-bottom: var(--pagination-controls);
+    flex-direction: column;
+    width: 70%;
+    justify-content: flex-start;
+    .endFix {
+        min-height: calc(2px + var(--pagination-controls));
     }
+  }
 
-    .paginationControls {
+  aside {
+    width: calc(0.3 * calc(100% - var(--horizontal-whitespace) * 2));
+    height: calc(
+      100vh - var(--pagination-controls) - var(--nav-height) -
+        var(--header-height) - 2px
+    );
+    position: fixed;
+    padding: var(--padding);
+    box-sizing: border-box;
+    right: calc(1px + var(--horizontal-whitespace));
+    .inner {
+      padding: var(--padding-small);
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2);
+      background: var(--foreground);
+      border: 1px solid var(--base-light);
+      border-radius: var(--border-radius);
+      width: 100%;
+      height: 100%;
+      gap:var(--padding-medium);
+
+      .searchForm {
         width: 100%;
-        height: var(--pagination-controls);
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        z-index: 99;
-        background: var(--foreground);
-        border-top: 1px solid var(--base-light);
+        display: flex;
+        gap: 2px;
+        align-items: center;
+        input {
+          flex-grow: 1;
+        }
+        svg {
+            padding: 0 3px;
+        }
+        .dropdownsContainer {
+            display: flex;
+            gap:2px;
+            button {
+                padding: 2px 3px;
+                font-size: var(--font-xs);
+            }
+        }
+      }
+      .searchTags {
         display: flex;
         align-items: center;
         justify-content: center;
-
-        .text {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 0.25rem;
-
-            span {
-                font-size: var(--font-lg);
-            }
-            span:last-of-type {
-                font-size: var(--font-md);
-            }
-        }
-
+        flex-wrap: wrap;
+        gap:var(--padding-small);
         button {
-            background: none;
-            padding: 0;
-            margin: 0;
-            border: none;
-            svg {
-                width: 2.5rem;
-                height: 2.5rem;
-            }
+          padding: 0px 4px;
+            font-size: var(--font-xs);
+            background: var(--tag-selected);
+            border: 1px solid var(--text-color);
         }
+      }
     }
+  }
+
+  .paginationControls {
+    width: 100%;
+    height: var(--pagination-controls);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 99;
+    background: var(--foreground);
+    border-top: 1px solid var(--base-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .text {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.25rem;
+
+      span {
+        font-size: var(--font-lg);
+      }
+      span:last-of-type {
+        font-size: var(--font-md);
+      }
+    }
+
+    button {
+      background: none;
+      padding: 0;
+      margin: 0;
+      border: none;
+      svg {
+        width: 2.5rem;
+        height: 2.5rem;
+      }
+    }
+  }
 }

@@ -164,16 +164,17 @@ func generatePost(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid prim
 	}) + "-" + cuid.Slug()
 
 	post := models.Post{
-		Title:        title,
-		Description:  description,
-		Body:         body,
-		Tags:         tags,
-		Author:       uid,
-		ImagePending: false,
-		Slug:         slug,
-		CreatedAt:    primitive.NewDateTimeFromTime(time.Now()),
-		UpdatedAt:    primitive.NewDateTimeFromTime(time.Now()),
-		ImgBlur:      "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(blurBuf.Bytes()),
+		Title:         title,
+		Description:   description,
+		Body:          body,
+		Tags:          tags,
+		Author:        uid,
+		ImagePending:  false,
+		Slug:          slug,
+		CreatedAt:     primitive.NewDateTimeFromTime(time.Now()),
+		UpdatedAt:     primitive.NewDateTimeFromTime(time.Now()),
+		ImgBlur:       "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(blurBuf.Bytes()),
+		SortVoteCount: 0,
 	}
 
 	inserted, err := colls.PostCollection.InsertOne(context.TODO(), post)

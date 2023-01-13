@@ -1,6 +1,6 @@
 @font-face {
   font-family: "Gidole";
-  src: url(../public/questrial.regular.ttf);
+  src: url(../public/didact-gothic.regular.ttf);
 }
 
 body {
@@ -34,10 +34,8 @@ textarea:focus {
 input::placeholder,:-ms-input-placeholder, ::-ms-input-placeholder {
   font-size: var(--font-xs);
 }
-
-button {
-  cursor: pointer;
-  background: var(--foreground);
+input {
+  width: 0;
 }
 
 * {
@@ -69,9 +67,14 @@ hr {
   );
 }
 
-button {
+button, .lightButton {
   background: var(--button);
-  color: white;
+  cursor: pointer;
+  color:white;
+}
+.lightButton {
+  color:var(--text-color);
+  background: var(--foreground);
 }
 
 :root {
@@ -88,6 +91,7 @@ button {
   --button: rgb(24, 24, 24);
   --nav: rgb(14, 14, 14);
   --header: linear-gradient(to top, rgb(14, 14, 14) 0%, rgb(8, 8, 8) 100%);
+  --tag-selected: rgb(55, 62, 95);
 
   /* Component & Text Colours */
   --text-color: black;
@@ -117,7 +121,7 @@ button {
   --horizontal-whitespace: 27.5vw;
 
   /* Font sizes */
-  --font-lg: 1.5rem;
+  --font-lg: 1.866rem;
   --font-md: min(7vw, 1.066rem);
   --font-sm: min(5vw, 0.95rem);
   --font-xs: min(4vw, 0.866rem);

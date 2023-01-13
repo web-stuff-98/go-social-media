@@ -4,12 +4,20 @@ import { baseURL, makeRequest } from "./makeRequest";
 export type SortOrder = "DESC" | "ASC";
 export type SortMode = "DATE" | "POPULARITY";
 
-const getPage = (pageNum: number, order: SortOrder, mode: SortMode) =>
+const getPage = (
+  pageNum: number,
+  order: SortOrder,
+  mode: SortMode,
+  tags: string[],
+  term: string
+) =>
   makeRequest(
     `/api/posts/page/${pageNum}${
-      order || mode
+      order || mode || tags.length > 0 || term
         ? `?${mode ? "mode=" + mode : ""}` +
-          (order ? `${mode ? "&" : "?"}order=` + order : "")
+          (order ? `${mode ? "&" : "?"}order=` + order : "") +
+          `${order || mode ? "&" : "?"}tags=${tags.join("+")}` +
+          `${order || mode || tags.length > 0 ? "&" : "?"}term=${term}`
         : ""
     }`,
     {

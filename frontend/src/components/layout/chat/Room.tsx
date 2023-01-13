@@ -2,14 +2,17 @@ import classes from "../../../styles/components/chat/Room.module.scss";
 import { useState, useEffect, useCallback } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import { getRoom } from "../../../services/rooms";
-import { useChat } from "./Chat";
+import { ChatSection, useChat } from "./Chat";
 import ResMsg, { IResMsg } from "../../ResMsg";
 import { IRoomCard } from "./Rooms";
 import RoomMessage from "./RoomMessage";
 import useSocket from "../../../context/SocketContext";
 import { MdSend } from "react-icons/md";
 import IconBtn from "../../IconBtn";
-import { instanceOfRoomMessageData } from "../../../utils/DetermineSocketEvent";
+import {
+  instanceOfChangeData,
+  instanceOfRoomMessageData,
+} from "../../../utils/DetermineSocketEvent";
 import { useAuth } from "../../../context/AuthContext";
 import { useUsers } from "../../../context/UsersContext";
 
@@ -30,7 +33,7 @@ export interface IRoom extends IRoomCard {
 }
 
 export default function Room() {
-  const { roomId } = useChat();
+  const { roomId, setSection } = useChat();
   const { socket, openSubscription, closeSubscription } = useSocket();
   const { user } = useAuth();
   const { cacheUserData } = useUsers();
@@ -83,6 +86,12 @@ export default function Room() {
         return { ...o, messages: [...o.messages, data.DATA] };
       });
     }
+    if (instanceOfChangeData(data)) {
+      if (data.DATA.ID !== roomId) return;
+      if (data.METHOD === "DELETE") {
+        setSection(ChatSection.MENU);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -96,9 +105,15 @@ export default function Room() {
     <div className={classes.container}>
       {room ? (
         <div className={classes.messages}>
-          {room.messages.map((msg) => (
-            <RoomMessage msg={msg} />
-          ))}
+          {room.messages.length > 0 ? (
+            <>
+              {room.messages.map((msg) => (
+                <RoomMessage msg={msg} />
+              ))}
+            </>
+          ) : (
+            <p>This room has recieved no messages.</p>
+          )}
         </div>
       ) : (
         <></>

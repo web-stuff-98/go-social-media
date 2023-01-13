@@ -28,7 +28,13 @@ export default function PostCard({
     state: { isMobile },
   } = useInterface();
   const navigate = useNavigate();
-  const { postEnteredView, postLeftView, updatePostCard } = usePosts();
+  const {
+    postEnteredView,
+    postLeftView,
+    updatePostCard,
+    addOrRemoveTagInParams,
+    getTagsFromParams,
+  } = usePosts();
   const { openModal } = useModal();
   const { getUserData } = useUsers();
   const { user } = useAuth();
@@ -69,7 +75,6 @@ export default function PostCard({
   const renderUser = (uid: string) => {
     return (
       <User
-        light
         additionalStuff={[
           <div className={classes.votesContainer}>
             <IconBtn
@@ -82,7 +87,7 @@ export default function PostCard({
                   : { filter: "opacity(0.5)" }),
               }}
               svgStyle={{
-                transform:"scale(1.166)",
+                transform: "scale(1.166)",
               }}
               Icon={FaChevronUp}
               type="button"
@@ -122,7 +127,7 @@ export default function PostCard({
                   : { filter: "opacity(0.5)" }),
               }}
               svgStyle={{
-                transform:"scale(1.166)"
+                transform: "scale(1.166)",
               }}
               Icon={FaChevronDown}
               type="button"
@@ -164,16 +169,7 @@ export default function PostCard({
       style={isMobile ? { height: "33.33%" } : {}}
       className={classes.container}
     >
-      <div
-        style={
-          isMobile
-            ? {}
-            : {
-                border: "none",
-              }
-        }
-        className={classes.inner}
-      >
+      <div className={classes.inner}>
         {post && (
           <>
             <div
@@ -189,19 +185,7 @@ export default function PostCard({
                 style={isMobile ? { width: "40%", minWidth: "40%" } : {}}
                 src={imgURL}
               />
-              {
-                <div
-                  style={
-                    reverse
-                      ? { right: "var(--padding)" }
-                      : { left: "var(--padding)" }
-                  }
-                  className={classes.userContainer}
-                >
-                  {renderUser(post.author_id)}
-                </div>
-              }
-              {
+              {user && user.ID === post.author_id && 
                 <div className={classes.actionIcons}>
                   <IconBtn
                     style={{ color: "red", padding: "3px" }}
@@ -252,15 +236,30 @@ export default function PostCard({
               <div className={classes.tags}>
                 {post.tags.map((t) => (
                   <button
+                    onClick={() => addOrRemoveTagInParams(t)}
                     key={t}
                     aria-label={`Tag: ${t}`}
                     id={`Tag: ${t}`}
                     name={`Tag: ${t}`}
-                    className={classes.tag}
+                    className={
+                      getTagsFromParams().includes(t)
+                        ? classes.tagSelected
+                        : classes.tag
+                    }
                   >
                     {t}
                   </button>
                 ))}
+              </div>
+              <div
+                style={
+                  reverse
+                    ? { right: "var(--padding)" }
+                    : { left: "var(--padding)" }
+                }
+                className={classes.userContainer}
+              >
+                {renderUser(post.author_id)}
               </div>
             </div>
           </>

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import type { ChangeEvent } from "react";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import { FaSearch } from "react-icons/fa";
 import useSocket from "../../../context/SocketContext";
@@ -23,6 +24,7 @@ export default function Rooms() {
   const [pageNum, setPageNum] = useState(1);
   const [page, setPage] = useState<IRoomCard[]>([]);
   const [count, setCount] = useState(0);
+  const [searchInput, setSearchInput] = useState("");
   const [resMsg, setResMsg] = useState<IResMsg>({
     msg: "",
     err: false,
@@ -32,10 +34,10 @@ export default function Rooms() {
   useEffect(() => {
     setResMsg({ msg: "", err: false, pen: true });
     updatePage();
-  }, [pageNum]);
+  }, [pageNum, searchInput]);
 
   const updatePage = () => {
-    getRoomPage(pageNum)
+    getRoomPage(pageNum, searchInput)
       .then(({ count, rooms }: { count: string; rooms: string }) => {
         setCount(Number(count));
         setPage(JSON.parse(rooms) as IRoomCard[]);
@@ -54,7 +56,7 @@ export default function Rooms() {
   }, []);
 
   const nextPage = () => {
-    setPageNum(Math.min(pageNum + 1, Math.ceil(count / 20)));
+    setPageNum(Math.min(pageNum + 1, Math.ceil(count / 30)));
   };
 
   const prevPage = () => {
@@ -66,7 +68,6 @@ export default function Rooms() {
     data["DATA"] = JSON.parse(data["DATA"]);
     if (instanceOfChangeData(data)) {
       if (data.ENTITY === "ROOM") {
-        console.log("CHANGE");
         updatePage();
       }
     }
@@ -82,15 +83,20 @@ export default function Rooms() {
   return (
     <div className={classes.container}>
       <div className={classes.rooms}>
-        {page.map((r) => (
-          <RoomCard r={r} />
-        ))}
+        {page && page.map((r) => <RoomCard r={r} />)}
         <div className={classes.resMsg}>
           <ResMsg resMsg={resMsg} />
         </div>
       </div>
       <form className={classes.searchContainer}>
-        <input type="text" placeholder="Search rooms..." />
+        <input
+          value={searchInput}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            setSearchInput(e.target.value)
+          }
+          type="text"
+          placeholder="Search rooms..."
+        />
         <IconBtn Icon={FaSearch} ariaLabel="Search rooms" name="Search rooms" />
       </form>
       <div className={classes.paginationControls}>
@@ -100,7 +106,7 @@ export default function Rooms() {
           ariaLabel="Prev page"
           Icon={BsChevronLeft}
         />
-        {pageNum}/{Math.ceil(count / 20)}
+        {pageNum}/{Math.ceil(count / 30)}
         <IconBtn
           onClick={nextPage}
           name="Next page"

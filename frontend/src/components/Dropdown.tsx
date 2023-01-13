@@ -19,6 +19,7 @@ export default function Dropdown({
   noLeftBorderRadius,
   noRightBorder,
   noLeftBorder,
+  light,
 }: {
   items?: DropdownItem[];
   index?: number;
@@ -27,6 +28,7 @@ export default function Dropdown({
   noLeftBorderRadius?: boolean;
   noRightBorder?: boolean;
   noLeftBorder?: boolean;
+  light?: boolean;
 }) {
   const rootItemContainerRef = useRef<HTMLDivElement>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -43,6 +45,7 @@ export default function Dropdown({
 
     return (
       <button
+        className={light ? "lightButton" : ""}
         key={name}
         type="button"
         style={

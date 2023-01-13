@@ -82,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       method: "POST",
     })
       .then((data) => {
-        setUser(data);
+        setUser(data.ID ? data : undefined);
         reconnectSocket();
       })
       .catch((e) => {
@@ -93,10 +93,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const i = setInterval(async () => {
       try {
-        await makeRequest("/api/account/refresh", {
+        const data = await makeRequest("/api/account/refresh", {
           withCredentials: true,
           method: "POST",
         });
+        if(!data.ID) setUser(undefined)
       } catch (e) {
         setUser(undefined);
         console.warn(e);

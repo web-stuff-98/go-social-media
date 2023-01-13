@@ -75,13 +75,40 @@ func (h handler) VoteOnPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	removeVote := false
+	removeVoteIsUpvote := false
 	for _, pv := range votes.Votes {
 		if pv.Uid == user.ID {
+			removeVoteIsUpvote = pv.IsUpvote
 			removeVote = true
 		}
 	}
 
+	var positiveVotes int = 0
+	var negativeVotes int = 0
+	for _, v := range votes.Votes {
+		if user != nil {
+			if user.ID != v.Uid {
+				if v.IsUpvote == true {
+					positiveVotes++
+				} else {
+					negativeVotes++
+				}
+			}
+		} else {
+			if v.IsUpvote == true {
+				positiveVotes++
+			} else {
+				negativeVotes++
+			}
+		}
+	}
+
 	if !removeVote {
+		if voteInput.IsUpvote {
+			positiveVotes++
+		} else {
+			negativeVotes++
+		}
 		if _, err := h.Collections.PostVoteCollection.UpdateByID(r.Context(), postId, bson.M{
 			"$addToSet": bson.M{
 				"votes": bson.M{
@@ -95,6 +122,11 @@ func (h handler) VoteOnPost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
+		if removeVoteIsUpvote {
+			positiveVotes--
+		} else {
+			negativeVotes--
+		}
 		if _, err := h.Collections.PostVoteCollection.UpdateByID(r.Context(), postId, bson.M{
 			"$pull": bson.M{
 				"votes": bson.M{
@@ -105,6 +137,10 @@ func (h handler) VoteOnPost(w http.ResponseWriter, r *http.Request) {
 			responseMessage(w, http.StatusInternalServerError, "Internal error")
 			return
 		}
+	}
+
+	if _, err := h.Collections.PostCollection.UpdateByID(r.Context(), postId, bson.M{"$set": bson.M{"sort_vote_count": positiveVotes - negativeVotes}}); err != nil {
+		responseMessage(w, http.StatusInternalServerError, "Internal error")
 	}
 
 	h.SocketServer.SendDataToSubscriptionExclusive <- socketserver.ExclusiveSubscriptionDataMessage{
@@ -348,33 +384,77 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 		responseMessage(w, http.StatusBadRequest, "Invalid page")
 		return
 	}
-	pageSize := 20
-	//r.URL.Query().Get("mode")
-	r.URL.Query().Get("order")
+	pageSize := 30
 	sortOrder := "DESC"
-	//sortMode := "DATE"
-	//if r.URL.Query().Has("mode") {
-	//	sortMode = r.URL.Query().Get("mode")
-	//}
+	term := ""
+	sortMode := "DATE"
+	if r.URL.Query().Has("mode") {
+		sortMode = r.URL.Query().Get("mode")
+	}
 	if r.URL.Query().Has("order") {
 		sortOrder = r.URL.Query().Get("order")
+	}
+	if r.URL.Query().Has("term") {
+		term = r.URL.Query().Get("term")
+	}
+
+	tags := []string{}
+	if r.URL.Query().Has("tags") {
+		for _, v := range strings.Split(r.URL.Query().Get("tags"), " ") {
+			if v != "" && v != " " {
+				tags = append(tags, v)
+			}
+		}
+		log.Println("TAG LENGTH ", len(tags))
 	}
 
 	findOptions := options.Find()
 	findOptions.SetLimit(int64(pageSize))
 	findOptions.SetSkip(int64(pageSize) * (int64(pageNumber) - 1))
 	if sortOrder == "DESC" {
-		findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
+		if sortMode == "DATE" {
+			findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
+		}
+		if sortMode == "POPULARITY" {
+			findOptions.SetSort(bson.D{{Key: "sort_vote_count", Value: -1}})
+		}
 	}
 	if sortOrder == "ASC" {
-		findOptions.SetSort(bson.D{{Key: "created_at", Value: 1}})
+		if sortMode == "DATE" {
+			findOptions.SetSort(bson.D{{Key: "created_at", Value: 1}})
+		}
+		if sortMode == "POPULARITY" {
+			findOptions.SetSort(bson.D{{Key: "sort_vote_count", Value: 1}})
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cursor, err := h.Collections.PostCollection.Find(ctx, bson.M{"image_pending": false}, findOptions)
-	if err != nil {
+	filter := bson.M{"image_pending": false}
+	if len(tags) == 0 {
+		if term != "" && term != " " {
+			filter = bson.M{"image_pending": false,
+				"$text": bson.M{
+					"$search":        term,
+					"$caseSensitive": false,
+				},
+			}
+		}
+	} else {
+		if term == "" {
+			filter = bson.M{"tags": bson.M{"$in": tags}, "image_pending": false}
+		} else {
+			filter = bson.M{"tags": bson.M{"$in": tags}, "image_pending": false,
+				"$text": bson.M{
+					"$search":        term,
+					"$caseSensitive": false,
+				},
+			}
+		}
+	}
+	cursor, curerr := h.Collections.PostCollection.Find(ctx, filter, findOptions)
+	if curerr != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
 	}
@@ -680,6 +760,7 @@ func (h handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	post.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 	post.ImagePending = true
 	post.Tags = tags
+	post.SortVoteCount = 0
 
 	inserted, err := h.Collections.PostCollection.InsertOne(r.Context(), post)
 	if err != nil {
