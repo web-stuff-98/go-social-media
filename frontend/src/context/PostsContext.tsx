@@ -170,7 +170,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleSearch = useMemo(
-    () => debounce(() => getPageWithParams(), 600),
+    () => debounce(() => getPageWithParams(), 300),
     [searchParams, page]
   );
 
