@@ -89,7 +89,7 @@ export default function Rooms() {
   return (
     <div className={classes.container}>
       <div className={classes.rooms}>
-        {page && page.map((r) => <RoomCard r={r} />)}
+        {page && page.map((r) => <RoomCard key={r.ID} r={r} />)}
         <div className={classes.resMsg}>
           <ResMsg resMsg={resMsg} />
         </div>

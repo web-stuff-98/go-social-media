@@ -153,7 +153,7 @@ func (h handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 
 	var roomMessages = &models.RoomMessages{
 		ID:       inserted.InsertedID.(primitive.ObjectID),
-		Messages: []models.PrivateMessage{},
+		Messages: []models.RoomMessage{},
 	}
 
 	if _, err := h.Collections.RoomMessagesCollection.InsertOne(r.Context(), roomMessages); err != nil {

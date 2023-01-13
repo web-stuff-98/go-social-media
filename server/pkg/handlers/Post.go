@@ -112,7 +112,6 @@ func (h handler) VoteOnPost(w http.ResponseWriter, r *http.Request) {
 		if _, err := h.Collections.PostVoteCollection.UpdateByID(r.Context(), postId, bson.M{
 			"$addToSet": bson.M{
 				"votes": bson.M{
-					"_id":       primitive.NewObjectID(),
 					"uid":       user.ID,
 					"is_upvote": voteInput.IsUpvote,
 				},
@@ -771,6 +770,15 @@ func (h handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 		Votes: []models.PostVote{},
 	}
 	if _, err := h.Collections.PostVoteCollection.InsertOne(r.Context(), postVotes); err != nil {
+		responseMessage(w, http.StatusInternalServerError, "Internal error")
+		return
+	}
+	postComments := &models.PostComments{
+		ID:       inserted.InsertedID.(primitive.ObjectID),
+		Votes:    []models.PostCommentVote{},
+		Comments: []models.PostComment{},
+	}
+	if _, err := h.Collections.PostCommentsCollection.InsertOne(r.Context(), postComments); err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
 	}

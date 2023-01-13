@@ -1,6 +1,6 @@
 import { useInterface } from "../context/InterfaceContext";
 import { IPostCard } from "../routes/Blog";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import classes from "../styles/components/PostCard.module.scss";
 import { deletePost, getPostThumb, voteOnPost } from "../services/posts";
 import type { CancelToken, CancelTokenSource } from "axios";
@@ -39,10 +39,29 @@ export default function PostCard({
   const { user } = useAuth();
 
   const textContainerRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [imgURL, setImgURL] = useState("");
   const imgCancelSource = useRef<CancelTokenSource>();
   const imgCancelToken = useRef<CancelToken>();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  const observer = new IntersectionObserver(([entry]) => {
+    if (entry.isIntersecting) {
+      setVisible(true);
+    } else {
+      setVisible(false);
+      if (imgCancelSource.current) {
+        imgCancelSource.current.cancel();
+      }
+    }
+  });
+  useLayoutEffect(() => {
+    observer.observe(containerRef.current!);
+    return () => {
+      observer.disconnect();
+    };
+    //putting the ref in the dependency array was the only way to get this working properly for some reason
+  }, [containerRef.current]);
 
   useEffect(() => {
     postEnteredView(post.ID);
@@ -53,7 +72,7 @@ export default function PostCard({
 
   //Rerender of image is triggered when img_url query param v=1 increments
   useEffect(() => {
-    if (!post.img_url) return;
+    if (!post.img_url || !visible) return;
     imgCancelSource.current = axios.CancelToken.source();
     imgCancelToken.current = imgCancelSource.current?.token;
     getPostThumb(post.ID, imgCancelToken.current)
@@ -69,7 +88,7 @@ export default function PostCard({
         imgCancelSource.current?.cancel("Image no longer visible");
       }
     };
-  }, [post.img_url]);
+  }, [post.img_url, visible]);
 
   const renderUser = (uid: string) => {
     return (
@@ -184,7 +203,7 @@ export default function PostCard({
                 style={isMobile ? { width: "40%", minWidth: "40%" } : {}}
                 src={imgURL}
               />
-              {user && user.ID === post.author_id && 
+              {user && user.ID === post.author_id && (
                 <div className={classes.actionIcons}>
                   <IconBtn
                     style={{ color: "red", padding: "3px" }}
@@ -227,7 +246,7 @@ export default function PostCard({
                     onClick={() => navigate(`/editor/${post.slug}`)}
                   />
                 </div>
-              }
+              )}
             </div>
             <div ref={textContainerRef} className={classes.textTags}>
               <h1>{post.title}</h1>

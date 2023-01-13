@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
+	"log"
 	"math"
 	"math/rand"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -28,6 +30,8 @@ func SeedDB(colls *db.Collections, numUsers int, numPosts int, numRooms int) (ui
 	uids = make(map[primitive.ObjectID]struct{})
 	pids = make(map[primitive.ObjectID]struct{})
 	rids = make(map[primitive.ObjectID]struct{})
+
+	log.Println("Generating seed...")
 
 	// Generate users
 	for i := 0; i < numUsers; i++ {
@@ -50,6 +54,16 @@ func SeedDB(colls *db.Collections, numUsers int, numPosts int, numRooms int) (ui
 		pids[pid] = struct{}{}
 	}
 
+	// Generate post comments
+	for pid := range pids {
+		generateComments(colls, pid, uids)
+	}
+
+	// Generate post votes
+	for pid := range pids {
+		generatePostVotes(colls, pid, uids)
+	}
+
 	// Generate rooms
 	for i := 0; i < numPosts; i++ {
 		uid := randomKey(uids)
@@ -60,10 +74,7 @@ func SeedDB(colls *db.Collections, numUsers int, numPosts int, numRooms int) (ui
 		rids[rid] = struct{}{}
 	}
 
-	// Generate post votes
-	for pid := range pids {
-		generatePostVotes(colls, pid, uids)
-	}
+	log.Println("Seed generated...")
 
 	return uids, pids, rids, err
 }
@@ -211,6 +222,13 @@ func generatePost(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid prim
 	}); err != nil {
 		return primitive.NilObjectID, err
 	}
+	if colls.PostCommentsCollection.InsertOne(context.TODO(), models.PostComments{
+		ID:       inserted.InsertedID.(primitive.ObjectID),
+		Comments: []models.PostComment{},
+		Votes:    []models.PostCommentVote{},
+	}); err != nil {
+		return primitive.NilObjectID, err
+	}
 	if colls.PostVoteCollection.InsertOne(context.TODO(), models.PostVotes{
 		ID:    inserted.InsertedID.(primitive.ObjectID),
 		Votes: []models.PostVote{},
@@ -232,11 +250,16 @@ func generatePostVotes(colls *db.Collections, pid primitive.ObjectID, uids map[p
 	positiveVotes := 0
 	negativeVotes := 0
 
+	bias := rand.Float32() * (rand.Float32() * 2)
+
 	votes := models.PostVotes{ID: pid, Votes: []models.PostVote{}}
 	for i := 0; i < len(uidsArray); i++ {
-		pos := rand.Float32() > 0.5
+		if rand.Float32() > 0.8 {
+			// at random, dont vote
+			return nil
+		}
+		pos := rand.Float32() < bias
 		vote := &models.PostVote{
-			ID:       primitive.NewObjectID(),
 			Uid:      uidsArray[i],
 			IsUpvote: pos,
 		}
@@ -261,7 +284,7 @@ func generatePostVotes(colls *db.Collections, pid primitive.ObjectID, uids map[p
 }
 
 func generateRoom(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid primitive.ObjectID, i int) (primitive.ObjectID, error) {
-	name := "ExampleRoom" + string(rune(i))
+	name := "ExampleRoom" + strconv.Itoa(i)
 
 	r := helpers.DownloadRandomImage(false)
 	var img image.Image
@@ -284,6 +307,7 @@ func generateRoom(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid prim
 	}
 
 	room := models.Room{
+		ID:           primitive.NewObjectID(),
 		Name:         name,
 		Author:       uid,
 		ImagePending: false,
@@ -304,7 +328,87 @@ func generateRoom(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid prim
 		return primitive.NilObjectID, err
 	}
 
+	if colls.RoomMessagesCollection.InsertOne(context.TODO(), models.RoomMessages{
+		ID:       inserted.InsertedID.(primitive.ObjectID),
+		Messages: []models.RoomMessage{},
+	}); err != nil {
+		return primitive.NilObjectID, err
+	}
+
 	return inserted.InsertedID.(primitive.ObjectID), nil
+}
+
+func generateComments(colls *db.Collections, pid primitive.ObjectID, uids map[primitive.ObjectID]struct{}) error {
+	uidsArray := []primitive.ObjectID{}
+	for id := range uids {
+		uidsArray = append(uidsArray, id)
+	}
+
+	comments := &models.PostComments{}
+	var max int = rand.Intn(300-50) + 50
+	var min int = 0
+	numCmts := rand.Intn(max-min) + min
+	for i := 0; i < numCmts; i++ {
+		timeRandNegative := 1
+		if rand.Float32() > 0.5 {
+			timeRandNegative = -1
+		}
+		timeRandOffset := time.Hour * time.Duration(rand.Float32()*3*float32(timeRandNegative))
+		createdAt := time.Now().Add(timeRandOffset)
+		updatedAt := createdAt
+		parentId := ""
+		if rand.Float32() > 0.8 {
+			updatedAt = createdAt.Add(time.Hour * 2 * time.Duration(rand.Float32()))
+		}
+		if rand.Float32() > 0.333 {
+			if len(comments.Comments) > 0 {
+				randIndex := len(comments.Comments) - 1
+				if randIndex == 0 || randIndex == -1 {
+					randIndex = 1
+				}
+				parentId = comments.Comments[rand.Intn(randIndex)].ID.Hex()
+			}
+		}
+		lipsum := loremipsum.NewWithSeed(int64(rand.Intn(1000)))
+		content := sentence(3, 60, lipsum)
+		if len(content) > 200 {
+			content = content[:200]
+		}
+		cmt := &models.PostComment{
+			ID:        primitive.NewObjectID(),
+			Author:    uidsArray[rand.Intn(len(uidsArray)-1)],
+			Content:   content,
+			CreatedAt: primitive.NewDateTimeFromTime(time.Now()),
+			UpdatedAt: primitive.NewDateTimeFromTime(updatedAt),
+			ParentID:  parentId,
+		}
+		comments.Comments = append(comments.Comments, *cmt)
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(uidsArray), func(i, j int) { uidsArray[i], uidsArray[j] = uidsArray[j], uidsArray[i] })
+
+	for _, c := range comments.Comments {
+		numVoters := rand.Intn(len(uidsArray))
+		for i := 0; i < numVoters; i++ {
+			if rand.Float32() > 0.5 {
+				// at random, dont vote
+				break
+			}
+			vote := &models.PostCommentVote{
+				Uid:       uidsArray[i],
+				IsUpvote:  rand.Float32() > 0.4,
+				CommentID: c.ID,
+			}
+			comments.Votes = append(comments.Votes, *vote)
+		}
+	}
+
+	if _, err := colls.PostCommentsCollection.UpdateByID(context.TODO(), pid, bson.M{"$set": bson.M{"comments": comments.Comments, "votes": comments.Votes}}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func sentence(minWords int, maxWords int, lipsum *loremipsum.LoremIpsum) string {

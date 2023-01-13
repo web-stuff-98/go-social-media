@@ -88,7 +88,6 @@ type PostVotes struct {
 }
 
 type PostVote struct {
-	ID       primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
 	Uid      primitive.ObjectID `bson:"uid" json:"uid"`
 	IsUpvote bool               `bson:"is_upvote" json:"is_upvote"`
 }
@@ -106,6 +105,13 @@ type PostThumb struct {
 type PostComments struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
 	Comments []PostComment      `bson:"comments" json:"comments"`
+	Votes    []PostCommentVote  `bson:"votes" json:"votes"`
+}
+
+type PostCommentVote struct {
+	Uid       primitive.ObjectID `json:"uid" bson:"uid"`
+	IsUpvote  bool               `bson:"is_upvote" json:"is_upvote"`
+	CommentID primitive.ObjectID `bson:"comment_id" json:"comment_id"`
 }
 
 type PostComment struct {
@@ -124,12 +130,12 @@ type Room struct {
 	CreatedAt    primitive.DateTime `bson:"created_at" json:"created_at"`
 	UpdatedAt    primitive.DateTime `bson:"updated_at" json:"updated_at"`
 	ImgBlur      string             `bson:"img_blur" json:"img_blur,omitempty"`
-	Messages     []PrivateMessage   `bson:"-" json:"messages"`
+	Messages     []RoomMessage      `bson:"-" json:"messages"`
 	ImagePending bool               `bson:"image_pending" json:"image_pending"`
 }
 type RoomMessages struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
-	Messages []PrivateMessage   `bson:"messages" json:"messages"`
+	Messages []RoomMessage      `bson:"messages" json:"messages"`
 }
 
 type RoomImage struct {
