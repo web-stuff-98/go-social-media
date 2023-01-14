@@ -13,6 +13,7 @@ import (
 	"github.com/web-stuff-98/go-social-media/pkg/handlers"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers/middleware"
 	rdb "github.com/web-stuff-98/go-social-media/pkg/redis"
+	"github.com/web-stuff-98/go-social-media/pkg/seed"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -219,6 +220,13 @@ func main() {
 		Message:       "Too many requests",
 		RouteName:     "post_vote",
 	}, redisClient, Collections)).Methods(http.MethodPatch)
+	router.HandleFunc("/api/posts/{postId}/{commentId}/vote", middleware.BasicRateLimiter(h.VoteOnPostComment, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 3,
+		MaxReqs:       10,
+		BlockDuration: time.Second * 100,
+		Message:       "Too many requests",
+		RouteName:     "post_vote_comment",
+	}, redisClient, Collections)).Methods(http.MethodPatch)
 
 	router.HandleFunc("/api/rooms", middleware.BasicRateLimiter(h.CreateRoom, middleware.SimpleLimiterOpts{
 		Window:        time.Second * 240,
@@ -275,8 +283,8 @@ func main() {
 	log.Println("Creating changestreams")
 	changestreams.WatchCollections(DB, SocketServer)
 
-	//DB.Drop(context.TODO())
-	//go seed.SeedDB(&Collections, 25, 50, 25)
+	DB.Drop(context.TODO())
+	go seed.SeedDB(&Collections, 5, 10, 5)
 
 	log.Println("API open on port", os.Getenv("PORT"))
 	log.Fatal(http.ListenAndServe(fmt.Sprint(":", os.Getenv("PORT")), c.Handler(router)))

@@ -238,19 +238,26 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     else setPosts((o) => [...o, data].slice(0, 30));
   };
 
+  const isPostOnPage = (id: string) =>
+    Boolean(posts.findIndex((p) => p.ID === id));
+
   const handleMessage = useCallback((e: MessageEvent) => {
     const data = JSON.parse(e.data);
     data["DATA"] = JSON.parse(data["DATA"]);
     if (instanceOfChangeData(data)) {
       if (data.ENTITY === "POST") {
         if (data.METHOD === "DELETE") {
-          removePostCard(data.DATA.ID);
+          if (isPostOnPage(data.DATA.ID)) removePostCard(data.DATA.ID);
+          return;
         }
         if (data.METHOD === "UPDATE") {
-          updatePostCard(data.DATA);
+          if (isPostOnPage(data.DATA.ID)) updatePostCard(data.DATA);
+          return;
         }
         if (data.METHOD === "UPDATE_IMAGE") {
-          updatePostCardImage({ ID: data.DATA.ID });
+          if (isPostOnPage(data.DATA.ID))
+            updatePostCardImage({ ID: data.DATA.ID });
+          return;
         }
         if (data.METHOD === "INSERT") {
           if (getSortModeFromParams === "DATE") {
@@ -285,17 +292,18 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     if (instanceOfPostVoteData(data)) {
-      setPosts((p) => {
-        let newPosts = p;
-        const i = p.findIndex((p) => p.ID === data.DATA.ID);
-        if (i === -1) return p;
-        if (data.DATA.is_upvote) {
-          newPosts[i].vote_pos_count += data.DATA.remove ? -1 : 1;
-        } else {
-          newPosts[i].vote_neg_count += data.DATA.remove ? -1 : 1;
-        }
-        return [...newPosts];
-      });
+      if (isPostOnPage(data.DATA.ID))
+        setPosts((p) => {
+          let newPosts = p;
+          const i = p.findIndex((p) => p.ID === data.DATA.ID);
+          if (i === -1) return p;
+          if (data.DATA.is_upvote) {
+            newPosts[i].vote_pos_count += data.DATA.remove ? -1 : 1;
+          } else {
+            newPosts[i].vote_neg_count += data.DATA.remove ? -1 : 1;
+          }
+          return [...newPosts];
+        });
     }
   }, []);
 

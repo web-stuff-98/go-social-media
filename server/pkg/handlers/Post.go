@@ -163,6 +163,135 @@ func (h handler) VoteOnPost(w http.ResponseWriter, r *http.Request) {
 	responseMessage(w, http.StatusOK, "Voted")
 }
 
+func (h handler) VoteOnPostComment(w http.ResponseWriter, r *http.Request) {
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	if err != nil {
+		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	rawPostId := mux.Vars(r)["postId"]
+	postId, err := primitive.ObjectIDFromHex(rawPostId)
+	if err != nil {
+		responseMessage(w, http.StatusBadRequest, "Bad request")
+		return
+	}
+
+	rawCmtId := mux.Vars(r)["commentId"]
+	commentId, err := primitive.ObjectIDFromHex(rawCmtId)
+	if err != nil {
+		responseMessage(w, http.StatusBadRequest, "Bad request")
+		return
+	}
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		responseMessage(w, http.StatusBadRequest, "Bad request")
+		return
+	}
+
+	var voteInput validation.Vote
+	if json.Unmarshal(body, &voteInput); err != nil {
+		responseMessage(w, http.StatusBadRequest, "Bad request")
+		return
+	}
+	validate := validator.New()
+	if err := validate.Struct(voteInput); err != nil {
+		responseMessage(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	comments := &models.PostComments{}
+	if err := h.Collections.PostCommentsCollection.FindOne(r.Context(), bson.M{"_id": postId}).Decode(&comments); err != nil {
+		if err == mongo.ErrNoDocuments {
+			responseMessage(w, http.StatusNotFound, "Not found")
+		} else {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+		}
+		return
+	}
+
+	removeVote := false
+	removeVoteIsUpvote := false
+	for _, cv := range comments.Votes {
+		if cv.CommentID == commentId && cv.Uid == user.ID {
+			removeVoteIsUpvote = cv.IsUpvote
+			removeVote = true
+		}
+	}
+
+	var positiveVotes int = 0
+	var negativeVotes int = 0
+	for _, v := range comments.Votes {
+		if v.CommentID == commentId {
+			if user != nil {
+				if user.ID != v.Uid {
+					if v.IsUpvote == true {
+						positiveVotes++
+					} else {
+						negativeVotes++
+					}
+				}
+			} else {
+				if v.IsUpvote == true {
+					positiveVotes++
+				} else {
+					negativeVotes++
+				}
+			}
+		}
+	}
+
+	if !removeVote {
+		if voteInput.IsUpvote {
+			positiveVotes++
+		} else {
+			negativeVotes++
+		}
+		if _, err := h.Collections.PostCommentsCollection.UpdateByID(r.Context(), postId, bson.M{
+			"$addToSet": bson.M{
+				"votes": bson.M{
+					"uid":        user.ID,
+					"is_upvote":  voteInput.IsUpvote,
+					"comment_id": commentId.Hex(),
+				},
+			},
+		}); err != nil {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+			return
+		}
+	} else {
+		if removeVoteIsUpvote {
+			positiveVotes--
+		} else {
+			negativeVotes--
+		}
+		if _, err := h.Collections.PostCommentsCollection.UpdateByID(r.Context(), postId, bson.M{
+			"$pull": bson.M{
+				"votes": bson.M{
+					"uid":        user.ID,
+					"comment_id": commentId.Hex(),
+				},
+			},
+		}); err != nil {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+			return
+		}
+	}
+
+	h.SocketServer.SendDataToSubscriptionExclusive <- socketserver.ExclusiveSubscriptionDataMessage{
+		Name: "post_page=" + postId.Hex(),
+		Data: map[string]string{
+			"TYPE": "POST_COMMENT_VOTE",
+			"DATA": `{"ID":"` + commentId.Hex() + `","is_upvote":` + strconv.FormatBool(voteInput.IsUpvote) + `,"remove":` + strconv.FormatBool(removeVote) + `}`,
+		},
+		Exclude: map[primitive.ObjectID]bool{user.ID: true},
+	}
+
+	responseMessage(w, http.StatusOK, "Voted")
+}
+
 func (h handler) CommentOnPost(w http.ResponseWriter, r *http.Request) {
 	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
 	if err != nil {
@@ -536,14 +665,31 @@ func (h handler) GetPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var comments models.PostComments
-	if err := h.Collections.PostCommentsCollection.FindOne(r.Context(), bson.M{"_id": post.ID}).Decode(&comments); err != nil {
+	var commentsDoc models.PostComments
+	if err := h.Collections.PostCommentsCollection.FindOne(r.Context(), bson.M{"_id": post.ID}).Decode(&commentsDoc); err != nil {
 		if err != mongo.ErrNoDocuments {
 			responseMessage(w, http.StatusInternalServerError, "Internal error")
 			return
 		}
 	} else {
-		post.Comments = comments.Comments
+		comments := commentsDoc.Comments
+		for _, pcv := range commentsDoc.Votes {
+			for i, pc := range comments {
+				if pc.ID == pcv.CommentID {
+					if user != nil && user.ID == pcv.Uid {
+						comments[i].UsersVote.Uid = user.ID
+						comments[i].UsersVote.IsUpvote = pcv.IsUpvote
+					} else {
+						if pcv.IsUpvote {
+							comments[i].PositiveVoteCount++
+						} else {
+							comments[i].NegativeVoteCount++
+						}
+					}
+				}
+			}
+		}
+		post.Comments = comments
 	}
 
 	var votes models.PostVotes

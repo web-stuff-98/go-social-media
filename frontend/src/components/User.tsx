@@ -77,11 +77,6 @@ export default function User({
     >
       {user && (
         <>
-          {additionalStuff && (
-            <div className={classes.additionalStuff}>
-              {additionalStuff.map((btn) => btn)}
-            </div>
-          )}
           <span
             style={{
               ...(user.base64pfp
@@ -114,6 +109,11 @@ export default function User({
               />
             )}
           </span>
+          {additionalStuff && (
+            <div className={classes.additionalStuff}>
+              {additionalStuff.map((btn) => btn)}
+            </div>
+          )}
           <div
             style={{
               ...(light ? { color: "white" } : {}),

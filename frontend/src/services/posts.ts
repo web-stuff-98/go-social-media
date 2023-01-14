@@ -121,8 +121,22 @@ const voteOnPost = (id: string, isUpvote: boolean) =>
     },
   });
 
+const voteOnPostComment = (
+  postId: string,
+  commentId: string,
+  isUpvote: boolean
+) =>
+  makeRequest(`/api/posts/${postId}/${commentId}/vote`, {
+    withCredentials: true,
+    method: "PATCH",
+    data: {
+      is_upvote: isUpvote,
+    },
+  });
+
 export {
   voteOnPost,
+  voteOnPostComment,
   getPost,
   createPost,
   updatePost,

@@ -116,7 +116,9 @@ func BasicRateLimiter(next http.HandlerFunc, opts SimpleLimiterOpts, rdb redis.C
 					return
 				}
 				next.ServeHTTP(w, r)
+				return
 			}
 		}
+		next.ServeHTTP(w, r)
 	})
 }

@@ -85,6 +85,7 @@ export default function Room() {
         if (!o) return o;
         return { ...o, messages: [...o.messages, data.DATA] };
       });
+      return
     }
     if (instanceOfChangeData(data)) {
       if (data.DATA.ID !== roomId) return;

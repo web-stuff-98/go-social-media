@@ -105,7 +105,7 @@ type PostThumb struct {
 type PostComments struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
 	Comments []PostComment      `bson:"comments" json:"comments"`
-	Votes    []PostCommentVote  `bson:"votes" json:"votes"`
+	Votes    []PostCommentVote  `bson:"votes" json:"-"`
 }
 
 type PostCommentVote struct {
@@ -115,12 +115,15 @@ type PostCommentVote struct {
 }
 
 type PostComment struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
-	Author    primitive.ObjectID `bson:"author_id" json:"author_id"`
-	Content   string             `bson:"content" json:"content"`
-	CreatedAt primitive.DateTime `bson:"created_at" json:"created_at"`
-	UpdatedAt primitive.DateTime `bson:"updated_at" json:"updated_at"`
-	ParentID  string             `bson:"parent_id" json:"parent_id"`
+	ID                primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
+	Author            primitive.ObjectID `bson:"author_id" json:"author_id"`
+	Content           string             `bson:"content" json:"content"`
+	CreatedAt         primitive.DateTime `bson:"created_at" json:"created_at"`
+	UpdatedAt         primitive.DateTime `bson:"updated_at" json:"updated_at"`
+	ParentID          string             `bson:"parent_id" json:"parent_id"`
+	PositiveVoteCount int                `bson:"-" json:"vote_pos_count"` // The vote count is sent to the client (excluding the users own vote)
+	NegativeVoteCount int                `bson:"-" json:"vote_neg_count"` // The vote count is sent to the client (excluding the users own vote)
+	UsersVote         PostVote           `bson:"-" json:"my_vote"`        // The clients own vote is sent to the client... the client checks if uid of own vote is 0000000000000, to make sure that the client actually voted
 }
 
 type Room struct {

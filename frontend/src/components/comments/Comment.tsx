@@ -1,5 +1,5 @@
 import { useUsers } from "../../context/UsersContext";
-import classes from "../../styles/components/Comments.module.scss";
+import classes from "../../styles/components/Comment.module.scss";
 import IconBtn from "../IconBtn";
 import User from "../User";
 import { AiFillEdit } from "react-icons/ai";
@@ -8,12 +8,16 @@ import {
   deleteComment,
   submitComment,
   updateComment,
+  voteOnPostComment,
 } from "../../services/posts";
 import { useState } from "react";
 import { FaReply } from "react-icons/fa";
 import ErrorTip from "../ErrorTip";
 import { CommentForm } from "./CommentForm";
 import { useModal } from "../../context/ModalContext";
+import { useAuth } from "../../context/AuthContext";
+
+import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 
 export interface IComment {
   ID: string;
@@ -22,6 +26,12 @@ export interface IComment {
   created_at: string;
   updated_at: string;
   parent_id: string;
+  vote_pos_count: number; // Excludes users own vote
+  vote_neg_count: number; // Excludes users own vote
+  my_vote: null | {
+    uid: string;
+    is_upvote: boolean;
+  };
 }
 
 export default function Comment({
@@ -30,15 +40,18 @@ export default function Comment({
   replyingTo,
   setReplyingTo,
   getReplies,
+  updateMyVoteOnComment,
 }: {
   comment: IComment;
   postId: string;
   replyingTo: string;
   setReplyingTo: (to: string) => void;
   getReplies: (parentId: string) => IComment[];
+  updateMyVoteOnComment: (id: string, isUpvote: boolean) => void;
 }) {
   const { getUserData } = useUsers();
   const { openModal } = useModal();
+  const { user } = useAuth();
   const [err, setErr] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [repliesOpen, setRepliesOpen] = useState(false);
@@ -49,32 +62,106 @@ export default function Comment({
       <div className={classes.top}>
         <User
           additionalStuff={[
-            <IconBtn
-              type="button"
-              ariaLabel="Edit comment"
-              name="edit"
-              onClick={() => setIsEditing(true)}
-              Icon={AiFillEdit}
-            />,
-            <IconBtn
-              type="button"
-              ariaLabel="Delete comment"
-              name="delete"
-              style={{ color: "red" }}
-              onClick={() =>
-                openModal("Confirm", {
-                  msg: "Are you sure you want to delete this comment?",
-                  err: false,
-                  pen: false,
-                  confirmationCallback: () =>
-                    deleteComment(postId, comment.ID).catch((e) =>
-                      setErr(`${e}`)
-                    ),
-                  cancellationCallback: () => {},
-                })
-              }
-              Icon={MdDelete}
-            />,
+            <div className={classes.userIcons}>
+              <div className={classes.vert}>
+                <div className={classes.votesContainer}>
+                  <IconBtn
+                    ariaLabel="Vote up"
+                    name="Vote up"
+                    style={{
+                      color: "lime",
+                      ...(comment.my_vote && comment.my_vote.is_upvote
+                        ? { stroke: "1px" }
+                        : { filter: "opacity(0.5)" }),
+                    }}
+                    Icon={FaChevronUp}
+                    onClick={() => {
+                      if (user)
+                        voteOnPostComment(postId, comment.ID, true)
+                          .catch((e) => {
+                            openModal("Message", {
+                              err: true,
+                              pen: false,
+                              msg: `${e}`,
+                            });
+                          })
+                          .then(() => {
+                            updateMyVoteOnComment(comment.ID, true);
+                          });
+                    }}
+                    type="button"
+                  />
+                  {comment.vote_pos_count +
+                    (comment.my_vote
+                      ? comment.my_vote.is_upvote
+                        ? 1
+                        : 0
+                      : 0) -
+                    (comment.vote_neg_count +
+                      (comment.my_vote
+                        ? comment.my_vote.is_upvote
+                          ? 0
+                          : 1
+                        : 0))}
+                  <IconBtn
+                    ariaLabel="Vote down"
+                    name="Vote down"
+                    style={{
+                      color: "red",
+                      ...(comment.my_vote && !comment.my_vote.is_upvote
+                        ? { stroke: "1px" }
+                        : { filter: "opacity(0.5)" }),
+                    }}
+                    Icon={FaChevronDown}
+                    onClick={() => {
+                      if (user)
+                        voteOnPostComment(postId, comment.ID, false)
+                          .catch((e) => {
+                            openModal("Message", {
+                              err: true,
+                              pen: false,
+                              msg: `${e}`,
+                            });
+                          })
+                          .then(() => {
+                            updateMyVoteOnComment(comment.ID, false);
+                          });
+                    }}
+                    type="button"
+                  />
+                </div>
+              </div>
+              {user && user.ID === comment.author_id && (
+                <div className={classes.vert}>
+                  <IconBtn
+                    type="button"
+                    ariaLabel="Edit comment"
+                    name="edit"
+                    onClick={() => setIsEditing(true)}
+                    Icon={AiFillEdit}
+                  />
+                  <IconBtn
+                    type="button"
+                    ariaLabel="Delete comment"
+                    name="delete"
+                    style={{ color: "red" }}
+                    onClick={() =>
+                      openModal("Confirm", {
+                        msg: "Are you sure you want to delete this comment?",
+                        err: false,
+                        pen: false,
+                        confirmationCallback: () =>
+                          deleteComment(postId, comment.ID).catch((e) =>
+                            setErr(`${e}`)
+                          ),
+                        cancellationCallback: () => {},
+                      })
+                    }
+                    Icon={MdDelete}
+                  />
+                </div>
+              )}
+            </div>,
           ]}
           date={comment.created_at ? new Date(comment.created_at) : new Date()}
           uid={comment.author_id}
@@ -115,18 +202,11 @@ export default function Comment({
           />
         </div>
       )}
-      {childComments && repliesOpen && (
-        <button
-          onClick={() => setRepliesOpen(false)}
-          className={classes.repliesBar}
-        >
-          <span />
-        </button>
-      )}
       {childComments && repliesOpen && childComments.length > 0 && (
         <div className={classes.childComments}>
           {childComments.map((cmt: IComment) => (
             <Comment
+              updateMyVoteOnComment={updateMyVoteOnComment}
               getReplies={getReplies}
               setReplyingTo={setReplyingTo}
               replyingTo={replyingTo}
@@ -134,6 +214,14 @@ export default function Comment({
               comment={cmt}
             />
           ))}
+          {childComments && repliesOpen && (
+            <button
+              onClick={() => setRepliesOpen(false)}
+              className={classes.repliesBar}
+            >
+              <span />
+            </button>
+          )}
         </div>
       )}
       {!repliesOpen && childComments && childComments.length > 0 && (

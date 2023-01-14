@@ -19,20 +19,22 @@ export default function Layout() {
       case "Feed": {
         const properties: CSSProperties = {
           width: "calc(100% - var(--horizontal-whitespace) * 2)",
-          minHeight: "max-content",
+          minHeight: pathname.includes("/blog") ? "max-content" : "100%",
           margin: "auto",
           display: "flex",
           position: "absolute",
           background: pathname.includes("/blog") ? "none" : "var(--foreground)",
           height: pathname.includes("/blog")
             ? "calc(100% - var(--header-height) - var(--nav-height) - var(--pagination-controls))"
-            : "100%",
+            : "fit-content",
           left: "var(--horizontal-whitespace)",
-          ...(!pathname.includes("/blog") ? {
-            borderLeft:"1px solid var(--base-pale)",
-            borderRight:"1px solid var(--base-pale)",
-            boxShadow:"0px 0px 6px rgba(0,0,0,0.1)"
-          } : {})
+          ...(!pathname.includes("/blog")
+            ? {
+                borderLeft: "1px solid var(--base-pale)",
+                borderRight: "1px solid var(--base-pale)",
+                boxShadow: "0px 0px 6px rgba(0,0,0,0.1)",
+              }
+            : {}),
         };
         return properties;
       }

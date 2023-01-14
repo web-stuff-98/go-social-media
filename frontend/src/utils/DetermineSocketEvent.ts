@@ -28,6 +28,11 @@ export type PostVoteData = {
   DATA: object & { ID: string; is_upvote: boolean; remove: boolean };
 };
 
+export type PostCommentVoteData = {
+  TYPE: "POST_COMMENT_VOTE";
+  DATA: object & { ID: string; is_upvote: boolean; remove: boolean };
+};
+
 export type SocketEventChangeMethod =
   | "UPDATE"
   | "INSERT"
@@ -64,4 +69,10 @@ export function instanceOfRoomMessageData(
 
 export function instanceOfPostVoteData(object: any): object is PostVoteData {
   return object.TYPE === "POST_VOTE";
+}
+
+export function instanceOfPostCommentVoteData(
+  object: any
+): object is PostCommentVoteData {
+  return object.TYPE === "POST_COMMENT_VOTE";
 }

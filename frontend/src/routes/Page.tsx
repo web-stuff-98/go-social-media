@@ -7,6 +7,7 @@ import ResMsg, { IResMsg } from "../components/ResMsg";
 import useSocket from "../context/SocketContext";
 import {
   instanceOfChangeData,
+  instanceOfPostCommentVoteData,
   instanceOfPostVoteData,
 } from "../utils/DetermineSocketEvent";
 import { baseURL } from "../services/makeRequest";
@@ -65,7 +66,16 @@ export default function Page() {
           my_vote:
             p.my_vote?.uid === "000000000000000000000000" ? null : p.my_vote,
         });
-        setComments(p.comments || []);
+        setComments(
+          p.comments
+            ? p.comments.map((cmt: IComment) => {
+                let outCmt = cmt;
+                if (cmt.my_vote?.uid === "000000000000000000000000")
+                  outCmt.my_vote = null;
+                return outCmt;
+              })
+            : []
+        );
         setResMsg({ msg: "", err: false, pen: false });
         cacheUserData(p.author_id);
         setImgURL(`${baseURL}/api/posts/${p.ID}/image?v=1`);
@@ -86,14 +96,17 @@ export default function Page() {
         if (data.DATA.ID !== post?.ID) return;
         if (data.METHOD === "DELETE") {
           navigate("/blog/1");
+          return;
         }
         if (data.METHOD === "UPDATE") {
           setPost((o) => ({ ...o, ...data.DATA } as IPost));
+          return;
         }
         if (data.METHOD === "UPDATE_IMAGE") {
           setImgURL(
             `${baseURL}/api/posts/${post.ID}/image?v=` + `${Math.random()}`
           );
+          return;
         }
       }
       if (data.ENTITY === "POST_COMMENT") {
@@ -101,9 +114,15 @@ export default function Page() {
           //@ts-ignore
           cacheUserData(data.DATA.author_id);
           setComments((o) => [...o, data.DATA as IComment]);
+          return;
         }
         if (data.METHOD === "DELETE") {
-          setComments((o) => [...o.filter((c) => c.ID !== data.DATA.ID)]);
+          setComments((o) => [
+            ...o.filter(
+              (c) => c.ID !== data.DATA.ID || c.parent_id === data.DATA.ID
+            ),
+          ]);
+          return;
         }
         if (data.METHOD === "UPDATE") {
           setComments((o) => {
@@ -113,6 +132,7 @@ export default function Page() {
             newCmts[i] = { ...newCmts[i], ...(data.DATA as Partial<IComment>) };
             return newCmts;
           });
+          return;
         }
       }
     }
@@ -127,6 +147,29 @@ export default function Page() {
         }
         return { ...newPost };
       });
+      return;
+    }
+    if (instanceOfPostCommentVoteData(data)) {
+      setComments((cmts) => {
+        let newCmts = cmts;
+        const i = cmts.findIndex((c) => c.ID === data.DATA.ID);
+        if (i === -1) return cmts;
+        if (data.DATA.remove) {
+          if (data.DATA.is_upvote) {
+            newCmts[i].vote_pos_count--;
+          } else {
+            newCmts[i].vote_neg_count--;
+          }
+        } else {
+          if (data.DATA.is_upvote) {
+            newCmts[i].vote_pos_count++;
+          } else {
+            newCmts[i].vote_neg_count++;
+          }
+        }
+        return [...newCmts];
+      });
+      return;
     }
   }, []);
 
@@ -138,6 +181,21 @@ export default function Page() {
   }, [socket]);
 
   const [cmtErr, setCmtErr] = useState("");
+
+  const updateMyVoteOnComment = (id: string, isUpvote: boolean) => {
+    setComments((cmts) => {
+      let newCmts = cmts;
+      const i = cmts.findIndex((cmt) => cmt.ID === id);
+      if (i === -1) return cmts;
+      newCmts[i].my_vote = newCmts[i].my_vote
+        ? null
+        : {
+            uid: user?.ID as string,
+            is_upvote: isUpvote,
+          };
+      return [...newCmts];
+    });
+  };
 
   return (
     <div className={classes.container}>
@@ -154,7 +212,7 @@ export default function Page() {
                 <h2>{post.description}</h2>
               </div>
               <User
-              reverse
+                reverse
                 light
                 additionalStuff={[
                   <div className={classes.votesContainer}>
@@ -269,6 +327,7 @@ export default function Page() {
           getReplies={getReplies}
           postId={post?.ID as string}
           comments={commentsByParentId[parentComment as string]}
+          updateMyVoteOnComment={updateMyVoteOnComment}
         />
       </div>
       <ResMsg resMsg={resMsg} />
