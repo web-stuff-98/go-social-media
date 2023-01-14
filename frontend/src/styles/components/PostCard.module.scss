@@ -135,7 +135,7 @@
   }
 }
 
-/*.container:nth-child(even) .inner {
+.container:nth-child(even) .inner {
   flex-direction: row-reverse;
   text-align: right;
   .textTags {
@@ -151,7 +151,7 @@
       flex-direction: row-reverse;
     }
   }
-}*/
+}
 
 @media (max-width: 700px) {
   .container {

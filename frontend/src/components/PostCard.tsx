@@ -109,27 +109,28 @@ export default function PostCard({
               }}
               Icon={FaChevronUp}
               type="button"
-              onClick={() =>
-                voteOnPost(post.ID, true)
-                  .catch((e) => {
-                    openModal("Message", {
-                      err: true,
-                      pen: false,
-                      msg: `${e}`,
+              onClick={() => {
+                if (user)
+                  voteOnPost(post.ID, true)
+                    .catch((e) => {
+                      openModal("Message", {
+                        err: true,
+                        pen: false,
+                        msg: `${e}`,
+                      });
+                    })
+                    .then(() => {
+                      updatePostCard({
+                        ID: post.ID,
+                        my_vote: post.my_vote
+                          ? null
+                          : {
+                              uid: user?.ID as string,
+                              is_upvote: true,
+                            },
+                      });
                     });
-                  })
-                  .then(() => {
-                    updatePostCard({
-                      ID: post.ID,
-                      my_vote: post.my_vote
-                        ? null
-                        : {
-                            uid: user?.ID as string,
-                            is_upvote: true,
-                          },
-                    });
-                  })
-              }
+              }}
             />
             {post.vote_pos_count +
               (post.my_vote ? (post.my_vote.is_upvote ? 1 : 0) : 0) -
@@ -149,27 +150,28 @@ export default function PostCard({
               }}
               Icon={FaChevronDown}
               type="button"
-              onClick={() =>
-                voteOnPost(post.ID, false)
-                  .catch((e) => {
-                    openModal("Message", {
-                      err: true,
-                      pen: false,
-                      msg: `${e}`,
+              onClick={() => {
+                if (user)
+                  voteOnPost(post.ID, false)
+                    .catch((e) => {
+                      openModal("Message", {
+                        err: true,
+                        pen: false,
+                        msg: `${e}`,
+                      });
+                    })
+                    .then(() => {
+                      updatePostCard({
+                        ID: post.ID,
+                        my_vote: post.my_vote
+                          ? null
+                          : {
+                              uid: user?.ID as string,
+                              is_upvote: false,
+                            },
+                      });
                     });
-                  })
-                  .then(() => {
-                    updatePostCard({
-                      ID: post.ID,
-                      my_vote: post.my_vote
-                        ? null
-                        : {
-                            uid: user?.ID as string,
-                            is_upvote: false,
-                          },
-                    });
-                  })
-              }
+              }}
             />
           </div>,
         ]}

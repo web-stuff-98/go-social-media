@@ -6,11 +6,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/web-stuff-98/go-social-media/pkg/db"
 	"github.com/web-stuff-98/go-social-media/pkg/db/changestreams"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers"
-	"github.com/web-stuff-98/go-social-media/pkg/seed"
+	"github.com/web-stuff-98/go-social-media/pkg/handlers/middleware"
+	rdb "github.com/web-stuff-98/go-social-media/pkg/redis"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -32,6 +34,8 @@ func main() {
 	}
 	h := handlers.New(DB, Collections, SocketServer)
 	router := mux.NewRouter()
+
+	redisClient := rdb.Init()
 
 	Collections.PostCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
 		Keys: bson.M{
@@ -82,7 +86,13 @@ func main() {
 	router.HandleFunc("/api/posts/{slug}/image", h.UploadPostImage).Methods(http.MethodPost)
 	router.HandleFunc("/api/posts/{id}/image", h.GetPostImage).Methods(http.MethodGet)
 	router.HandleFunc("/api/posts/{id}/thumb", h.GetPostThumb).Methods(http.MethodGet)
-	router.HandleFunc("/api/posts/{id}/vote", h.VoteOnPost).Methods(http.MethodPatch)
+	router.HandleFunc("/api/posts/{id}/vote", middleware.BasicRateLimiter(h.VoteOnPost, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 3,
+		MaxReqs:       1,
+		BlockDuration: time.Second * 3,
+		Message:       "Too many requests",
+		RouteName:     "post_vote",
+	}, redisClient, Collections)).Methods(http.MethodPatch)
 
 	router.HandleFunc("/api/rooms", h.CreateRoom).Methods(http.MethodPost)
 	router.HandleFunc("/api/rooms/page/{page}", h.GetRoomPage).Methods(http.MethodGet)
@@ -97,8 +107,8 @@ func main() {
 	log.Println("Creating changestreams")
 	changestreams.WatchCollections(DB, SocketServer)
 
-	DB.Drop(context.TODO())
-	go seed.SeedDB(&Collections, 10, 10, 10)
+	//DB.Drop(context.TODO())
+	//go seed.SeedDB(&Collections, 25, 50, 25)
 
 	log.Println("API open on port", os.Getenv("PORT"))
 	log.Fatal(http.ListenAndServe(fmt.Sprint(":", os.Getenv("PORT")), c.Handler(router)))

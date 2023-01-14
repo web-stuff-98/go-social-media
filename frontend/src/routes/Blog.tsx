@@ -64,7 +64,7 @@ export default function Blog() {
         {!resMsg.pen && (
           <>
             {posts.map((p, i) => (
-              <PostCard reverse={false} key={p.ID} post={p} />
+              <PostCard reverse={Boolean(i % 2)} key={p.ID} post={p} />
             ))}
             <div className={classes.endFix} />
           </>

@@ -193,7 +193,7 @@ func (h handler) GetRoom(w http.ResponseWriter, r *http.Request) {
 	var roomMessages models.RoomMessages
 	if err := h.Collections.RoomMessagesCollection.FindOne(r.Context(), bson.M{"_id": roomId}).Decode(&room); err != nil {
 		if err == mongo.ErrNoDocuments {
-			responseMessage(w, http.StatusNotFound, "Room not found")
+			responseMessage(w, http.StatusNotFound, "Room messages not found")
 		} else {
 			responseMessage(w, http.StatusInternalServerError, "Internal error")
 		}
