@@ -63,44 +63,212 @@ func main() {
 		AllowedMethods:   []string{"GET", "HEAD", "POST", "PATCH", "DELETE"},
 	})
 
-	router.HandleFunc("/api/users/{id}", h.GetUser).Methods(http.MethodGet)
-	router.HandleFunc("/api/users/{id}/pfp", h.GetPfp).Methods(http.MethodGet)
+	router.HandleFunc("/api/users/{id}", middleware.BasicRateLimiter(h.GetUser, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 20,
+		MaxReqs:       500,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "get_user",
+	}, redisClient, Collections)).Methods(http.MethodGet)
+	router.HandleFunc("/api/users/{id}/pfp", middleware.BasicRateLimiter(h.GetPfp, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 20,
+		MaxReqs:       500,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "get_pfp",
+	}, redisClient, Collections)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/account/register", h.Register).Methods(http.MethodPost)
-	router.HandleFunc("/api/account/login", h.Login).Methods(http.MethodPost)
-	router.HandleFunc("/api/account/logout", h.Logout).Methods(http.MethodPost)
-	router.HandleFunc("/api/account/refresh", h.RefreshToken).Methods(http.MethodPost)
-	router.HandleFunc("/api/account/delete", h.DeleteAccount).Methods(http.MethodPost)
-	router.HandleFunc("/api/account/pfp", h.UploadPfp).Methods(http.MethodPost)
-	router.HandleFunc("/api/account/conversations", h.GetConversations).Methods(http.MethodGet)
-	router.HandleFunc("/api/account/conversation/{id}", h.GetConversation).Methods(http.MethodGet)
+	router.HandleFunc("/api/account/register", middleware.BasicRateLimiter(h.Register, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 1000,
+		MaxReqs:       3,
+		BlockDuration: time.Second * 10000,
+		Message:       "You have been creating too many accounts",
+		RouteName:     "register",
+	}, redisClient, Collections)).Methods(http.MethodPost)
+	router.HandleFunc("/api/account/login", middleware.BasicRateLimiter(h.Login, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 20,
+		MaxReqs:       5,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "login",
+	}, redisClient, Collections)).Methods(http.MethodPost)
+	router.HandleFunc("/api/account/logout", middleware.BasicRateLimiter(h.Logout, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 20,
+		MaxReqs:       5,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "logout",
+	}, redisClient, Collections)).Methods(http.MethodPost)
+	router.HandleFunc("/api/account/refresh", middleware.BasicRateLimiter(h.RefreshToken, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 20,
+		MaxReqs:       6,
+		BlockDuration: time.Second * 6000,
+		Message:       "Too many requests",
+		RouteName:     "refresh_token",
+	}, redisClient, Collections)).Methods(http.MethodPost)
+	router.HandleFunc("/api/account/delete", middleware.BasicRateLimiter(h.DeleteAccount, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 20,
+		MaxReqs:       2,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "delete_account",
+	}, redisClient, Collections)).Methods(http.MethodPost)
+	router.HandleFunc("/api/account/pfp", middleware.BasicRateLimiter(h.UploadPfp, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 120,
+		MaxReqs:       10,
+		BlockDuration: time.Second * 500,
+		Message:       "Too many requests",
+		RouteName:     "upload_pfp",
+	}, redisClient, Collections)).Methods(http.MethodPost)
+	router.HandleFunc("/api/account/conversations", middleware.BasicRateLimiter(h.GetConversations, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 8,
+		MaxReqs:       20,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "get_conversations",
+	}, redisClient, Collections)).Methods(http.MethodGet)
+	router.HandleFunc("/api/account/conversation/{id}", middleware.BasicRateLimiter(h.GetConversation, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 8,
+		MaxReqs:       20,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "get_conversation",
+	}, redisClient, Collections)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/posts/page/{page}", h.GetPage).Methods(http.MethodGet)
-	router.HandleFunc("/api/posts/{postId}/comment", h.CommentOnPost).Methods(http.MethodPost)
-	router.HandleFunc("/api/posts/{postId}/comment/{id}/delete", h.DeleteCommentOnPost).Methods(http.MethodDelete)
-	router.HandleFunc("/api/posts/{postId}/comment/{id}/update", h.UpdatePostComment).Methods(http.MethodPatch)
-	router.HandleFunc("/api/posts/{slug}", h.GetPost).Methods(http.MethodGet)
-	router.HandleFunc("/api/posts/{slug}/delete", h.DeletePost).Methods(http.MethodDelete)
-	router.HandleFunc("/api/posts/{slug}/update", h.UpdatePost).Methods(http.MethodPatch)
-	router.HandleFunc("/api/posts", h.CreatePost).Methods(http.MethodPost)
-	router.HandleFunc("/api/posts/{slug}/image", h.UploadPostImage).Methods(http.MethodPost)
-	router.HandleFunc("/api/posts/{id}/image", h.GetPostImage).Methods(http.MethodGet)
-	router.HandleFunc("/api/posts/{id}/thumb", h.GetPostThumb).Methods(http.MethodGet)
+	router.HandleFunc("/api/posts/page/{page}", middleware.BasicRateLimiter(h.GetPage, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 10,
+		MaxReqs:       20,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "get_page",
+	}, redisClient, Collections)).Methods(http.MethodGet)
+	router.HandleFunc("/api/posts/{postId}/comment", middleware.BasicRateLimiter(h.CommentOnPost, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 120,
+		MaxReqs:       40,
+		BlockDuration: time.Second * 3000,
+		Message:       "You have been making too many comments",
+		RouteName:     "create_comment",
+	}, redisClient, Collections)).Methods(http.MethodPost)
+	router.HandleFunc("/api/posts/{postId}/comment/{id}/delete", middleware.BasicRateLimiter(h.DeleteCommentOnPost, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 120,
+		MaxReqs:       40,
+		BlockDuration: time.Second * 3000,
+		Message:       "You have been deleting too many comments",
+		RouteName:     "delete_comment",
+	}, redisClient, Collections)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/posts/{postId}/comment/{id}/update", middleware.BasicRateLimiter(h.UpdatePostComment, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 120,
+		MaxReqs:       30,
+		BlockDuration: time.Second * 3000,
+		Message:       "You have been editing too many comments",
+		RouteName:     "update_comment",
+	}, redisClient, Collections)).Methods(http.MethodPatch)
+	router.HandleFunc("/api/posts/{slug}", middleware.BasicRateLimiter(h.GetPost, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 60,
+		MaxReqs:       20,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "get_post",
+	}, redisClient, Collections)).Methods(http.MethodGet)
+	router.HandleFunc("/api/posts/{slug}/delete", middleware.BasicRateLimiter(h.DeletePost, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 120,
+		MaxReqs:       20,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "delete_post",
+	}, redisClient, Collections)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/posts/{slug}/update", middleware.BasicRateLimiter(h.UpdatePost, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 120,
+		MaxReqs:       10,
+		BlockDuration: time.Second * 3000,
+		Message:       "You have been editing too many posts",
+		RouteName:     "update_post",
+	}, redisClient, Collections)).Methods(http.MethodPatch)
+	router.HandleFunc("/api/posts", middleware.BasicRateLimiter(h.CreatePost, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 120,
+		MaxReqs:       10,
+		BlockDuration: time.Second * 3000,
+		Message:       "You have been creating too many posts",
+		RouteName:     "create_post",
+	}, redisClient, Collections)).Methods(http.MethodPost)
+	router.HandleFunc("/api/posts/{slug}/image", middleware.BasicRateLimiter(h.UploadPostImage, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 30,
+		MaxReqs:       20,
+		BlockDuration: time.Second * 200,
+		Message:       "Too many requests",
+		RouteName:     "upload_post_image",
+	}, redisClient, Collections)).Methods(http.MethodPost)
+	router.HandleFunc("/api/posts/{id}/image", middleware.BasicRateLimiter(h.GetPostImage, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 3,
+		MaxReqs:       60,
+		BlockDuration: time.Second * 100,
+		Message:       "Too many requests",
+		RouteName:     "get_post_image",
+	}, redisClient, Collections)).Methods(http.MethodGet)
+	router.HandleFunc("/api/posts/{id}/thumb", middleware.BasicRateLimiter(h.GetPostThumb, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 3,
+		MaxReqs:       60,
+		BlockDuration: time.Second * 100,
+		Message:       "Too many requests",
+		RouteName:     "get_post_thumb",
+	}, redisClient, Collections)).Methods(http.MethodGet)
 	router.HandleFunc("/api/posts/{id}/vote", middleware.BasicRateLimiter(h.VoteOnPost, middleware.SimpleLimiterOpts{
 		Window:        time.Second * 3,
-		MaxReqs:       1,
-		BlockDuration: time.Second * 3,
+		MaxReqs:       10,
+		BlockDuration: time.Second * 100,
 		Message:       "Too many requests",
 		RouteName:     "post_vote",
 	}, redisClient, Collections)).Methods(http.MethodPatch)
 
-	router.HandleFunc("/api/rooms", h.CreateRoom).Methods(http.MethodPost)
-	router.HandleFunc("/api/rooms/page/{page}", h.GetRoomPage).Methods(http.MethodGet)
-	router.HandleFunc("/api/rooms/{id}", h.GetRoom).Methods(http.MethodGet)
-	router.HandleFunc("/api/rooms/{id}/image", h.UploadRoomImage).Methods(http.MethodPost)
-	router.HandleFunc("/api/rooms/{id}/image", h.GetRoomImage).Methods(http.MethodGet)
-	router.HandleFunc("/api/rooms/{id}/update", h.UpdateRoom).Methods(http.MethodPatch)
-	router.HandleFunc("/api/rooms/{id}/delete", h.DeleteRoom).Methods(http.MethodDelete)
+	router.HandleFunc("/api/rooms", middleware.BasicRateLimiter(h.CreateRoom, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 240,
+		MaxReqs:       3,
+		BlockDuration: time.Second * 1000,
+		Message:       "You have been creating too many rooms",
+		RouteName:     "create_room",
+	}, redisClient, Collections)).Methods(http.MethodPost)
+	router.HandleFunc("/api/rooms/page/{page}", middleware.BasicRateLimiter(h.GetRoomPage, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 10,
+		MaxReqs:       20,
+		BlockDuration: time.Second * 1000,
+		Message:       "Too many requests",
+		RouteName:     "get_room_page",
+	}, redisClient, Collections)).Methods(http.MethodGet)
+	router.HandleFunc("/api/rooms/{id}", middleware.BasicRateLimiter(h.GetRoom, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 10,
+		MaxReqs:       20,
+		BlockDuration: time.Second * 1000,
+		Message:       "Too many requests",
+		RouteName:     "get_room",
+	}, redisClient, Collections)).Methods(http.MethodGet)
+	router.HandleFunc("/api/rooms/{id}/image", middleware.BasicRateLimiter(h.UploadRoomImage, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 30,
+		MaxReqs:       20,
+		BlockDuration: time.Second * 200,
+		Message:       "Too many requests",
+		RouteName:     "upload_room_image",
+	}, redisClient, Collections)).Methods(http.MethodPost)
+	router.HandleFunc("/api/rooms/{id}/image", middleware.BasicRateLimiter(h.GetRoomImage, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 3,
+		MaxReqs:       60,
+		BlockDuration: time.Second * 100,
+		Message:       "Too many requests",
+		RouteName:     "get_room_image",
+	}, redisClient, Collections)).Methods(http.MethodGet)
+	router.HandleFunc("/api/rooms/{id}/update", middleware.BasicRateLimiter(h.UpdateRoom, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 120,
+		MaxReqs:       10,
+		BlockDuration: time.Second * 3000,
+		Message:       "You have been editing too many rooms",
+		RouteName:     "update_room",
+	}, redisClient, Collections)).Methods(http.MethodPatch)
+	router.HandleFunc("/api/rooms/{id}/delete", middleware.BasicRateLimiter(h.DeleteRoom, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 120,
+		MaxReqs:       20,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "delete_room",
+	}, redisClient, Collections)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/ws", h.WebSocketEndpoint)
 
