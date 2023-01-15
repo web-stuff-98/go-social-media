@@ -401,6 +401,9 @@ func (h handler) DeleteCommentOnPost(w http.ResponseWriter, r *http.Request) {
 				"_id":       id,
 				"author_id": user.ID,
 			},
+			"votes": bson.M{
+				"comment_id": id,
+			},
 		},
 	})
 	if err != nil {

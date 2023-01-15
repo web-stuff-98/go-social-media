@@ -137,6 +137,7 @@ func watchPostDeletes(db *mongo.Database, ss *socketserver.SocketServer) {
 		db.Collection("post_images").DeleteOne(context.TODO(), bson.M{"_id": postId})
 		db.Collection("post_thumbs").DeleteOne(context.TODO(), bson.M{"_id": postId})
 		db.Collection("post_votes").DeleteOne(context.TODO(), bson.M{"_id": postId})
+		db.Collection("post_comments").DeleteOne(context.TODO(), bson.M{"_id": postId})
 		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "post_card=" + postId.Hex(),
 			Data: map[string]string{

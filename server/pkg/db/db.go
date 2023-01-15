@@ -6,10 +6,21 @@ import (
 	"os"
 	"time"
 
+	"github.com/web-stuff-98/go-social-media/pkg/db/models"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"golang.org/x/exp/maps"
 )
+
+/*
+	Also included is a cleanup function. The cleanup function removes comments
+	that are parented to comments that no longer exist, and votes that are parented to
+	comments that no longer exist, to save space. It also deletes users accounts after
+	20 minutes, along with all their stuff.
+*/
 
 type Collections struct {
 	UserCollection         *mongo.Collection
@@ -56,5 +67,79 @@ func Init() (*mongo.Database, Collections) {
 		RoomMessagesCollection: DB.Collection("room_messages"),
 		RoomImageCollection:    DB.Collection("room_images"),
 	}
+	cleanUp(&colls)
 	return DB, colls
+}
+
+func cleanUp(colls *Collections) {
+	cleanupTicker := time.NewTicker(10 * time.Minute)
+	quitCleanup := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-cleanupTicker.C:
+				cleanUpPosts(colls)
+			case <-quitCleanup:
+				cleanupTicker.Stop()
+				return
+			}
+		}
+	}()
+}
+
+func getChildrenOfOrphanedComment(orphanId string, cmts map[string]string) map[string]struct{} {
+	childIds := make(map[string]struct{})
+	for commentId, parentId := range cmts {
+		if parentId == orphanId {
+			childIds[commentId] = struct{}{}
+		}
+	}
+	for childId, _ := range childIds {
+		childChildren := getChildrenOfOrphanedComment(childId, cmts)
+		maps.Copy(childChildren, childIds)
+	}
+	return childIds
+}
+
+func cleanUpPosts(colls *Collections) {
+	cmtsCursor, err := colls.PostCommentsCollection.Find(context.Background(), bson.D{})
+	if err != nil {
+		log.Fatal("ERROR IN POSTS CLEANUP CURSOR :", err)
+	}
+	for cmtsCursor.Next(context.Background()) {
+		postCmts := &models.PostComments{}
+		cmtsCursor.Decode(&postCmts)
+		allCmts := make(map[string]string)
+		for _, c := range postCmts.Comments {
+			allCmts[c.ID.Hex()] = c.ParentID
+		}
+		// Get all orphaned comments
+		orphanedCmts := make(map[string]struct{})
+		for commentId, parentId := range allCmts {
+			_, ok := allCmts[parentId]
+			if !ok {
+				orphanedCmts[commentId] = struct{}{}
+			}
+		}
+		// Get children of orphaned comments (getChildrenOfOrphanedComment works recursively)
+		for cmtId, _ := range orphanedCmts {
+			children := getChildrenOfOrphanedComment(cmtId, allCmts)
+			maps.Copy(children, orphanedCmts)
+		}
+		deleteIds := []primitive.ObjectID{}
+		for id, _ := range orphanedCmts {
+			oid, err := primitive.ObjectIDFromHex(id)
+			if err != nil {
+				log.Fatal("Invalid ID : ", err)
+			}
+			deleteIds = append(deleteIds, oid)
+		}
+		// Delete all orphaned comments and votes on those orphaned comments
+		if _, err := colls.PostCommentsCollection.UpdateByID(context.Background(), postCmts.ID, bson.M{"$pull": bson.M{
+			"comments": bson.M{"_id": bson.M{"$in": deleteIds}},
+			"votes":    bson.M{"$elemMatch": bson.M{"parent_id": bson.M{"$in": deleteIds}}},
+		}}); err != nil {
+			log.Fatal("ERROR IN POSTS CLEANUP DELETE COMMENTS OPERATION :", err)
+		}
+	}
 }

@@ -24,6 +24,11 @@ import (
 	"github.com/rs/cors"
 )
 
+/*
+	Some of this stuff should be moved to seperate files...
+	It isn't a problem at the moment though, it just looks messy.
+*/
+
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("DOTENV ERROR : ", err)

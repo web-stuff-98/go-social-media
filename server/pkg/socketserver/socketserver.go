@@ -3,6 +3,7 @@ package socketserver
 import (
 	"log"
 	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -13,9 +14,9 @@ import (
 	file handles messages from the client.
 
 	Uid can always be left as primitive.NilObjectID, users are not required
-	to be authenticated to connect to the socket, join subscriptions or recieve
-	messages. Uid is stored with the connection so it's easy to identify users
-	that are logged in.
+	to be authenticated to connect or open subscriptions, but there is an auth
+	check for users down below, to make sure users cannot subscribe to other users
+	inboxes or subscribe to rooms without being authenticated.
 */
 
 type ConnectionInfo struct {
@@ -136,6 +137,12 @@ func RunServer(socketServer *SocketServer) {
 						allow = false
 					}
 				}
+				// Make sure users cannot subscribe to rooms without being logged in
+				if strings.Contains(connData.Name, "room=") {
+					if connData.Uid == primitive.NilObjectID {
+						allow = false
+					}
+				}
 				if allow {
 					if socketServer.Subscriptions[connData.Name] == nil {
 						socketServer.Subscriptions[connData.Name] = make(map[*websocket.Conn]primitive.ObjectID)
@@ -205,6 +212,27 @@ func RunServer(socketServer *SocketServer) {
 		for {
 			subsName := <-socketServer.DestroySubscription
 			delete(socketServer.Subscriptions, subsName)
+		}
+	}()
+
+	/* -------- Cleanup ticker -------- */
+	cleanupTicker := time.NewTicker(2 * time.Minute)
+	quitCleanup := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-cleanupTicker.C:
+				// Remove subscriptions nobody is connected to
+				for k, v := range socketServer.Subscriptions {
+					if len(v) == 0 {
+						socketServer.DestroySubscription <- k
+					}
+				}
+
+			case <-quitCleanup:
+				cleanupTicker.Stop()
+				return
+			}
 		}
 	}()
 }
