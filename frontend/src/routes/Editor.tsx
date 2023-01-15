@@ -19,6 +19,9 @@ import type { IResMsg } from "../components/ResMsg";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 
+import { z } from "zod";
+import FieldErrorTip from "../components/FieldErrorTip";
+
 export default function Editor() {
   const { slug } = useParams();
 
@@ -60,6 +63,17 @@ export default function Editor() {
     pen: false,
   });
 
+  const [validationErrs, setValidationErrs] = useState<any[]>([]);
+
+  const Schema = z.object({
+    title: z.string().max(80).min(2),
+    description: z.string().min(10).max(100),
+    body: z.string().min(10).max(8000),
+    tags: z.string().refine((v) => v.split("#").filter((t) => t).length < 8, {
+      message: "Max 8 tags",
+    }),
+  });
+
   const formik = useFormik({
     initialValues: {
       title: "",
@@ -68,7 +82,17 @@ export default function Editor() {
       tags: "",
       file: undefined,
     },
+    validate: (values) => {
+      if (!Schema) return;
+      try {
+        Schema.parse(values);
+        setValidationErrs([]);
+      } catch (error: any) {
+        setValidationErrs(error.issues);
+      }
+    },
     onSubmit: async (vals) => {
+      if (validationErrs.length > 0) return;
       try {
         setResMsg({ msg: "Uploading post...", err: false, pen: true });
         if (!vals.file) throw new Error("No image file selected");
@@ -118,6 +142,7 @@ export default function Editor() {
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
             />
+            <FieldErrorTip fieldName="title" validationErrs={validationErrs} />
           </div>
           <div className={formClasses.inputLabelWrapper}>
             <label htmlFor="description">Description</label>
@@ -128,6 +153,10 @@ export default function Editor() {
               value={formik.values.description}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
+            />
+            <FieldErrorTip
+              fieldName="description"
+              validationErrs={validationErrs}
             />
           </div>
           <div className={formClasses.inputLabelWrapper}>
@@ -140,6 +169,7 @@ export default function Editor() {
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
             />
+            <FieldErrorTip fieldName="tags" validationErrs={validationErrs} />
           </div>
           <div className={classes.quillOuterContainer}>
             <label htmlFor="body">Body</label>
@@ -151,6 +181,7 @@ export default function Editor() {
                 onChange={(e) => formik.setFieldValue("body", e)}
               />
             </div>
+            <FieldErrorTip fieldName="body" validationErrs={validationErrs} />
           </div>
           <input
             name="file"

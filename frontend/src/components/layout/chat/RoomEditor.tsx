@@ -8,6 +8,10 @@ import { createRoom, uploadRoomImage } from "../../../services/rooms";
 import axios from "axios";
 import { IRoomCard } from "./Rooms";
 
+import { z } from "zod";
+import FieldErrorTip from "../../FieldErrorTip";
+import ErrorTip from "../../ErrorTip";
+
 export default function RoomEditor() {
   const [resMsg, setResMsg] = useState<IResMsg>({
     msg: "",
@@ -15,9 +19,26 @@ export default function RoomEditor() {
     pen: false,
   });
 
+  const Schema = z.object({
+    name: z.string().max(16).min(2),
+  });
+
+  const [validationErrs, setValidationErrs] = useState<any[]>([]);
+
   const formik = useFormik({
     initialValues: { name: "", image: null },
+    validate: (values) => {
+      if (!Schema) return;
+      try {
+        Schema.parse(values);
+        setValidationErrs([]);
+      } catch (error: any) {
+        console.log(error.issues as z.ZodError[]);
+        setValidationErrs(error.issues);
+      }
+    },
     onSubmit: async (vals) => {
+      if (validationErrs.length > 0) return;
       try {
         setResMsg({ msg: "", err: false, pen: true });
         const id = await createRoom(vals as Pick<IRoomCard, "name">);
@@ -48,6 +69,7 @@ export default function RoomEditor() {
   };
 
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
   return (
     <form onSubmit={formik.handleSubmit} className={classes.container}>
       <div className={formClasses.inputLabelWrapper}>
@@ -59,6 +81,7 @@ export default function RoomEditor() {
           id="name"
           type="text"
         />
+        <FieldErrorTip fieldName="name" validationErrs={validationErrs} />
       </div>
       <div className={formClasses.inputLabelWrapper}>
         <input
@@ -93,12 +116,24 @@ export default function RoomEditor() {
       <button type="submit">Create</button>
       {formik.values.image && (
         <img
+          ref={imgRef}
           alt="Preview"
           className={classes.imgPreview}
           src={URL.createObjectURL(formik.values.image)}
         />
       )}
-      <ResMsg resMsg={resMsg} />
+      {resMsg.pen ||
+        (resMsg.msg && (
+          <div
+            style={{
+              width: `${
+                imgRef.current ? `${imgRef.current.width}px` : "12rem"
+              }`,
+            }}
+          >
+            <ResMsg resMsg={resMsg} />
+          </div>
+        ))}
     </form>
   );
 }

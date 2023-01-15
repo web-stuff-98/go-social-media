@@ -11,6 +11,7 @@ import useSocket from "../../../context/SocketContext";
 import { instanceOfPrivateMessageData } from "../../../utils/DetermineSocketEvent";
 import { useModal } from "../../../context/ModalContext";
 import { getConversations, getConversation } from "../../../services/chat";
+import ErrorTip from "../../ErrorTip";
 
 export interface IPrivateMessage {
   ID: string;
@@ -178,7 +179,7 @@ export default function Conversations() {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!selectedConversation) return;
+    if (!selectedConversation || messageInput.length > 200) return;
     socket?.send(
       JSON.stringify({
         event_type: "PRIVATE_MESSAGE",
@@ -214,6 +215,7 @@ export default function Conversations() {
             required
           />
           <IconBtn name="Send" ariaLabel="Send message" Icon={MdSend} />
+          {messageInput.length > 200 && <ErrorTip message="Maximum 200 characters"/>}
         </form>
       </div>
     </>

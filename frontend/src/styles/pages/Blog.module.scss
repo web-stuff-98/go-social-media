@@ -11,7 +11,7 @@
     width: 70%;
     justify-content: flex-start;
     .endFix {
-        min-height: calc(2px + var(--pagination-controls));
+      min-height: calc(2px + var(--pagination-controls));
     }
   }
 
@@ -36,42 +36,60 @@
       border-radius: var(--border-radius);
       width: 100%;
       height: 100%;
-      gap:var(--padding-medium);
+      gap: var(--padding-medium);
 
       .searchForm {
         width: 100%;
         display: flex;
         gap: 2px;
         align-items: center;
-        input {
+        .search {
           flex-grow: 1;
-        }
-        svg {
+          display: flex;
+          align-items: center;
+          input {
+            flex-grow: 1;
+          }
+          svg {
             padding: 0 3px;
+          }
         }
         .dropdownsContainer {
-            display: flex;
-            gap:2px;
-            button {
-                padding: 2px 4px;
-                font-size: var(--font-xs);
-            }
-            .sortMode {
-                min-width: 4.5rem;
-            }
+          display: flex;
+          gap: 2px;
+          button {
+            padding: 2px 4px;
+            font-size: var(--font-xs);
+          }
+          .sortMode {
+            min-width: 4.5rem;
+          }
         }
       }
+
+      @media (max-width:1280px) {
+        .searchForm {
+          flex-direction: column;
+          .dropdownsContainer {
+            width: 100%;
+          }
+          .search {
+            width: 100%;
+          }
+        }
+      }
+
       .searchTags {
         display: flex;
         align-items: center;
         justify-content: center;
         flex-wrap: wrap;
-        gap:var(--padding-small);
+        gap: var(--padding-small);
         button {
           padding: 0px 4px;
-            font-size: var(--font-xs);
-            background: var(--tag-selected);
-            border: 1px solid var(--text-color);
+          font-size: var(--font-xs);
+          background: var(--tag-selected);
+          border: 1px solid var(--text-color);
         }
       }
     }

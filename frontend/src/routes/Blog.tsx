@@ -98,6 +98,7 @@ export default function Blog() {
               />
               </div>
             </div>
+            <div className={classes.search}>
             <input
               name="Search input"
               id="Search input"
@@ -110,6 +111,7 @@ export default function Blog() {
               required
             />
             <IconBtn name="Search" ariaLabel="Search" Icon={FaSearch} />
+            </div>
           </form>
           <div className={classes.searchTags}>
             {getTagsFromParams.map((t) => (

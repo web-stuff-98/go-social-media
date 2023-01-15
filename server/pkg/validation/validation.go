@@ -9,7 +9,7 @@ type Post struct {
 	Title       string `json:"title" validate:"required,min=2,max=80"`
 	Description string `json:"description" validate:"required,min=10,max=100"`
 	Body        string `json:"body" validate:"required,min=10,max=8000"`
-	Tags        string `json:"tags"`
+	Tags        string `json:"tags" validate:"required,min=2,max=100"`
 }
 
 type Vote struct {

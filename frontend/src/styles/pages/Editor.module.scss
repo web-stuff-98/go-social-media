@@ -36,6 +36,7 @@
     width: 100%;
     display: grid;
     margin-top: var(--padding);
+    position: relative;
     .quillContainer {
       background: var(--foreground);
       border-radius: var(--border-radius-medium);

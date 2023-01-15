@@ -228,7 +228,6 @@ func RunServer(socketServer *SocketServer) {
 						socketServer.DestroySubscription <- k
 					}
 				}
-
 			case <-quitCleanup:
 				cleanupTicker.Stop()
 				return

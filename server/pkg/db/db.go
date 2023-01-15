@@ -121,7 +121,7 @@ func cleanUpPosts(colls *Collections) {
 				orphanedCmts[commentId] = struct{}{}
 			}
 		}
-		// Get children of orphaned comments (getChildrenOfOrphanedComment works recursively)
+		// Get children of orphaned comments
 		for cmtId, _ := range orphanedCmts {
 			children := getChildrenOfOrphanedComment(cmtId, allCmts)
 			maps.Copy(children, orphanedCmts)

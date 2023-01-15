@@ -15,6 +15,7 @@ import {
 } from "../../../utils/DetermineSocketEvent";
 import { useAuth } from "../../../context/AuthContext";
 import { useUsers } from "../../../context/UsersContext";
+import ErrorTip from "../../ErrorTip";
 
 export interface IRoomMessage {
   ID: string;
@@ -66,6 +67,7 @@ export default function Room() {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if(messageInput.length > 200) return
     socket?.send(
       JSON.stringify({
         event_type: "ROOM_MESSAGE",
@@ -85,7 +87,7 @@ export default function Room() {
         if (!o) return o;
         return { ...o, messages: [...o.messages, data.DATA] };
       });
-      return
+      return;
     }
     if (instanceOfChangeData(data)) {
       if (data.DATA.ID !== roomId) return;
@@ -128,6 +130,9 @@ export default function Room() {
           required
         />
         <IconBtn name="Send" ariaLabel="Send message" Icon={MdSend} />
+        {messageInput.length > 200 && (
+          <ErrorTip message="Maximum 200 characters" />
+        )}
       </form>
       <ResMsg resMsg={resMsg} />
     </div>
