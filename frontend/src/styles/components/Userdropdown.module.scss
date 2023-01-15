@@ -49,7 +49,7 @@
     display: flex;
     align-items: center;
     padding-left: var(--padding-small);
-    height: fit-content;
+    height: 1.75rem;
 
     input {
       width: 100%;
@@ -58,8 +58,11 @@
     button {
       background: none;
       border: none;
-      padding: 0 var(--padding);
-      font-size: var(--font-lg);
+      display: flex;
+      svg {
+        margin: auto;
+        font-size: 1rem;
+      }
     }
   }
 }

@@ -94,7 +94,7 @@ func GetUserAndSessionFromRequest(r *http.Request, collections db.Collections) (
 	return &user, &session, nil
 }
 
-func DownloadImageURL(inputURL string) io.ReadCloser {
+func DownloadURL(inputURL string) io.ReadCloser {
 	_, err := url.Parse(inputURL)
 	if err != nil {
 		log.Fatal("Failed to parse image url")
@@ -113,9 +113,9 @@ func DownloadImageURL(inputURL string) io.ReadCloser {
 }
 func DownloadRandomImage(pfp bool) io.ReadCloser {
 	if !pfp {
-		return DownloadImageURL("https://picsum.photos/1100/500")
+		return DownloadURL("https://picsum.photos/1100/500")
 	} else {
-		return DownloadImageURL("https://100k-faces.glitch.me/random-image")
+		return DownloadURL("https://100k-faces.glitch.me/random-image")
 	}
 }
 

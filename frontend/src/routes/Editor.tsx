@@ -7,7 +7,6 @@ import "../styles/fixQuill.css";
 import {
   createPost,
   getPost,
-  getPostImage,
   getPostImageFile,
   updatePost,
   uploadPostImage,
@@ -18,7 +17,6 @@ import ResMsg from "../components/ResMsg";
 import type { IResMsg } from "../components/ResMsg";
 import axios from "axios";
 import { useParams } from "react-router-dom";
-
 import { z } from "zod";
 import FieldErrorTip from "../components/FieldErrorTip";
 

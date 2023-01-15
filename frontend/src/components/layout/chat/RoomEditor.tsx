@@ -33,7 +33,6 @@ export default function RoomEditor() {
         Schema.parse(values);
         setValidationErrs([]);
       } catch (error: any) {
-        console.log(error.issues as z.ZodError[]);
         setValidationErrs(error.issues);
       }
     },

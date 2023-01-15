@@ -187,7 +187,7 @@ export default function PostCard({
     <article
       ref={containerRef}
       style={isMobile ? { height: "33.33%" } : {}}
-      className={classes.container}
+      className={isMobile ? classes.mobileContainer : classes.container}
     >
       <div className={classes.inner}>
         {post && (

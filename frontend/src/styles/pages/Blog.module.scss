@@ -67,7 +67,7 @@
         }
       }
 
-      @media (max-width:1280px) {
+      @media (max-width: 1280px) {
         .searchForm {
           flex-direction: column;
           .dropdownsContainer {
@@ -132,6 +132,24 @@
         width: 2.5rem;
         height: 2.5rem;
       }
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .container {
+    aside {
+      width: calc(0.35 * calc(100% - var(--horizontal-whitespace) * 2));
+    }
+    .feed {
+      width: 65%;
+    }
+  }
+}
+@media (max-width: 350px) {
+  .container {
+    .dropdownsContainer {
+      flex-direction: column;
     }
   }
 }

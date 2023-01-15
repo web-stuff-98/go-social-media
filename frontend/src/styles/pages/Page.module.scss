@@ -73,12 +73,14 @@
     padding: calc(2 * var(--padding));
     width: 100%;
     box-sizing: border-box;
+    gap:1rem;
+    display: flex;
+    flex-direction: column;
     * {
       margin: 0;
     }
-    ul,
-    ol {
-      margin-bottom: 1rem;
+    mark {
+      color:black;
     }
 
     h2 {

@@ -7,6 +7,7 @@ import Dropdown from "../components/Dropdown";
 import IconBtn from "../components/IconBtn";
 import PostCard from "../components/PostCard";
 import ResMsg from "../components/ResMsg";
+import { useInterface } from "../context/InterfaceContext";
 import usePosts from "../context/PostsContext";
 import useSocket from "../context/SocketContext";
 import classes from "../styles/pages/Blog.module.scss";
@@ -32,6 +33,9 @@ export interface IPostCard {
 
 export default function Blog() {
   const { openSubscription, closeSubscription } = useSocket();
+  const {
+    state: { isMobile },
+  } = useInterface();
   const {
     resMsg,
     getTagsFromParams,
@@ -64,7 +68,11 @@ export default function Blog() {
         {!resMsg.pen && (
           <>
             {posts.map((p, i) => (
-              <PostCard reverse={Boolean(i % 2)} key={p.ID} post={p} />
+              <PostCard
+                reverse={isMobile ? false : Boolean(i % 2)}
+                key={p.ID}
+                post={p}
+              />
             ))}
             <div className={classes.endFix} />
           </>
@@ -87,30 +95,30 @@ export default function Blog() {
                 ]}
               />
               <div className={classes.sortMode}>
-              <Dropdown
-                light
-                index={getSortModeFromParams === "DATE" ? 0 : 1}
-                setIndex={setSortModeInParams}
-                items={[
-                  { name: "DATE", node: "Date" },
-                  { name: "POPULARITY", node: "Popularity" },
-                ]}
-              />
+                <Dropdown
+                  light
+                  index={getSortModeFromParams === "DATE" ? 0 : 1}
+                  setIndex={setSortModeInParams}
+                  items={[
+                    { name: "DATE", node: "Date" },
+                    { name: "POPULARITY", node: "Popularity" },
+                  ]}
+                />
               </div>
             </div>
             <div className={classes.search}>
-            <input
-              name="Search input"
-              id="Search input"
-              aria-label="Search"
-              type="text"
-              value={getTermFromParams}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setTermInParams(e.target.value)
-              }
-              required
-            />
-            <IconBtn name="Search" ariaLabel="Search" Icon={FaSearch} />
+              <input
+                name="Search input"
+                id="Search input"
+                aria-label="Search"
+                type="text"
+                value={getTermFromParams}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setTermInParams(e.target.value)
+                }
+                required
+              />
+              <IconBtn name="Search" ariaLabel="Search" Icon={FaSearch} />
             </div>
           </form>
           <div className={classes.searchTags}>

@@ -509,8 +509,6 @@ func (h handler) UpdatePostComment(w http.ResponseWriter, r *http.Request) {
 func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 	user, _, _ := helpers.GetUserAndSessionFromRequest(r, h.Collections)
 
-	log.Println("what the fuck")
-
 	pageNumberString := mux.Vars(r)["page"]
 	pageNumber, err := strconv.Atoi(pageNumberString)
 	if err != nil {

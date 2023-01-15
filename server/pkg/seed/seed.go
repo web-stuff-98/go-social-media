@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
+	"io/ioutil"
 	"log"
 	"math"
 	"math/rand"
@@ -128,22 +129,10 @@ func generatePost(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid prim
 
 	title := strings.Title(lipsum.Words(wordsInTitle))
 	description := strings.Title(lipsum.Words(wordsInDescription))
-	body := ""
 	tags := []string{}
 
-	var bodyTags = []string{}
-
-	// Add heading to body
-	bodyTags = append(bodyTags, encapsulateIntoHTMLTag("h1", sentence(6, 22, lipsum)))
-	bodyTags = append(bodyTags, "<br/>")
-	// Add subheading to body
-	bodyTags = append(bodyTags, encapsulateIntoHTMLTag("h2", sentence(8, 26, lipsum)))
-	bodyTags = append(bodyTags, "<br/>")
-	// Add paragraphs to body
-	bodyTags = append(bodyTags, paragraphs(lipsum))
-	bodyTags = append(bodyTags, "<br/>")
-	// Join body into string
-	body = strings.Join(bodyTags, "")
+	rb := helpers.DownloadURL("https://loripsum.net/api/link/ul/ol/dl/bq/code/headers/decorate/long")
+	bodyBytes, err := ioutil.ReadAll(rb)
 
 	// Add 5 - 8 tags
 	i := 0
@@ -191,16 +180,28 @@ func generatePost(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid prim
 		return r == runes[0]
 	}) + "-" + cuid.Slug()
 
+	timeRandNegative := 1
+	if rand.Float32() > 0.5 {
+		timeRandNegative = -1
+	}
+	timeRandOffset := time.Hour * time.Duration(rand.Float32()*24*float32(timeRandNegative))
+	createdAt := time.Now().Add(timeRandOffset)
+	updatedAt := time.Now()
+	if rand.Float32() > 0.8 {
+		timeRandOffsetB := time.Hour * time.Duration(rand.Float32()*24)
+		updatedAt = createdAt.Add(timeRandOffsetB)
+	}
+
 	post := models.Post{
 		Title:         title,
 		Description:   description,
-		Body:          body,
+		Body:          string(bodyBytes),
 		Tags:          tags,
 		Author:        uid,
 		ImagePending:  false,
 		Slug:          slug,
-		CreatedAt:     primitive.NewDateTimeFromTime(time.Now()),
-		UpdatedAt:     primitive.NewDateTimeFromTime(time.Now()),
+		CreatedAt:     primitive.NewDateTimeFromTime(createdAt),
+		UpdatedAt:     primitive.NewDateTimeFromTime(updatedAt),
 		ImgBlur:       "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(blurBuf.Bytes()),
 		SortVoteCount: 0,
 	}
@@ -414,6 +415,19 @@ func generateComments(colls *db.Collections, pid primitive.ObjectID, uids map[pr
 func sentence(minWords int, maxWords int, lipsum *loremipsum.LoremIpsum) string {
 	wordCount := rand.Intn(maxWords-minWords) + minWords
 	return lipsum.Words(wordCount)
+}
+
+func list(lipsum *loremipsum.LoremIpsum) string {
+	items := []string{}
+	numItems := rand.Intn(4) + 1
+	for i := 0; i < numItems; i++ {
+		items = append(items, encapsulateIntoHTMLTag("li", sentence(5, 30, lipsum)))
+	}
+	listType := "ol"
+	if rand.Float32() > 0.5 {
+		listType = "ul"
+	}
+	return encapsulateIntoHTMLTag(listType, strings.Join(items, ""))
 }
 
 func paragraphs(lipsum *loremipsum.LoremIpsum) string {

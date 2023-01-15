@@ -117,7 +117,7 @@ func cleanUpPosts(colls *Collections) {
 		orphanedCmts := make(map[string]struct{})
 		for commentId, parentId := range allCmts {
 			_, ok := allCmts[parentId]
-			if !ok {
+			if !ok && parentId != "" {
 				orphanedCmts[commentId] = struct{}{}
 			}
 		}
