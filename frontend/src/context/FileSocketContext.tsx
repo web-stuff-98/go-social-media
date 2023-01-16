@@ -41,7 +41,12 @@ export const FileSocketProvider = ({ children }: { children: ReactNode }) => {
     let promises = [];
     while (startPointer < endPointer) {
       let newStartPointer = startPointer + 4072;
-      promises.push(new Blob([msgId,file.slice(startPointer, newStartPointer)]).arrayBuffer());
+      promises.push(
+        new Blob([
+          msgId,
+          file.slice(startPointer, newStartPointer),
+        ]).arrayBuffer()
+      );
       startPointer = newStartPointer;
     }
     for await (const buff of promises) {
