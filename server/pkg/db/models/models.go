@@ -58,6 +58,7 @@ type AttachmentMetadata struct {
 	Name     string             `bson:"name" json:"name"`
 	Size     int                `bson:"size" json:"size"`
 	Pending  bool               `bson:"pending"`
+	Failed   bool               `bson:"failed"`
 }
 
 type AttachmentChunk struct {

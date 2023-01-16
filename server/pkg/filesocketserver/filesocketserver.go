@@ -2,11 +2,13 @@ package filesocketserver
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/gorilla/websocket"
 	"github.com/web-stuff-98/go-social-media/pkg/db"
 	"github.com/web-stuff-98/go-social-media/pkg/db/models"
+	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -30,12 +32,17 @@ import (
 
 	This works like GridFS except its my implementation.
 
-	I commented it a lot because its confusing and I didn't test it yet.
+	I commented it a lot because its confusing and Its not completely finished
 */
 
 type ConnectionInfo struct {
 	Conn *websocket.Conn
 	Uid  primitive.ObjectID
+}
+
+type BytesInfo struct {
+	TotalBytes int
+	BytesDone  int
 }
 
 type FileSocketServer struct {
@@ -47,6 +54,11 @@ type FileSocketServer struct {
 	AttachmentChunks      map[primitive.ObjectID][]byte
 	AttachmentChunksChan  chan (*ChunkData)
 	AttachmentNextChunkId map[primitive.ObjectID]primitive.ObjectID
+	/* The name of the subscription to send progress updates to through the regular socketserver (either inbox or room)
+	This is set from the attachment metadata HTTP endpoint */
+	AttachmentSubscriptionNames map[primitive.ObjectID][]string
+	/* This is also set from the attachment metadata HTTP endpoint  */
+	AttachmentBytesProcessed map[primitive.ObjectID]BytesInfo
 
 	FinishAttachmentChan chan (primitive.ObjectID)
 }
@@ -56,23 +68,25 @@ type ChunkData struct {
 	Chunk []byte
 }
 
-func Init(colls *db.Collections) (*FileSocketServer, error) {
+func Init(socketServer *socketserver.SocketServer, colls *db.Collections) (*FileSocketServer, error) {
 	fileSocketServer := &FileSocketServer{
 		Connections:    make(map[*websocket.Conn]primitive.ObjectID),
 		RegisterConn:   make(chan ConnectionInfo),
 		UnregisterConn: make(chan ConnectionInfo),
 
-		AttachmentChunks:      make(map[primitive.ObjectID][]byte),
-		AttachmentChunksChan:  make(chan *ChunkData),
-		AttachmentNextChunkId: make(map[primitive.ObjectID]primitive.ObjectID),
+		AttachmentChunks:            make(map[primitive.ObjectID][]byte),
+		AttachmentChunksChan:        make(chan *ChunkData),
+		AttachmentNextChunkId:       make(map[primitive.ObjectID]primitive.ObjectID),
+		AttachmentSubscriptionNames: make(map[primitive.ObjectID][]string),
+		AttachmentBytesProcessed:    make(map[primitive.ObjectID]BytesInfo),
 
 		FinishAttachmentChan: make(chan primitive.ObjectID),
 	}
-	RunServer(fileSocketServer, colls)
+	RunServer(fileSocketServer, socketServer, colls)
 	return fileSocketServer, nil
 }
 
-func RunServer(fileSocketServer *FileSocketServer, colls *db.Collections) {
+func RunServer(fileSocketServer *FileSocketServer, socketServer *socketserver.SocketServer, colls *db.Collections) {
 	/* ----- Connection registration ----- */
 	go func() {
 		for {
@@ -126,6 +140,11 @@ func RunServer(fileSocketServer *FileSocketServer, colls *db.Collections) {
 			*/
 			chunkData := <-fileSocketServer.AttachmentChunksChan
 			if _, ok := fileSocketServer.AttachmentChunks[chunkData.MsgID]; ok {
+				// Keep track of number of bytes processed
+				fileSocketServer.AttachmentBytesProcessed[chunkData.MsgID] = BytesInfo{
+					TotalBytes: fileSocketServer.AttachmentBytesProcessed[chunkData.MsgID].TotalBytes,
+					BytesDone:  fileSocketServer.AttachmentBytesProcessed[chunkData.MsgID].BytesDone + len(chunkData.Chunk),
+				}
 				if len(fileSocketServer.AttachmentChunks[chunkData.MsgID]) > 1024*1024*2 {
 					// If the chunk stored in memory is larger than 2mb then move on to saving it to the database
 					count, err := colls.AttachmentChunksCollection.CountDocuments(context.Background(), bson.M{"_id": chunkData.MsgID})
@@ -133,7 +152,7 @@ func RunServer(fileSocketServer *FileSocketServer, colls *db.Collections) {
 						log.Panicln("Error finding chunk :", err)
 					}
 					if count == 0 {
-						// Save the FIRST chunk and create the ID for the next big chunk (if there isn't one it will be nulled when finished)
+						// Save the first chunk, create the ID for the next chunk, and send the progress update
 						nextChunkID := primitive.NewObjectID()
 						fileSocketServer.AttachmentNextChunkId[chunkData.MsgID] = nextChunkID
 						colls.AttachmentChunksCollection.InsertOne(context.Background(), models.AttachmentChunk{
@@ -141,8 +160,20 @@ func RunServer(fileSocketServer *FileSocketServer, colls *db.Collections) {
 							NextChunk: nextChunkID,
 							Bytes:     primitive.Binary{Data: append(fileSocketServer.AttachmentChunks[chunkData.MsgID], chunkData.Chunk...)},
 						})
+						if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[chunkData.MsgID]; ok {
+							socketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+								Names: subscriptionNames,
+								Data: map[string]string{
+									"TYPE": "ATTACHMENT_PROGRESS",
+									"DATA": `{"ID":"` + chunkData.MsgID.Hex() + `","failed":false,"pending":true,"ratio":` + getProgressString(fileSocketServer.AttachmentBytesProcessed[chunkData.MsgID]) + `}`,
+								},
+							}
+							log.Println(subscriptionNames)
+						} else {
+							log.Println("Not ok")
+						}
 					} else {
-						// Save the chunk and create the ID for the next big chunk (if there isn't one it will be nulled when finished)
+						// Save the chunk and create the ID for the next chunk, and send progress update
 						nextChunkID := primitive.NewObjectID()
 						colls.AttachmentChunksCollection.InsertOne(context.Background(), models.AttachmentChunk{
 							ID:        fileSocketServer.AttachmentNextChunkId[chunkData.MsgID],
@@ -150,6 +181,18 @@ func RunServer(fileSocketServer *FileSocketServer, colls *db.Collections) {
 							Bytes:     primitive.Binary{Data: append(fileSocketServer.AttachmentChunks[chunkData.MsgID], chunkData.Chunk...)},
 						})
 						fileSocketServer.AttachmentNextChunkId[chunkData.MsgID] = nextChunkID
+						if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[chunkData.MsgID]; ok {
+							socketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+								Names: subscriptionNames,
+								Data: map[string]string{
+									"TYPE": "ATTACHMENT_PROGRESS",
+									"DATA": `{"ID":"` + chunkData.MsgID.Hex() + `","failed":false,"pending":true,"ratio":` + getProgressString(fileSocketServer.AttachmentBytesProcessed[chunkData.MsgID]) + `}`,
+								},
+							}
+							log.Println(subscriptionNames)
+						} else {
+							log.Println("Not ok")
+						}
 					}
 				} else {
 					// Append the bit of the small chunk into existing chunk memory (not large enough to be saved in the database yet)
@@ -181,7 +224,7 @@ func RunServer(fileSocketServer *FileSocketServer, colls *db.Collections) {
 			var firstChunk models.AttachmentChunk
 			if err := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"_id": msgId}).Decode(&firstChunk); err != nil {
 				if err == mongo.ErrNoDocuments {
-					// Couldn't find a chunk in the database, so save the bytes that are in memory as the only chunk (small file).
+					// Couldn't find a chunk in the database, so save the bytes that are in memory as the only chunk
 					colls.AttachmentChunksCollection.InsertOne(context.Background(), models.AttachmentChunk{
 						ID:        msgId,
 						NextChunk: primitive.NilObjectID,
@@ -195,16 +238,29 @@ func RunServer(fileSocketServer *FileSocketServer, colls *db.Collections) {
 				var nextChunk models.AttachmentChunk
 				if err := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"_id": firstChunk.NextChunk}).Decode(&nextChunk); err != nil {
 					if err == mongo.ErrNoDocuments {
-						// The first chunk is the last chunk... so nil the NextChunkID
+						// The first chunk is the last chunk... so nil the NextChunkID and send the progress update
 						colls.AttachmentChunksCollection.UpdateByID(context.Background(), firstChunk.ID, bson.M{
 							"$set": bson.M{"next_id": primitive.NilObjectID},
 						})
+						if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[msgId]; ok {
+							socketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+								Names: subscriptionNames,
+								Data: map[string]string{
+									"TYPE": "ATTACHMENT_PROGRESS",
+									"DATA": `{"ID":"` + msgId.Hex() + `","failed":false,"pending":false,"ratio":1}`,
+								},
+							}
+							log.Println(subscriptionNames)
+						} else {
+							log.Println("Not ok")
+						}
 					} else {
 						//Send internal error and panic
 					}
 				} else {
 					// The first chunk isn't the last chunk... so find the last chunk recursively and nil its ObjectID using the recursive function
-					if err := recursivelyFindAndNilNextChunkOnLastChunk(&nextChunk.ID, &nextChunk.NextChunk, colls); err != nil {
+					// then send the progress update
+					if err := recursivelyFindAndNilNextChunkOnLastChunk(&nextChunk.ID, &nextChunk.NextChunk, colls, socketServer, fileSocketServer, &msgId); err != nil {
 						//Send internal error and panic
 					}
 				}
@@ -213,18 +269,36 @@ func RunServer(fileSocketServer *FileSocketServer, colls *db.Collections) {
 	}()
 }
 
-func recursivelyFindAndNilNextChunkOnLastChunk(currentChunkId *primitive.ObjectID, nextChunkId *primitive.ObjectID, colls *db.Collections) error {
+func recursivelyFindAndNilNextChunkOnLastChunk(currentChunkId *primitive.ObjectID, nextChunkId *primitive.ObjectID, colls *db.Collections, ss *socketserver.SocketServer, fss *FileSocketServer, msgId *primitive.ObjectID) error {
 	var nextChunk models.AttachmentChunk
 	if err := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"_id": nextChunkId}).Decode(&nextChunk); err != nil {
 		if err == mongo.ErrNoDocuments {
-			colls.AttachmentChunksCollection.UpdateByID(context.Background(), currentChunkId, bson.M{
+			if _, err := colls.AttachmentChunksCollection.UpdateByID(context.Background(), currentChunkId, bson.M{
 				"$set": bson.M{"next_id": primitive.NilObjectID},
-			})
+			}); err != nil {
+				return err
+			}
+			if subscriptionNames, ok := fss.AttachmentSubscriptionNames[*msgId]; ok {
+				ss.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+					Names: subscriptionNames,
+					Data: map[string]string{
+						"TYPE": "ATTACHMENT_PROGRESS",
+						"DATA": `{"ID":"` + msgId.Hex() + `","failed":false,"pending":false,"ratio":1}`,
+					},
+				}
+				log.Println(subscriptionNames)
+			} else {
+				log.Println("Not ok")
+			}
 			return nil
 		} else {
 			return err
 		}
 	} else {
-		return recursivelyFindAndNilNextChunkOnLastChunk(nextChunkId, &nextChunk.NextChunk, colls)
+		return recursivelyFindAndNilNextChunkOnLastChunk(nextChunkId, &nextChunk.NextChunk, colls, ss, fss, msgId)
 	}
+}
+
+func getProgressString(info BytesInfo) string {
+	return fmt.Sprintf("%v", float32(info.BytesDone)/float32(info.TotalBytes))
 }

@@ -1,4 +1,5 @@
 import classes from "../../../styles/components/chat/PrivateMessage.module.scss";
+import Attachment from "../../Attachment";
 import { IPrivateMessage } from "./Conversations";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -33,6 +34,15 @@ export default function PrivateMessage({
         className={classes.content}
       >
         {msg.content}
+        {msg.has_attachment && (
+          <div className={classes.attachmentContainer}>
+            <Attachment
+              data={
+                msg.attachmentData || { failed: false, pending: true, ratio: 0 }
+              }
+            />
+          </div>
+        )}
       </div>
       <div
         style={reverse ? { textAlign: "left" } : {}}

@@ -1,0 +1,21 @@
+.container {
+  width: 100%;
+  height: 1rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+
+  span {
+    height: 2px;
+    background: linear-gradient(to top, lightgray 0%, black 100%);
+    border-radius: 2px;
+    border: 1px solid var(--base-pale);
+    display: flex;
+
+    span {
+        border: none;
+      background: lime;
+      transition: width 100ms ease;
+    }
+  }
+}

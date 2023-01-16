@@ -1,0 +1,31 @@
+.container {
+  width: 100%;
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    filter: drop-shadow(0px 1.5px 1.5px rgba(0, 0, 0, 0.33));
+  }
+
+  .failed,
+  .complete {
+    display: flex;
+    align-items: center;
+    gap: var(--padding-small);
+    font-size: var(--font-xs);
+  }
+
+  .failed {
+    color:red;
+    font-weight: 600;
+    svg {
+      fill: red;
+    }
+  }
+
+  .complete {
+    font-weight: 600;
+    svg {
+      fill: var(--text-color);
+    }
+  }
+}

@@ -8,11 +8,15 @@ import type { ChangeEvent, FormEvent } from "react";
 import { IUser, useAuth } from "../../../context/AuthContext";
 import PrivateMessage from "./PrivateMessage";
 import useSocket from "../../../context/SocketContext";
-import { instanceOfPrivateMessageData } from "../../../utils/DetermineSocketEvent";
+import {
+  instanceOfAttachmentProgressData,
+  instanceOfPrivateMessageData,
+} from "../../../utils/DetermineSocketEvent";
 import { useModal } from "../../../context/ModalContext";
 import { getConversations, getConversation } from "../../../services/chat";
 import ErrorTip from "../../ErrorTip";
 import useFileSocket from "../../../context/FileSocketContext";
+import { IMsgAttachmentData } from "../../Attachment";
 
 export interface IPrivateMessage {
   ID: string;
@@ -22,6 +26,7 @@ export interface IPrivateMessage {
   updated_at: string;
   has_attachment: boolean;
   recipient_id: string;
+  attachmentData?: IMsgAttachmentData;
 }
 export type Conversation = {
   uid: string;
@@ -148,6 +153,29 @@ export default function Conversations() {
         }
       }
     }
+    if (instanceOfAttachmentProgressData(data)) {
+      console.log(data.DATA);
+      if (selectedConversationIndex !== -1)
+        setConversations((conversations) => {
+          let newConversations = conversations;
+          const i = conversations[selectedConversationIndex].messages.findIndex(
+            (msg) => msg.ID === data.DATA.ID
+          );
+          if (i !== -1) {
+            conversations[selectedConversationIndex].messages[
+              i
+            ].attachmentData = {
+              failed: data.DATA.failed,
+              pending: data.DATA.pending,
+              ratio: data.DATA.ratio,
+            };
+            return [...newConversations];
+          } else {
+            console.log(i);
+            return conversations;
+          }
+        });
+    }
   };
 
   useEffect(() => {
@@ -196,6 +224,7 @@ export default function Conversations() {
         event_type: "PRIVATE_MESSAGE",
         content: messageInput,
         recipient_id: selectedConversation,
+        has_attachment: file ? true : false,
       })
     );
     setMessageInput("");

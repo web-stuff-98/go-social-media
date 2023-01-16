@@ -8,6 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 	"github.com/web-stuff-98/go-social-media/pkg/db/models"
+	"github.com/web-stuff-98/go-social-media/pkg/filesocketserver"
 	"github.com/web-stuff-98/go-social-media/pkg/helpers"
 	"github.com/web-stuff-98/go-social-media/pkg/validation"
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,7 +17,7 @@ import (
 )
 
 func (h handler) HandleAttachmentMetadata(w http.ResponseWriter, r *http.Request) {
-	_, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -64,7 +65,7 @@ func (h handler) HandleAttachmentMetadata(w http.ResponseWriter, r *http.Request
 	}
 	if isPrivateMsg {
 		for _, pm := range inbox.Messages {
-			if pm.ID == msgId {
+			if pm.ID == msgId && pm.Uid == user.ID {
 				found = true
 				break
 			}
@@ -80,7 +81,7 @@ func (h handler) HandleAttachmentMetadata(w http.ResponseWriter, r *http.Request
 			return
 		} else {
 			for _, rm := range roomMsgs.Messages {
-				if rm.ID == msgId {
+				if rm.ID == msgId && rm.Uid == user.ID {
 					found = true
 					break
 				}
@@ -98,9 +99,21 @@ func (h handler) HandleAttachmentMetadata(w http.ResponseWriter, r *http.Request
 		Name:     metadataInput.Name,
 		Size:     metadataInput.Size,
 		Pending:  true,
+		Failed:   false,
 	}); err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
+	}
+
+	if isPrivateMsg {
+		h.FileSocketServer.AttachmentSubscriptionNames[msgId] = []string{"inbox=" + recipientId.Hex(), "inbox=" + user.ID.Hex()}
+	} else {
+		h.FileSocketServer.AttachmentSubscriptionNames[msgId] = []string{"room=" + recipientId.Hex()}
+	}
+
+	h.FileSocketServer.AttachmentBytesProcessed[msgId] = filesocketserver.BytesInfo{
+		TotalBytes: metadataInput.Size,
+		BytesDone:  0,
 	}
 
 	responseMessage(w, http.StatusCreated, "Created attachment metadata")

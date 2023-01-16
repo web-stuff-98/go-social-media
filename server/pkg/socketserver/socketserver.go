@@ -38,6 +38,15 @@ type ExclusiveSubscriptionDataMessage struct {
 	Data    map[string]string
 	Exclude map[primitive.ObjectID]bool
 }
+type SubscriptionDataMessageMulti struct {
+	Names []string
+	Data  map[string]string
+}
+type ExclusiveSubscriptionDataMessageMulti struct {
+	Names   []string
+	Data    map[string]string
+	Exclude map[primitive.ObjectID]bool
+}
 
 type SocketServer struct {
 	Connections   map[*websocket.Conn]primitive.ObjectID
@@ -49,23 +58,31 @@ type SocketServer struct {
 	RegisterSubscriptionConn   chan SubscriptionConnectionInfo
 	UnregisterSubscriptionConn chan SubscriptionConnectionInfo
 
-	SendDataToSubscription          chan SubscriptionDataMessage
-	SendDataToSubscriptionExclusive chan ExclusiveSubscriptionDataMessage
+	SendDataToSubscription           chan SubscriptionDataMessage
+	SendDataToSubscriptionExclusive  chan ExclusiveSubscriptionDataMessage
+	SendDataToSubscriptions          chan SubscriptionDataMessageMulti
+	SendDataToSubscriptionsExclusive chan ExclusiveSubscriptionDataMessageMulti
 
 	DestroySubscription chan string
 }
 
 func Init() (*SocketServer, error) {
 	socketServer := &SocketServer{
-		Connections:                     make(map[*websocket.Conn]primitive.ObjectID),
-		Subscriptions:                   make(map[string]map[*websocket.Conn]primitive.ObjectID),
-		RegisterConn:                    make(chan ConnectionInfo),
-		UnregisterConn:                  make(chan ConnectionInfo),
-		RegisterSubscriptionConn:        make(chan SubscriptionConnectionInfo),
-		UnregisterSubscriptionConn:      make(chan SubscriptionConnectionInfo),
-		SendDataToSubscription:          make(chan SubscriptionDataMessage),
-		SendDataToSubscriptionExclusive: make(chan ExclusiveSubscriptionDataMessage),
-		DestroySubscription:             make(chan string),
+		Connections:   make(map[*websocket.Conn]primitive.ObjectID),
+		Subscriptions: make(map[string]map[*websocket.Conn]primitive.ObjectID),
+
+		RegisterConn:   make(chan ConnectionInfo),
+		UnregisterConn: make(chan ConnectionInfo),
+
+		RegisterSubscriptionConn:   make(chan SubscriptionConnectionInfo),
+		UnregisterSubscriptionConn: make(chan SubscriptionConnectionInfo),
+
+		SendDataToSubscription:           make(chan SubscriptionDataMessage),
+		SendDataToSubscriptionExclusive:  make(chan ExclusiveSubscriptionDataMessage),
+		SendDataToSubscriptions:          make(chan SubscriptionDataMessageMulti),
+		SendDataToSubscriptionsExclusive: make(chan ExclusiveSubscriptionDataMessageMulti),
+
+		DestroySubscription: make(chan string),
 	}
 	RunServer(socketServer)
 	return socketServer, nil
@@ -202,6 +219,43 @@ func RunServer(socketServer *SocketServer) {
 						}
 					}
 					break
+				}
+			}
+		}
+	}()
+	/* ----- Send data to multiple subscriptions ----- */
+	go func() {
+		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in subscription data channel : ", r)
+				}
+			}()
+			subsData := <-socketServer.SendDataToSubscriptions
+			for _, v := range subsData.Names {
+				socketServer.SendDataToSubscription <- SubscriptionDataMessage{
+					Name: v,
+					Data: subsData.Data,
+				}
+			}
+		}
+	}()
+	/* ----- Send data to multiple subscriptions excluding uids ----- */
+	go func() {
+		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in exclusive subscription data channel : ", r)
+				}
+			}()
+			subsData := <-socketServer.SendDataToSubscriptionsExclusive
+			for _, v := range subsData.Names {
+				socketServer.SendDataToSubscriptionExclusive <- ExclusiveSubscriptionDataMessage{
+					Name:    v,
+					Data:    subsData.Data,
+					Exclude: subsData.Exclude,
 				}
 			}
 		}

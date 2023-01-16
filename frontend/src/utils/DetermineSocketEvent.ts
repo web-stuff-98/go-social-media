@@ -33,6 +33,11 @@ export type PostCommentVoteData = {
   DATA: { ID: string; is_upvote: boolean; remove: boolean };
 };
 
+export type AttachmentProgressData = {
+  TYPE: "ATTACHMENT_PROGRESS";
+  DATA: { ID: string; failed: boolean; pending: boolean; ratio: number };
+};
+
 export type SocketEventChangeMethod =
   | "UPDATE"
   | "INSERT"
@@ -75,4 +80,10 @@ export function instanceOfPostCommentVoteData(
   object: any
 ): object is PostCommentVoteData {
   return object.TYPE === "POST_COMMENT_VOTE";
+}
+
+export function instanceOfAttachmentProgressData(
+  object: any
+): object is AttachmentProgressData {
+  return object.TYPE === "ATTACHMENT_PROGRESS";
 }
