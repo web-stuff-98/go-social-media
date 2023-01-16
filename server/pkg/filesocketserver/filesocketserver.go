@@ -2,12 +2,14 @@ package filesocketserver
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 
 	"github.com/gorilla/websocket"
 	"github.com/web-stuff-98/go-social-media/pkg/db"
 	"github.com/web-stuff-98/go-social-media/pkg/db/models"
+	"github.com/web-stuff-98/go-social-media/pkg/socketmodels"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -161,12 +163,13 @@ func RunServer(fileSocketServer *FileSocketServer, socketServer *socketserver.So
 							Bytes:     primitive.Binary{Data: append(fileSocketServer.AttachmentChunks[chunkData.MsgID], chunkData.Chunk...)},
 						})
 						if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[chunkData.MsgID]; ok {
+							outBytes, err := json.Marshal(socketmodels.OutMessage{
+								Type: "ATTACHMENT_PROGRESS",
+								Data: `{"ID":"` + chunkData.MsgID.Hex() + `","failed":false,"pending":true,"ratio":` + getProgressString(fileSocketServer.AttachmentBytesProcessed[chunkData.MsgID]) + `}`,
+							})
 							socketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
 								Names: subscriptionNames,
-								Data: map[string]string{
-									"TYPE": "ATTACHMENT_PROGRESS",
-									"DATA": `{"ID":"` + chunkData.MsgID.Hex() + `","failed":false,"pending":true,"ratio":` + getProgressString(fileSocketServer.AttachmentBytesProcessed[chunkData.MsgID]) + `}`,
-								},
+								Data:  outBytes,
 							}
 							log.Println(subscriptionNames)
 						} else {
@@ -182,12 +185,13 @@ func RunServer(fileSocketServer *FileSocketServer, socketServer *socketserver.So
 						})
 						fileSocketServer.AttachmentNextChunkId[chunkData.MsgID] = nextChunkID
 						if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[chunkData.MsgID]; ok {
+							outBytes, err := json.Marshal(socketmodels.OutMessage{
+								Type: "ATTACHMENT_PROGRESS",
+								Data: `{"ID":"` + chunkData.MsgID.Hex() + `","failed":false,"pending":true,"ratio":` + getProgressString(fileSocketServer.AttachmentBytesProcessed[chunkData.MsgID]) + `}`,
+							})
 							socketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
 								Names: subscriptionNames,
-								Data: map[string]string{
-									"TYPE": "ATTACHMENT_PROGRESS",
-									"DATA": `{"ID":"` + chunkData.MsgID.Hex() + `","failed":false,"pending":true,"ratio":` + getProgressString(fileSocketServer.AttachmentBytesProcessed[chunkData.MsgID]) + `}`,
-								},
+								Data:  outBytes,
 							}
 							log.Println(subscriptionNames)
 						} else {
@@ -243,12 +247,13 @@ func RunServer(fileSocketServer *FileSocketServer, socketServer *socketserver.So
 							"$set": bson.M{"next_id": primitive.NilObjectID},
 						})
 						if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[msgId]; ok {
+							outBytes, err := json.Marshal(socketmodels.OutMessage{
+								Type: "ATTACHMENT_PROGRESS",
+								Data: `{"ID":"` + msgId.Hex() + `","failed":false,"pending":false,"ratio":1}`,
+							})
 							socketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
 								Names: subscriptionNames,
-								Data: map[string]string{
-									"TYPE": "ATTACHMENT_PROGRESS",
-									"DATA": `{"ID":"` + msgId.Hex() + `","failed":false,"pending":false,"ratio":1}`,
-								},
+								Data:  outBytes,
 							}
 							log.Println(subscriptionNames)
 						} else {
@@ -279,12 +284,13 @@ func recursivelyFindAndNilNextChunkOnLastChunk(currentChunkId *primitive.ObjectI
 				return err
 			}
 			if subscriptionNames, ok := fss.AttachmentSubscriptionNames[*msgId]; ok {
+				outBytes, err := json.Marshal(socketmodels.OutMessage{
+					Type: "ATTACHMENT_PROGRESS",
+					Data: `{"ID":"` + msgId.Hex() + `","failed":false,"pending":false,"ratio":1}`,
+				})
 				ss.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
 					Names: subscriptionNames,
-					Data: map[string]string{
-						"TYPE": "ATTACHMENT_PROGRESS",
-						"DATA": `{"ID":"` + msgId.Hex() + `","failed":false,"pending":false,"ratio":1}`,
-					},
+					Data:  outBytes,
 				}
 				log.Println(subscriptionNames)
 			} else {

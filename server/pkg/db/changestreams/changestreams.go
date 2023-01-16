@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/web-stuff-98/go-social-media/pkg/db/models"
+	"github.com/web-stuff-98/go-social-media/pkg/socketmodels"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -110,14 +111,17 @@ func watchUserPfpUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
 			log.Println("CS MARSHAL ERROR : ", err)
 			return
 		}
+
+		outBytes, err := json.Marshal(socketmodels.OutChangeMessage{
+			Type:   "CHANGE",
+			Method: "UPDATE_IMAGE",
+			Entity: "USER",
+			Data:   string(jsonBytes),
+		})
+
 		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "user=" + uid.Hex(),
-			Data: map[string]string{
-				"TYPE":   "CHANGE",
-				"METHOD": "UPDATE_IMAGE",
-				"ENTITY": "USER",
-				"DATA":   string(jsonBytes),
-			},
+			Data: outBytes,
 		}
 	}
 }
@@ -138,14 +142,17 @@ func watchPostDeletes(db *mongo.Database, ss *socketserver.SocketServer) {
 		db.Collection("post_thumbs").DeleteOne(context.TODO(), bson.M{"_id": postId})
 		db.Collection("post_votes").DeleteOne(context.TODO(), bson.M{"_id": postId})
 		db.Collection("post_comments").DeleteOne(context.TODO(), bson.M{"_id": postId})
+
+		outBytes, err := json.Marshal(socketmodels.OutChangeMessage{
+			Type:   "CHANGE",
+			Method: "DELETE",
+			Entity: "POST",
+			Data:   `{"ID":"` + postId.Hex() + `"}`,
+		})
+
 		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "post_card=" + postId.Hex(),
-			Data: map[string]string{
-				"TYPE":   "CHANGE",
-				"METHOD": "DELETE",
-				"ENTITY": "POST",
-				"DATA":   `{"ID":"` + postId.Hex() + `"}`,
-			},
+			Data: outBytes,
 		}
 		ss.DestroySubscription <- "post_card=" + postId.Hex()
 		ss.DestroySubscription <- "post_page=" + postId.Hex()
@@ -175,14 +182,15 @@ func watchPostImageInserts(db *mongo.Database, ss *socketserver.SocketServer) {
 			log.Println("CS MARSHAL ERROR : ", err)
 			return
 		}
+		outBytes, err := json.Marshal(socketmodels.OutChangeMessage{
+			Type:   "CHANGE",
+			Method: "INSERT",
+			Entity: "POST",
+			Data:   string(data),
+		})
 		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "post_feed",
-			Data: map[string]string{
-				"TYPE":   "CHANGE",
-				"METHOD": "INSERT",
-				"ENTITY": "POST",
-				"DATA":   string(data),
-			},
+			Data: outBytes,
 		}
 	}
 }
@@ -199,23 +207,19 @@ func watchPostImageUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
 			log.Fatal(err)
 		}
 		postId := changeEv["documentKey"].(bson.M)["_id"].(primitive.ObjectID)
+		outBytes, err := json.Marshal(socketmodels.OutChangeMessage{
+			Type:   "CHANGE",
+			Method: "UPDATE_IMAGE",
+			Entity: "POST",
+			Data:   `{"ID":"` + postId.Hex() + `"}`,
+		})
 		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "post_card=" + postId.Hex(),
-			Data: map[string]string{
-				"TYPE":   "CHANGE",
-				"METHOD": "UPDATE_IMAGE",
-				"ENTITY": "POST",
-				"DATA":   `{"ID":"` + postId.Hex() + `"}`,
-			},
+			Data: outBytes,
 		}
 		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "post_page=" + postId.Hex(),
-			Data: map[string]string{
-				"TYPE":   "CHANGE",
-				"METHOD": "UPDATE_IMAGE",
-				"ENTITY": "POST",
-				"DATA":   `{"ID":"` + postId.Hex() + `"}`,
-			},
+			Data: outBytes,
 		}
 	}
 }
@@ -244,23 +248,20 @@ func watchPostUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
 			log.Println("CS JSON MARSHAL ERROR : ", err)
 			return
 		}
+		outBytes, err := json.Marshal(socketmodels.OutChangeMessage{
+			Type:   "CHANGE",
+			Method: "UPDATE",
+			Entity: "POST",
+			Data:   string(data),
+		})
+
 		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "post_card=" + postId.Hex(),
-			Data: map[string]string{
-				"TYPE":   "CHANGE",
-				"METHOD": "UPDATE",
-				"ENTITY": "POST",
-				"DATA":   string(data),
-			},
+			Data: outBytes,
 		}
 		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "post_page=" + postId.Hex(),
-			Data: map[string]string{
-				"TYPE":   "CHANGE",
-				"METHOD": "UPDATE",
-				"ENTITY": "POST",
-				"DATA":   string(data),
-			},
+			Data: outBytes,
 		}
 	}
 }
@@ -279,24 +280,23 @@ func watchRoomDeletes(db *mongo.Database, ss *socketserver.SocketServer) {
 		roomId := changeEv["documentKey"].(bson.M)["_id"].(primitive.ObjectID)
 		db.Collection("room_images").DeleteOne(context.TODO(), bson.M{"_id": roomId})
 		db.Collection("room_messages").DeleteOne(context.TODO(), bson.M{"_id": roomId})
+
+		outBytes, err := json.Marshal(socketmodels.OutChangeMessage{
+			Type:   "CHANGE",
+			Method: "DELETE",
+			Entity: "ROOM",
+			Data:   `{"ID":"` + roomId.Hex() + `"}`,
+		})
+
 		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "room_card=" + roomId.Hex(),
-			Data: map[string]string{
-				"TYPE":   "CHANGE",
-				"METHOD": "DELETE",
-				"ENTITY": "ROOM",
-				"DATA":   `{"ID":"` + roomId.Hex() + `"}`,
-			},
+			Data: outBytes,
 		}
 		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "room=" + roomId.Hex(),
-			Data: map[string]string{
-				"TYPE":   "CHANGE",
-				"METHOD": "DELETE",
-				"ENTITY": "ROOM",
-				"DATA":   `{"ID":"` + roomId.Hex() + `"}`,
-			},
+			Data: outBytes,
 		}
+
 		ss.DestroySubscription <- "room=" + roomId.Hex()
 		ss.DestroySubscription <- "room_card=" + roomId.Hex()
 		ss.DestroySubscription <- "room_feed" + roomId.Hex()
@@ -315,23 +315,21 @@ func watchRoomImageUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
 			log.Fatal(err)
 		}
 		roomId := changeEv["documentKey"].(bson.M)["_id"].(primitive.ObjectID)
+
+		outBytes, err := json.Marshal(socketmodels.OutChangeMessage{
+			Type:   "CHANGE",
+			Method: "UPDATE_IMAGE",
+			Entity: "ROOM",
+			Data:   `{"ID":"` + roomId.Hex() + `"}`,
+		})
+
 		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "room_card=" + roomId.Hex(),
-			Data: map[string]string{
-				"TYPE":   "CHANGE",
-				"METHOD": "UPDATE_IMAGE",
-				"ENTITY": "ROOM",
-				"DATA":   `{"ID":"` + roomId.Hex() + `"}`,
-			},
+			Data: outBytes,
 		}
 		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "room=" + roomId.Hex(),
-			Data: map[string]string{
-				"TYPE":   "CHANGE",
-				"METHOD": "UPDATE_IMAGE",
-				"ENTITY": "ROOM",
-				"DATA":   `{"ID":"` + roomId.Hex() + `"}`,
-			},
+			Data: outBytes,
 		}
 	}
 }
@@ -360,23 +358,21 @@ func watchRoomUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
 			log.Println("CS JSON MARSHAL ERROR : ", err)
 			return
 		}
+
+		outBytes, err := json.Marshal(socketmodels.OutChangeMessage{
+			Type:   "CHANGE",
+			Method: "UPDATE",
+			Entity: "ROOM",
+			Data:   string(data),
+		})
+
 		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "room_card=" + roomId.Hex(),
-			Data: map[string]string{
-				"TYPE":   "CHANGE",
-				"METHOD": "UPDATE",
-				"ENTITY": "ROOM",
-				"DATA":   string(data),
-			},
+			Data: outBytes,
 		}
 		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "room=" + roomId.Hex(),
-			Data: map[string]string{
-				"TYPE":   "CHANGE",
-				"METHOD": "UPDATE",
-				"ENTITY": "ROOM",
-				"DATA":   string(data),
-			},
+			Data: outBytes,
 		}
 	}
 }
@@ -393,14 +389,17 @@ func watchRoomInserts(db *mongo.Database, ss *socketserver.SocketServer) {
 			log.Fatal(err)
 		}
 		data, err := bson.MarshalExtJSON(changeEv["fullDocument"].(bson.M), true, true)
+
+		outBytes, err := json.Marshal(socketmodels.OutChangeMessage{
+			Type:   "CHANGE",
+			Method: "INSERT",
+			Entity: "ROOM",
+			Data:   string(data),
+		})
+
 		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "room_feed",
-			Data: map[string]string{
-				"TYPE":   "CHANGE",
-				"METHOD": "INSERT",
-				"ENTITY": "ROOM",
-				"DATA":   string(data),
-			},
+			Data: outBytes,
 		}
 	}
 }

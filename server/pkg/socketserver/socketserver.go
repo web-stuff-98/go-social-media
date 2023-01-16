@@ -22,32 +22,29 @@ type ConnectionInfo struct {
 	Conn *websocket.Conn
 	Uid  primitive.ObjectID
 }
-
 type SubscriptionConnectionInfo struct {
 	Name string
 	Uid  primitive.ObjectID
 	Conn *websocket.Conn
 }
-
 type SubscriptionDataMessage struct {
 	Name string
-	Data map[string]string
+	Data []byte
 }
 type ExclusiveSubscriptionDataMessage struct {
 	Name    string
-	Data    map[string]string
+	Data    []byte
 	Exclude map[primitive.ObjectID]bool
 }
 type SubscriptionDataMessageMulti struct {
 	Names []string
-	Data  map[string]string
+	Data  []byte
 }
 type ExclusiveSubscriptionDataMessageMulti struct {
 	Names   []string
-	Data    map[string]string
+	Data    []byte
 	Exclude map[primitive.ObjectID]bool
 }
-
 type SocketServer struct {
 	Connections   map[*websocket.Conn]primitive.ObjectID
 	Subscriptions map[string]map[*websocket.Conn]primitive.ObjectID
@@ -194,7 +191,7 @@ func RunServer(socketServer *SocketServer) {
 			for k, s := range socketServer.Subscriptions {
 				if k == subsData.Name {
 					for conn := range s {
-						conn.WriteJSON(subsData.Data)
+						conn.WriteMessage(websocket.BinaryMessage, subsData.Data)
 					}
 					break
 				}
@@ -215,7 +212,7 @@ func RunServer(socketServer *SocketServer) {
 				if k == subsData.Name {
 					for conn, oid := range s {
 						if subsData.Exclude[oid] != true {
-							conn.WriteJSON(subsData.Data)
+							conn.WriteMessage(websocket.BinaryMessage, subsData.Data)
 						}
 					}
 					break

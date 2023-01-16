@@ -10,6 +10,7 @@ import (
 	"github.com/web-stuff-98/go-social-media/pkg/db"
 	"github.com/web-stuff-98/go-social-media/pkg/db/models"
 	"github.com/web-stuff-98/go-social-media/pkg/helpers"
+	"github.com/web-stuff-98/go-social-media/pkg/socketmodels"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 
 	"github.com/gorilla/websocket"
@@ -72,11 +73,12 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 				}
 			}
 			if data["event_type"] == "PRIVATE_MESSAGE" {
+				inBytes, err := json.Marshal(socketmodels.InMessage{
+					Content: data["content"].(string),
+				})
 				socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 					Name: "inbox=" + data["recipient_id"].(string),
-					Data: map[string]string{
-						"content": data["content"].(string),
-					},
+					Data: inBytes,
 				}
 				recipientId, err := primitive.ObjectIDFromHex(data["recipient_id"].(string))
 				if err != nil {
@@ -132,20 +134,18 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 									log.Println(err)
 								}
 							} else {
+								outBytes, err := json.Marshal(socketmodels.OutMessage{
+									Type: "PRIVATE_MESSAGE",
+									Data: string(data),
+								})
 								socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 									Name: "inbox=" + recipientId.Hex(),
-									Data: map[string]string{
-										"TYPE": "PRIVATE_MESSAGE",
-										"DATA": string(data),
-									},
+									Data: outBytes,
 								}
 								// Also send the message to the sender because they need to be able to see their own message
 								socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 									Name: "inbox=" + uid.Hex(),
-									Data: map[string]string{
-										"TYPE": "PRIVATE_MESSAGE",
-										"DATA": string(data),
-									},
+									Data: outBytes,
 								}
 							}
 						}
@@ -212,12 +212,13 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 										log.Println(err)
 									}
 								} else {
+									outBytes, err := json.Marshal(socketmodels.OutMessage{
+										Type: "ROOM_MESSAGE",
+										Data: string(data),
+									})
 									socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 										Name: "room=" + roomId.Hex(),
-										Data: map[string]string{
-											"TYPE": "ROOM_MESSAGE",
-											"DATA": string(data),
-										},
+										Data: outBytes,
 									}
 								}
 							}

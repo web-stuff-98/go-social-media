@@ -19,6 +19,7 @@ import (
 
 	"github.com/web-stuff-98/go-social-media/pkg/db/models"
 	"github.com/web-stuff-98/go-social-media/pkg/helpers"
+	"github.com/web-stuff-98/go-social-media/pkg/socketmodels"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 	"github.com/web-stuff-98/go-social-media/pkg/validation"
 
@@ -142,21 +143,20 @@ func (h handler) VoteOnPost(w http.ResponseWriter, r *http.Request) {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 	}
 
+	outBytes, err := json.Marshal(socketmodels.OutMessage{
+		Type: "POST_VOTE",
+		Data: `{"ID":"` + postId.Hex() + `","is_upvote":` + strconv.FormatBool(voteInput.IsUpvote) + `,"remove":` + strconv.FormatBool(removeVote) + `}`,
+	})
+
 	h.SocketServer.SendDataToSubscriptionExclusive <- socketserver.ExclusiveSubscriptionDataMessage{
-		Name: "post_card=" + postId.Hex(),
-		Data: map[string]string{
-			"TYPE": "POST_VOTE",
-			"DATA": `{"ID":"` + postId.Hex() + `","is_upvote":` + strconv.FormatBool(voteInput.IsUpvote) + `,"remove":` + strconv.FormatBool(removeVote) + `}`,
-		},
+		Name:    "post_card=" + postId.Hex(),
+		Data:    outBytes,
 		Exclude: map[primitive.ObjectID]bool{user.ID: true},
 	}
 
 	h.SocketServer.SendDataToSubscriptionExclusive <- socketserver.ExclusiveSubscriptionDataMessage{
-		Name: "post_page=" + postId.Hex(),
-		Data: map[string]string{
-			"TYPE": "POST_VOTE",
-			"DATA": `{"ID":"` + postId.Hex() + `","is_upvote":` + strconv.FormatBool(voteInput.IsUpvote) + `,"remove":` + strconv.FormatBool(removeVote) + `}`,
-		},
+		Name:    "post_page=" + postId.Hex(),
+		Data:    outBytes,
 		Exclude: map[primitive.ObjectID]bool{user.ID: true},
 	}
 
@@ -280,12 +280,14 @@ func (h handler) VoteOnPostComment(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	outBytes, err := json.Marshal(socketmodels.OutMessage{
+		Type: "POST_COMMENT_VOTE",
+		Data: `{"ID":"` + commentId.Hex() + `","is_upvote":` + strconv.FormatBool(voteInput.IsUpvote) + `,"remove":` + strconv.FormatBool(removeVote) + `}`,
+	})
+
 	h.SocketServer.SendDataToSubscriptionExclusive <- socketserver.ExclusiveSubscriptionDataMessage{
-		Name: "post_page=" + postId.Hex(),
-		Data: map[string]string{
-			"TYPE": "POST_COMMENT_VOTE",
-			"DATA": `{"ID":"` + commentId.Hex() + `","is_upvote":` + strconv.FormatBool(voteInput.IsUpvote) + `,"remove":` + strconv.FormatBool(removeVote) + `}`,
-		},
+		Name:    "post_page=" + postId.Hex(),
+		Data:    outBytes,
 		Exclude: map[primitive.ObjectID]bool{user.ID: true},
 	}
 
@@ -362,15 +364,16 @@ func (h handler) CommentOnPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonBytes, err := json.Marshal(comment)
+	outBytes, err := json.Marshal(socketmodels.OutChangeMessage{
+		Type:   "CHANGE",
+		Method: "INSERT",
+		Entity: "POST_COMMENT",
+		Data:   string(jsonBytes),
+	})
 
 	h.SocketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 		Name: "post_page=" + post.ID.Hex(),
-		Data: map[string]string{
-			"TYPE":   "CHANGE",
-			"METHOD": "INSERT",
-			"ENTITY": "POST_COMMENT",
-			"DATA":   string(jsonBytes),
-		},
+		Data: outBytes,
 	}
 
 	responseMessage(w, http.StatusCreated, "Comment added")
@@ -425,14 +428,16 @@ func (h handler) DeleteCommentOnPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	outBytes, err := json.Marshal(socketmodels.OutChangeMessage{
+		Type:   "CHANGE",
+		Method: "DELETE",
+		Entity: "POST_COMMENT",
+		Data:   `{"ID":"` + rawId + `"}`,
+	})
+
 	h.SocketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 		Name: "post_page=" + rawPostId,
-		Data: map[string]string{
-			"TYPE":   "CHANGE",
-			"METHOD": "DELETE",
-			"ENTITY": "POST_COMMENT",
-			"DATA":   `{"ID":"` + rawId + `"}`,
-		},
+		Data: outBytes,
 	}
 
 	responseMessage(w, http.StatusOK, "Comment deleted")
@@ -493,14 +498,16 @@ func (h handler) UpdatePostComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	outBytes, err := json.Marshal(socketmodels.OutChangeMessage{
+		Type:   "CHANGE",
+		Method: "UPDATE",
+		Entity: "POST_COMMENT",
+		Data:   `{"ID":"` + rawId + `","content":"` + commentInput.Content + `","updated_at":"` + time.Now().Format(time.RFC3339) + `"}`,
+	})
+
 	h.SocketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 		Name: "post_page=" + rawPostId,
-		Data: map[string]string{
-			"TYPE":   "CHANGE",
-			"METHOD": "UPDATE",
-			"ENTITY": "POST_COMMENT",
-			"DATA":   `{"ID":"` + rawId + `","content":"` + commentInput.Content + `","updated_at":"` + time.Now().Format(time.RFC3339) + `"}`,
-		},
+		Data: outBytes,
 	}
 
 	responseMessage(w, http.StatusOK, "Comment updated")
