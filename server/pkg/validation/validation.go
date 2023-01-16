@@ -1,5 +1,9 @@
 package validation
 
+/*
+	The client also validates user input using Zod.
+*/
+
 type Credentials struct {
 	Username string `json:"username" validate:"required,min=2,max=16"`
 	Password string `json:"password" validate:"required,min=2,max=100"`

@@ -45,7 +45,7 @@ func GetClearedCookie() http.Cookie {
 // Used by login, register and refresh to set the cookie. Cookie is refresh token with encrypted sid
 func GenerateCookieAndSession(uid primitive.ObjectID, collections db.Collections) (http.Cookie, error) {
 	collections.SessionCollection.DeleteMany(context.TODO(), bson.M{"_uid": uid})
-	expiry := primitive.NewDateTimeFromTime(time.Now().Add(time.Minute * 20))
+	expiry := primitive.NewDateTimeFromTime(time.Now().Add(time.Minute * 2))
 	defer func() {
 		if r := recover(); r != nil {
 			log.Println("Recovered from panic in generate cookie helper function, why is this happening?")
@@ -120,15 +120,9 @@ func DownloadRandomImage(pfp bool) io.ReadCloser {
 }
 
 func RemoveDuplicates(strings []string) []string {
-	// Create a map to hold the unique strings
 	uniqueStrings := make(map[string]bool)
-	// Create a new slice to hold the unique strings
 	var unique []string
-
-	// Loop through the input slice of strings
 	for _, str := range strings {
-		// If the string is not in the map, add it to the map
-		// and append it to the unique slice
 		if !uniqueStrings[str] {
 			uniqueStrings[str] = true
 			unique = append(unique, str)

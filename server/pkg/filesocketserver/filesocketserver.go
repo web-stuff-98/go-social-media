@@ -121,7 +121,7 @@ func RunServer(fileSocketServer *FileSocketServer, colls *db.Collections) {
 			}()
 			/*
 				When a chunk comes in, append it to memory... if the chunk is big (8mb) then save it to the chunks collection in the
-				database and clear memory.
+				database and clear memory, and wait for the next chunks.
 
 				When the client is done uploading the last chunk the server will handle saving it to the database and cleaning up
 				the NextChunk ID if there isn't one... its confusing but should work fine.
@@ -225,7 +225,6 @@ func recursivelyFindAndNilNextChunkOnLastChunk(currentChunkId *primitive.ObjectI
 			})
 			return nil
 		} else {
-			//Send internal error and panic
 			return err
 		}
 	} else {

@@ -13,8 +13,8 @@ import (
 )
 
 var fileWsUpgrader = websocket.Upgrader{
-	ReadBufferSize:  4096,
-	WriteBufferSize: 4096,
+	ReadBufferSize:  1048576,
+	WriteBufferSize: 1048576,
 }
 
 /*
@@ -23,7 +23,10 @@ var fileWsUpgrader = websocket.Upgrader{
 	for is the first 24 bytes of the message, so that the message the file bytes belong to can be
 	identified.
 
-	The chunks are sent off to be handled by the fileSocketServer
+	The chunks are sent off to be handled by the fileSocketServer.
+
+	When the client is done uploading the attachment it will send the message ID on its own,
+	then the server will finalize the upload.
 */
 
 func fileWsReader(conn *websocket.Conn, uid *primitive.ObjectID, fileSocketServer *filesocketserver.FileSocketServer) {
@@ -43,13 +46,13 @@ func fileWsReader(conn *websocket.Conn, uid *primitive.ObjectID, fileSocketServe
 		if size == 24 {
 			// If the binary size is 24 (just the ID) it means its has finished uploading
 			fileSocketServer.FinishAttachmentChan <- msgId
-		} else if size > 24 {
+		} else if size > 24 && size <= 1048576 {
 			fileSocketServer.AttachmentChunksChan <- &filesocketserver.ChunkData{
 				MsgID: msgId,
 				Chunk: p[24:],
 			}
 		} else {
-			// If the size is less than 24, that cannot be possible, so break the connection
+			// If the size is less than 24, or larger than 1048576, that means hacks, so break the connection.
 			break
 		}
 

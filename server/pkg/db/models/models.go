@@ -6,7 +6,8 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 	Private messages are kept in Inbox collection, and room messages are kept
 	in RoomMessage collection because then when querying for Rooms or Users
 	the messages aren't returned also, which is slower, also messages shouldn't
-	trigger changestream events so they shouldn't be stored inside the same collection.
+	trigger changestream events so they shouldn't be stored inside the same collection
+	as posts or rooms.
 */
 
 type User struct {
@@ -59,8 +60,8 @@ type AttachmentMetadata struct {
 }
 
 type AttachmentChunk struct {
-	ID        primitive.ObjectID `bson:"_id"` // The first chunk should be the same as the message ID
-	NextChunk primitive.ObjectID `bson:"_id"` // If its the last chunk NextChunk will be nil ObjectID (000000000000000000000000)
+	ID        primitive.ObjectID `bson:"_id"`     // The first chunk should be the same as the message ID
+	NextChunk primitive.ObjectID `bson:"next_id"` // If its the last chunk NextChunk will be nil ObjectID (000000000000000000000000)
 	Bytes     primitive.Binary   `bson:"bytes"`
 }
 

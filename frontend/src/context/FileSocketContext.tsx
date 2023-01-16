@@ -34,13 +34,13 @@ export const FileSocketProvider = ({ children }: { children: ReactNode }) => {
     setFileSocket(fileSocket);
   };
 
-  // Upload attachment in 4kb chunks (with the first 24 bytes being the msg id)
+  // Upload attachment in 1mb chunks (with the first 24 bytes being the msg id)
   const uploadAttachment = async (file: File, msgId: string) => {
     let startPointer = 0;
     let endPointer = file.size;
     let promises = [];
     while (startPointer < endPointer) {
-      let newStartPointer = startPointer + 4072;
+      let newStartPointer = startPointer + 1048552;
       promises.push(
         new Blob([
           msgId,
