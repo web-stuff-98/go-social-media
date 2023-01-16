@@ -37,7 +37,7 @@ type Collections struct {
 	RoomImageCollection    *mongo.Collection
 }
 
-func Init() (*mongo.Database, Collections) {
+func Init() (*mongo.Database, *Collections) {
 	log.Println("Connecting to MongoDB...")
 	client, err := mongo.NewClient(options.Client().ApplyURI(os.Getenv("MONGODB_URI")))
 	if err != nil {
@@ -53,7 +53,7 @@ func Init() (*mongo.Database, Collections) {
 		log.Fatal(err)
 	}
 	DB := client.Database(os.Getenv("MONGODB_DB"))
-	colls := Collections{
+	colls := &Collections{
 		UserCollection:         DB.Collection("users"),
 		InboxCollection:        DB.Collection("inboxes"),
 		SessionCollection:      DB.Collection("sessions"),
@@ -67,12 +67,12 @@ func Init() (*mongo.Database, Collections) {
 		RoomMessagesCollection: DB.Collection("room_messages"),
 		RoomImageCollection:    DB.Collection("room_images"),
 	}
-	cleanUp(&colls)
+	cleanUp(colls)
 	return DB, colls
 }
 
 func cleanUp(colls *Collections) {
-	cleanupTicker := time.NewTicker(10 * time.Minute)
+	cleanupTicker := time.NewTicker(24 * time.Hour)
 	quitCleanup := make(chan struct{})
 	go func() {
 		for {

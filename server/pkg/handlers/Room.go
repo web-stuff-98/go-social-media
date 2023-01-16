@@ -28,7 +28,7 @@ import (
 )
 
 func (h handler) GetRoomPage(w http.ResponseWriter, r *http.Request) {
-	_, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	_, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -94,7 +94,7 @@ func (h handler) GetRoomPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
-	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -167,7 +167,7 @@ func (h handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) GetRoom(w http.ResponseWriter, r *http.Request) {
-	_, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	_, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -208,7 +208,7 @@ func (h handler) GetRoom(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) UpdateRoom(w http.ResponseWriter, r *http.Request) {
-	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -300,7 +300,7 @@ func (h handler) UpdateRoom(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) DeleteRoom(w http.ResponseWriter, r *http.Request) {
-	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -367,7 +367,7 @@ func (h handler) GetRoomImage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) UploadRoomImage(w http.ResponseWriter, r *http.Request) {
-	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return

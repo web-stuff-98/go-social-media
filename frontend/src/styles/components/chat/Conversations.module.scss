@@ -23,7 +23,7 @@
 }
 
 .right {
-  width: 14.444rem;
+  width: 12rem;
   min-height: 15rem;
   display: flex;
   flex-direction: column;
@@ -48,6 +48,9 @@
     align-items: center;
     input {
       flex-grow: 1;
+    }
+    input[type="file"] {
+      display: none;
     }
     width: 100%;
     box-sizing: border-box;

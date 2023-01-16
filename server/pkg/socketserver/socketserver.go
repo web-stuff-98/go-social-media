@@ -10,8 +10,7 @@ import (
 )
 
 /*
-	This facilitiates connection registrations and subscriptions. The socket handler
-	file handles messages from the client.
+	This is for the chat. It handles JSON messages only.
 
 	Uid can always be left as primitive.NilObjectID, users are not required
 	to be authenticated to connect or open subscriptions, but there is an auth
@@ -73,7 +72,7 @@ func Init() (*SocketServer, error) {
 }
 
 func RunServer(socketServer *SocketServer) {
-	/* ----- Websocket connection registration ----- */
+	/* ----- Connection registration ----- */
 	go func() {
 		for {
 			defer func() {
@@ -88,7 +87,7 @@ func RunServer(socketServer *SocketServer) {
 			}
 		}
 	}()
-	/* ----- Websocket disconnect registration ----- */
+	/* ----- Disconnect registration ----- */
 	go func() {
 		for {
 			defer func() {
@@ -207,7 +206,7 @@ func RunServer(socketServer *SocketServer) {
 			}
 		}
 	}()
-	/* ----- Destroy subscription (for when a post is deleted for example) ----- */
+	/* ----- Destroy subscription ----- */
 	go func() {
 		for {
 			subsName := <-socketServer.DestroySubscription
@@ -216,7 +215,7 @@ func RunServer(socketServer *SocketServer) {
 	}()
 
 	/* -------- Cleanup ticker -------- */
-	cleanupTicker := time.NewTicker(2 * time.Minute)
+	cleanupTicker := time.NewTicker(20 * time.Minute)
 	quitCleanup := make(chan struct{})
 	go func() {
 		for {

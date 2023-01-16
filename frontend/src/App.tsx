@@ -1,5 +1,6 @@
 import Layout from "./components/layout/Layout";
 import { AuthProvider } from "./context/AuthContext";
+import { FileSocketProvider } from "./context/FileSocketContext";
 import { InterfaceProvider } from "./context/InterfaceContext";
 import { ModalProvider } from "./context/ModalContext";
 import { MouseProvider } from "./context/MouseContext";
@@ -15,13 +16,15 @@ function App() {
         <SocketProvider>
           <UserdropdownProvider>
             <AuthProvider>
-              <ModalProvider>
-                <PostsProvider>
-                  <UsersProvider>
-                    <Layout />
-                  </UsersProvider>
-                </PostsProvider>
-              </ModalProvider>
+              <FileSocketProvider>
+                <ModalProvider>
+                  <PostsProvider>
+                    <UsersProvider>
+                      <Layout />
+                    </UsersProvider>
+                  </PostsProvider>
+                </ModalProvider>
+              </FileSocketProvider>
             </AuthProvider>
           </UserdropdownProvider>
         </SocketProvider>

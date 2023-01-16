@@ -23,10 +23,11 @@ var upgrader = websocket.Upgrader{
 }
 
 /*
-	This is where most socket event are triggered from, some are triggered from API routes, like voting
+	This is where private message and room messages socket event are triggered from, some are triggered from API routes,
+	like voting & commenting
 */
 
-func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid primitive.ObjectID, colls db.Collections) {
+func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *primitive.ObjectID, colls *db.Collections) {
 	for {
 		_, p, err := conn.ReadMessage()
 		if err != nil {
@@ -49,14 +50,14 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 				// Authorization check for private subscriptions is done inside socketserver
 				socketServer.RegisterSubscriptionConn <- socketserver.SubscriptionConnectionInfo{
 					Name: data["name"].(string),
-					Uid:  uid,
+					Uid:  *uid,
 					Conn: conn,
 				}
 			}
 			if data["event_type"] == "CLOSE_SUBSCRIPTION" {
 				socketServer.UnregisterSubscriptionConn <- socketserver.SubscriptionConnectionInfo{
 					Name: data["name"].(string),
-					Uid:  uid,
+					Uid:  *uid,
 					Conn: conn,
 				}
 			}
@@ -65,7 +66,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 				for _, name := range names {
 					socketServer.RegisterSubscriptionConn <- socketserver.SubscriptionConnectionInfo{
 						Name: name.(string),
-						Uid:  uid,
+						Uid:  *uid,
 						Conn: conn,
 					}
 				}
@@ -90,7 +91,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 					msg := &models.PrivateMessage{
 						ID:          primitive.NewObjectIDFromTimestamp(time.Now()),
 						Content:     data["content"].(string),
-						Uid:         uid,
+						Uid:         *uid,
 						CreatedAt:   primitive.NewDateTimeFromTime(time.Now()),
 						UpdatedAt:   primitive.NewDateTimeFromTime(time.Now()),
 						RecipientId: recipientId,
@@ -152,7 +153,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 				}
 			}
 			if data["event_type"] == "ROOM_MESSAGE" {
-				if uid == primitive.NilObjectID {
+				if *uid == primitive.NilObjectID {
 					err := conn.WriteJSON(map[string]string{
 						"TYPE": "RESPONSE_MESSAGE",
 						"DATA": `{"msg":"Unauthorized","err":true}`,
@@ -183,7 +184,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid p
 							msg := &models.RoomMessage{
 								ID:                primitive.NewObjectID(),
 								Content:           data["content"].(string),
-								Uid:               uid,
+								Uid:               *uid,
 								CreatedAt:         primitive.NewDateTimeFromTime(time.Now()),
 								UpdatedAt:         primitive.NewDateTimeFromTime(time.Now()),
 								HasAttachment:     false,
@@ -237,7 +238,7 @@ func (h handler) WebSocketEndpoint(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 	}
-	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	uid := primitive.NilObjectID
 	if user != nil {
 		uid = user.ID
@@ -254,5 +255,5 @@ func (h handler) WebSocketEndpoint(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Println("Client Disconnected")
 	}()
-	reader(ws, h.SocketServer, uid, h.Collections)
+	reader(ws, h.SocketServer, &uid, h.Collections)
 }

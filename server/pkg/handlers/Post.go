@@ -33,7 +33,7 @@ import (
 )
 
 func (h handler) VoteOnPost(w http.ResponseWriter, r *http.Request) {
-	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -164,7 +164,7 @@ func (h handler) VoteOnPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) VoteOnPostComment(w http.ResponseWriter, r *http.Request) {
-	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -293,7 +293,7 @@ func (h handler) VoteOnPostComment(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) CommentOnPost(w http.ResponseWriter, r *http.Request) {
-	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -377,7 +377,7 @@ func (h handler) CommentOnPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) DeleteCommentOnPost(w http.ResponseWriter, r *http.Request) {
-	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -439,7 +439,7 @@ func (h handler) DeleteCommentOnPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) UpdatePostComment(w http.ResponseWriter, r *http.Request) {
-	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -507,7 +507,7 @@ func (h handler) UpdatePostComment(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
-	user, _, _ := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, _ := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 
 	pageNumberString := mux.Vars(r)["page"]
 	pageNumber, err := strconv.Atoi(pageNumberString)
@@ -654,7 +654,7 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) GetPost(w http.ResponseWriter, r *http.Request) {
-	user, _, _ := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, _ := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 
 	slug := mux.Vars(r)["slug"]
 
@@ -783,7 +783,7 @@ func (h handler) GetPostThumb(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
-	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -854,7 +854,7 @@ func (h handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) CreatePost(w http.ResponseWriter, r *http.Request) {
-	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -940,7 +940,7 @@ func (h handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 func (h handler) DeletePost(w http.ResponseWriter, r *http.Request) {
 	slug := mux.Vars(r)["slug"]
 
-	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -972,7 +972,7 @@ func (h handler) DeletePost(w http.ResponseWriter, r *http.Request) {
 func (h handler) UploadPostImage(w http.ResponseWriter, r *http.Request) {
 	slug := mux.Vars(r)["slug"]
 
-	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return

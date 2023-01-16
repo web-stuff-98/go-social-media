@@ -71,7 +71,7 @@ func (h handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie, err := helpers.GenerateCookieAndSession(inserted.InsertedID.(primitive.ObjectID), h.Collections)
+	cookie, err := helpers.GenerateCookieAndSession(inserted.InsertedID.(primitive.ObjectID), *h.Collections)
 	http.SetCookie(w, &cookie)
 
 	w.Header().Add("Content-Type", "application/json")
@@ -123,7 +123,7 @@ func (h handler) Login(w http.ResponseWriter, r *http.Request) {
 		user.Base64pfp = "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(pfp.Binary.Data)
 	}
 
-	cookie, err := helpers.GenerateCookieAndSession(user.ID, h.Collections)
+	cookie, err := helpers.GenerateCookieAndSession(user.ID, *h.Collections)
 	http.SetCookie(w, &cookie)
 
 	w.Header().Add("Content-Type", "application/json")
@@ -153,7 +153,7 @@ func (h handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie, err := helpers.GenerateCookieAndSession(session.UID, h.Collections)
+	cookie, err := helpers.GenerateCookieAndSession(session.UID, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -221,7 +221,7 @@ func (h handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) Logout(w http.ResponseWriter, r *http.Request) {
-	_, session, _ := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	_, session, _ := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 
 	clearedCookie := helpers.GetClearedCookie()
 	http.SetCookie(w, &clearedCookie)
@@ -244,7 +244,7 @@ func (h handler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) UploadPfp(w http.ResponseWriter, r *http.Request) {
-	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -323,7 +323,7 @@ func (h handler) UploadPfp(w http.ResponseWriter, r *http.Request) {
 
 // Get uids of all conversations (excluding the messages - getConversation will be used to retrieve messages when the conversation is opened)
 func (h handler) GetConversations(w http.ResponseWriter, r *http.Request) {
-	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -347,7 +347,7 @@ func (h handler) GetConversations(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) GetConversation(w http.ResponseWriter, r *http.Request) {
-	user, _, err := helpers.GetUserAndSessionFromRequest(r, h.Collections)
+	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return

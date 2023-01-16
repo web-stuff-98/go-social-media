@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/web-stuff-98/go-social-media/pkg/db"
+	"github.com/web-stuff-98/go-social-media/pkg/filesocketserver"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -20,11 +21,12 @@ func responseMessage(w http.ResponseWriter, c int, m string) {
 }
 
 type handler struct {
-	DB           *mongo.Database
-	Collections  db.Collections
-	SocketServer *socketserver.SocketServer
+	DB               *mongo.Database
+	Collections      *db.Collections
+	SocketServer     *socketserver.SocketServer
+	FileSocketServer *filesocketserver.FileSocketServer
 }
 
-func New(db *mongo.Database, collections db.Collections, sserver *socketserver.SocketServer) handler {
-	return handler{db, collections, sserver}
+func New(db *mongo.Database, collections *db.Collections, sserver *socketserver.SocketServer, fsserver *filesocketserver.FileSocketServer) handler {
+	return handler{db, collections, sserver, fsserver}
 }

@@ -1,6 +1,6 @@
 import classes from "../../../styles/components/chat/Conversations.module.scss";
 import IconBtn from "../../IconBtn";
-import { MdSend } from "react-icons/md";
+import { MdFileCopy, MdSend } from "react-icons/md";
 import User from "../../User";
 import { useUsers } from "../../../context/UsersContext";
 import { useState, useEffect, useRef } from "react";
@@ -12,6 +12,7 @@ import { instanceOfPrivateMessageData } from "../../../utils/DetermineSocketEven
 import { useModal } from "../../../context/ModalContext";
 import { getConversations, getConversation } from "../../../services/chat";
 import ErrorTip from "../../ErrorTip";
+import useFileSocket from "../../../context/FileSocketContext";
 
 export interface IPrivateMessage {
   ID: string;
@@ -33,6 +34,7 @@ export type Conversation = {
 export default function Conversations() {
   const { getUserData, cacheUserData } = useUsers();
   const { socket } = useSocket();
+  const { uploadAttachment } = useFileSocket();
   const { user: currentUser } = useAuth();
   const { openModal } = useModal();
 
@@ -47,8 +49,10 @@ export default function Conversations() {
     if (!currentUser) return;
     getConversations()
       .then((uids) => {
-        if (uids)
+        if (uids) {
+          uids.forEach((uid: string) => cacheUserData(uid));
           setConversations(uids.map((uid: string) => ({ uid, messages: [] })));
+        }
       })
       .catch((e) => {
         openModal("Message", {
@@ -190,6 +194,15 @@ export default function Conversations() {
     setMessageInput("");
   };
 
+  const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    if (!e.target.files[0]) return;
+    const file = e.target.files[0];
+    window.alert("Uploading file")
+    uploadAttachment(file, "000000000000000000000000");
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
   return (
     <>
       <div className={classes.users}>
@@ -207,6 +220,13 @@ export default function Conversations() {
             ))}
         </div>
         <form onSubmit={handleSubmit} className={classes.messageForm}>
+          <input ref={fileInputRef} type="file" onChange={handleFile} />
+          <IconBtn
+            name="Select attachment"
+            ariaLabel="Select and attachment"
+            Icon={MdFileCopy}
+            onClick={() => fileInputRef.current?.click()}
+          />
           <input
             value={messageInput}
             onChange={handleMessageInput}
@@ -215,7 +235,9 @@ export default function Conversations() {
             required
           />
           <IconBtn name="Send" ariaLabel="Send message" Icon={MdSend} />
-          {messageInput.length > 200 && <ErrorTip message="Maximum 200 characters"/>}
+          {messageInput.length > 200 && (
+            <ErrorTip message="Maximum 200 characters" />
+          )}
         </form>
       </div>
     </>
