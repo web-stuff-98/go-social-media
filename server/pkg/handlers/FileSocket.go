@@ -48,13 +48,17 @@ func fileWsReader(conn *websocket.Conn, uid *primitive.ObjectID, fileSocketServe
 				MsgID: msgId,
 				Chunk: p[24:],
 			}
+		} else {
+			// If the size is less than 24, that cannot be possible, so break the connection
+			break
 		}
-		// If the size is less than 24, that cannot be possible, so don't do anything
 
 		defer func() {
 			r := recover()
 			if r != nil {
 				log.Println("Recovered from panic in File WS reader loop : ", r)
+			} else {
+				conn.Close()
 			}
 		}()
 	}

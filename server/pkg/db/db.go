@@ -19,22 +19,27 @@ import (
 	Also included is a cleanup function. The cleanup function removes comments
 	that are parented to comments that no longer exist, and votes that are parented to
 	comments that no longer exist, to save space. It also deletes users accounts after
-	20 minutes, along with all their stuff.
+	20 minutes, along with all their stuff (i havent wrote that last bit yet though)
 */
 
 type Collections struct {
-	UserCollection         *mongo.Collection
-	InboxCollection        *mongo.Collection
-	SessionCollection      *mongo.Collection
-	PfpCollection          *mongo.Collection
+	UserCollection    *mongo.Collection
+	InboxCollection   *mongo.Collection
+	SessionCollection *mongo.Collection
+	PfpCollection     *mongo.Collection
+
 	PostCollection         *mongo.Collection
 	PostVoteCollection     *mongo.Collection
 	PostImageCollection    *mongo.Collection
 	PostThumbCollection    *mongo.Collection
 	PostCommentsCollection *mongo.Collection
+
 	RoomCollection         *mongo.Collection
 	RoomMessagesCollection *mongo.Collection
 	RoomImageCollection    *mongo.Collection
+
+	AttachmentMetadataCollection *mongo.Collection
+	AttachmentChunksCollection   *mongo.Collection
 }
 
 func Init() (*mongo.Database, *Collections) {
@@ -54,18 +59,23 @@ func Init() (*mongo.Database, *Collections) {
 	}
 	DB := client.Database(os.Getenv("MONGODB_DB"))
 	colls := &Collections{
-		UserCollection:         DB.Collection("users"),
-		InboxCollection:        DB.Collection("inboxes"),
-		SessionCollection:      DB.Collection("sessions"),
-		PfpCollection:          DB.Collection("pfps"),
+		UserCollection:    DB.Collection("users"),
+		InboxCollection:   DB.Collection("inboxes"),
+		SessionCollection: DB.Collection("sessions"),
+		PfpCollection:     DB.Collection("pfps"),
+
 		PostCollection:         DB.Collection("posts"),
 		PostVoteCollection:     DB.Collection("post_votes"),
 		PostImageCollection:    DB.Collection("post_images"),
 		PostThumbCollection:    DB.Collection("post_thumbs"),
 		PostCommentsCollection: DB.Collection("post_comments"),
+
 		RoomCollection:         DB.Collection("rooms"),
 		RoomMessagesCollection: DB.Collection("room_messages"),
 		RoomImageCollection:    DB.Collection("room_images"),
+
+		AttachmentMetadataCollection: DB.Collection("attachment_metadata"),
+		AttachmentChunksCollection:   DB.Collection("attachment_chunks"),
 	}
 	cleanUp(colls)
 	return DB, colls
