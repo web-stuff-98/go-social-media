@@ -8,6 +8,14 @@
   border-bottom: none !important;
 }
 
+.ql-editor * {
+  margin: 1rem 0;
+}
+
+.ql-editor li {
+  margin: 0;
+}
+
 .ql-toolbar {
   border-left: 1px solid var(--base-medium) !important;
   border-right: 1px solid var(--base-medium) !important;

@@ -5,32 +5,32 @@ export type ChangeData = {
   TYPE: "CHANGE";
   METHOD: SocketEventChangeMethod;
   ENTITY: SocketEventChangeEntityType;
-  DATA: object & { ID: string };
+  DATA: { ID: string };
 };
 
 export type ResponseMessageData = {
   TYPE: "RESPONSE_MESSAGE";
-  DATA: object & { ID: string };
+  DATA: { ID: string };
 };
 
 export type PrivateMessageData = {
   TYPE: "PRIVATE_MESSAGE";
-  DATA: object & IPrivateMessage;
+  DATA: IPrivateMessage;
 };
 
 export type RoomMessageData = {
   TYPE: "ROOM_MESSAGE";
-  DATA: object & IRoomMessage;
+  DATA: IRoomMessage;
 };
 
 export type PostVoteData = {
   TYPE: "POST_VOTE";
-  DATA: object & { ID: string; is_upvote: boolean; remove: boolean };
+  DATA: { ID: string; is_upvote: boolean; remove: boolean };
 };
 
 export type PostCommentVoteData = {
   TYPE: "POST_COMMENT_VOTE";
-  DATA: object & { ID: string; is_upvote: boolean; remove: boolean };
+  DATA: { ID: string; is_upvote: boolean; remove: boolean };
 };
 
 export type SocketEventChangeMethod =

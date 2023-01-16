@@ -102,43 +102,48 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     let outTerm = rawTerm ? `&term=${rawTerm}` : "";
     let outOrder = rawOrder ? `&order=${rawOrder}` : "";
     let outMode = rawMode ? `&mode=${rawMode}` : "";
-    const outStr = `/blog/1${outTags}${outTerm}${outOrder.toLowerCase()}${outMode.toLowerCase()}`;
-    navigate(`${outStr}`.replace("/blog/1&", "/blog/1?"));
+    navigate(
+      `/blog/1${outTags}${outTerm}${outOrder.toLowerCase()}${outMode.toLowerCase()}`.replace(
+        "/blog/1&",
+        "/blog/1?"
+      )
+    );
   };
 
-  const getSortOrderFromParams = useMemo(() => {
-    const order = searchParams.get("order");
-    if (!order) return "DESC";
-    return order.toUpperCase() as SortOrder;
-  }, [searchParams]);
-  const getSortModeFromParams = useMemo(() => {
-    const mode = searchParams.get("mode");
-    if (!mode) return "DATE";
-    return mode.toUpperCase() as SortMode;
-  }, [searchParams]);
-  const getTagsFromParams = useMemo(() => {
-    const tags = searchParams.get("tags");
-    if (!tags) return [];
-    return tags.split(" ").filter((t) => t);
-  }, [searchParams]);
-  const getTermFromParams = useMemo(() => {
-    const term = searchParams.get("term");
-    return term || "";
-  }, [searchParams]);
+  const getSortOrderFromParams = useMemo(
+    () => (searchParams.get("order") || "DESC") as SortOrder,
+    [searchParams]
+  );
+  const getSortModeFromParams = useMemo(
+    () => (searchParams.get("mode") || "DATE") as SortMode,
+    [searchParams]
+  );
+  const getTagsFromParams = useMemo(
+    () =>
+      searchParams.has("tags")
+        ? searchParams
+            .get("tags")!
+            .split(" ")
+            .filter((t) => t)
+        : [],
+    [searchParams]
+  );
+  const getTermFromParams = useMemo(
+    () => searchParams.get("term") || "",
+    [searchParams]
+  );
 
-  const setSortOrderInParams = (index: number) => {
+  const setSortOrderInParams = (index: number) =>
     addUpdateOrRemoveParamsAndNavigateToUrl(
       "order",
       index === 0 ? "DESC" : "ASC"
     );
-  };
-  const setSortModeInParams = (index: number) => {
+  const setSortModeInParams = (index: number) =>
     addUpdateOrRemoveParamsAndNavigateToUrl(
       "mode",
       index === 0 ? "DATE" : "POPULARITY"
     );
-  };
-  const addOrRemoveTagInParams = (tag: string) => {
+  const addOrRemoveTagInParams = (tag: string) =>
     addUpdateOrRemoveParamsAndNavigateToUrl(
       "tags",
       (getTagsFromParams.includes(tag)
@@ -146,10 +151,8 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
         : [...getTagsFromParams, tag].sort()
       ).join("+")
     );
-  };
-  const setTermInParams = (term: string) => {
+  const setTermInParams = (term: string) =>
     addUpdateOrRemoveParamsAndNavigateToUrl("term", term.replaceAll(" ", "+"));
-  };
 
   const [posts, setPosts] = useState<IPostCard[]>([]);
   const [postsCount, setPostsCount] = useState(0); // Document count of all posts matching query... not the count of posts on the page
@@ -172,9 +175,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     [searchParams, page]
   );
 
-  useEffect(() => {
-    handleSearch();
-  }, [page, searchParams]);
+  useEffect(() => handleSearch(), [page, searchParams]);
 
   const getPageWithParams = () => {
     setResMsg({ msg: "", err: false, pen: true });
@@ -204,7 +205,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
       });
   };
 
-  const updatePostCard = (data: Partial<IPostCard>) => {
+  const updatePostCard = (data: Partial<IPostCard>) =>
     setPosts((o) => {
       let newPosts = o;
       const i = o.findIndex((p) => p.ID === data.ID);
@@ -212,9 +213,8 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
       newPosts[i] = { ...newPosts[i], ...data };
       return [...newPosts];
     });
-  };
 
-  const updatePostCardImage = (data: { ID: string }) => {
+  const updatePostCardImage = (data: { ID: string }) =>
     setPosts((o) => {
       let newPosts = o;
       const i = o.findIndex((p) => p.ID === data.ID);
@@ -227,11 +227,9 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
       };
       return [...newPosts];
     });
-  };
 
-  const removePostCard = (id: string) => {
+  const removePostCard = (id: string) =>
     setPosts((o) => [...o.filter((p) => p.ID !== id)]);
-  };
 
   const createPostCard = (data: IPostCard, addToStart?: boolean) => {
     if (addToStart) setPosts((o) => [data, ...o].slice(0, 30));
