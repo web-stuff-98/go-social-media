@@ -182,15 +182,12 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 							}
 						} else {
 							msg := &models.RoomMessage{
-								ID:                primitive.NewObjectID(),
-								Content:           data["content"].(string),
-								Uid:               *uid,
-								CreatedAt:         primitive.NewDateTimeFromTime(time.Now()),
-								UpdatedAt:         primitive.NewDateTimeFromTime(time.Now()),
-								HasAttachment:     false,
-								AttachmentPending: false,
-								AttachmentType:    "",
-								AttachmentError:   false,
+								ID:            primitive.NewObjectID(),
+								Content:       data["content"].(string),
+								Uid:           *uid,
+								CreatedAt:     primitive.NewDateTimeFromTime(time.Now()),
+								UpdatedAt:     primitive.NewDateTimeFromTime(time.Now()),
+								HasAttachment: false,
 							}
 							if _, err := colls.RoomMessagesCollection.UpdateByID(context.TODO(), roomId, bson.M{
 								"$push": bson.M{

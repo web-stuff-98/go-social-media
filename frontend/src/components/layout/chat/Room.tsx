@@ -24,9 +24,6 @@ export interface IRoomMessage {
   created_at: string;
   updated_at: string;
   has_attachment: boolean;
-  attachment_pending: boolean;
-  attachment_type: string;
-  attachment_error: boolean;
 }
 
 export interface IRoom extends IRoomCard {

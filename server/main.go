@@ -35,7 +35,7 @@ func main() {
 	}
 	DB, Collections := db.Init()
 	SocketServer, err := socketserver.Init()
-	FileSocketServer, err := filesocketserver.Init()
+	FileSocketServer, err := filesocketserver.Init(Collections)
 	if err != nil {
 		log.Fatal("Failed to set up socket server ", err)
 	}

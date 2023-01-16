@@ -22,19 +22,6 @@ type Inbox struct {
 	MessagesSentTo []primitive.ObjectID `bson:"messages_sent_to" json:"-"` // list of all the people the user has messaged, needed to join both users messages together for display
 }
 
-type PrivateMessage struct {
-	ID                primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
-	Content           string             `bson:"content,maxlength=200" json:"content"`
-	Uid               primitive.ObjectID `bson:"uid" json:"uid"`
-	CreatedAt         primitive.DateTime `bson:"created_at" json:"created_at"`
-	UpdatedAt         primitive.DateTime `bson:"updated_at" json:"updated_at"`
-	HasAttachment     bool               `bson:"has_attachment" json:"has_attachment"`
-	AttachmentPending bool               `bson:"attachment_pending" json:"attachment_pending"`
-	AttachmentType    string             `bson:"attachment_type" json:"attachment_type"`
-	AttachmentError   bool               `bson:"attachment_error" json:"attachment_error"`
-	RecipientId       primitive.ObjectID `bson:"-" json:"recipient_id"`
-}
-
 type Pfp struct {
 	ID     primitive.ObjectID `bson:"_id, omitempty"` //id should be the same id as the uid
 	Binary primitive.Binary   `bson:"binary"`
@@ -45,22 +32,36 @@ type Session struct {
 	ExpiresAt primitive.DateTime `bson:"exp"`
 }
 
-type RoomMessage struct {
-	ID                primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
-	Content           string             `bson:"content,maxlength=200" json:"content"`
-	Uid               primitive.ObjectID `bson:"uid" json:"uid"`
-	CreatedAt         primitive.DateTime `bson:"created_at" json:"created_at"`
-	UpdatedAt         primitive.DateTime `bson:"updated_at" json:"updated_at"`
-	HasAttachment     bool               `bson:"has_attachment" json:"has_attachment"`
-	AttachmentPending bool               `bson:"attachment_pending" json:"attachment_pending"`
-	AttachmentType    string             `bson:"attachment_type" json:"attachment_type"`
-	AttachmentError   bool               `bson:"attachment_error" json:"attachment_error"`
+type PrivateMessage struct {
+	ID            primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
+	Content       string             `bson:"content,maxlength=200" json:"content"`
+	Uid           primitive.ObjectID `bson:"uid" json:"uid"`
+	CreatedAt     primitive.DateTime `bson:"created_at" json:"created_at"`
+	UpdatedAt     primitive.DateTime `bson:"updated_at" json:"updated_at"`
+	HasAttachment bool               `bson:"has_attachment" json:"has_attachment"`
+	RecipientId   primitive.ObjectID `bson:"-" json:"recipient_id"`
 }
 
-type Attachment struct {
-	ID       primitive.ObjectID `bson:"_id,omitempty" json:"ID"` // ID should be the same as the message
-	Binary   primitive.Binary   `bson:"binary"`
-	MimeType string             `bson:"attachment_type" json:"-"`
+type RoomMessage struct {
+	ID            primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
+	Content       string             `bson:"content,maxlength=200" json:"content"`
+	Uid           primitive.ObjectID `bson:"uid" json:"uid"`
+	CreatedAt     primitive.DateTime `bson:"created_at" json:"created_at"`
+	UpdatedAt     primitive.DateTime `bson:"updated_at" json:"updated_at"`
+	HasAttachment bool               `bson:"has_attachment" json:"has_attachment"`
+}
+
+type AttachmentMetadata struct {
+	ID       primitive.ObjectID `bson:"_id" json:"ID"` // Should be the same as message ID
+	MimeType string             `bson:"mime_type" json:"mime_type"`
+	Name     string             `bson:"name" json:"name"`
+	Pending  bool               `bson:"pending"`
+}
+
+type AttachmentChunk struct {
+	ID        primitive.ObjectID `bson:"_id"` // The first chunk should be the same as the message ID
+	NextChunk primitive.ObjectID `bson:"_id"` // If its the last chunk NextChunk will be nil ObjectID (000000000000000000000000)
+	Bytes     primitive.Binary   `bson:"bytes"`
 }
 
 type Post struct {

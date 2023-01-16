@@ -21,9 +21,6 @@ export interface IPrivateMessage {
   created_at: string;
   updated_at: string;
   has_attachment: boolean;
-  attachment_pending: boolean;
-  attachment_type: string;
-  attachment_error: boolean;
   recipient_id: string;
 }
 export type Conversation = {
