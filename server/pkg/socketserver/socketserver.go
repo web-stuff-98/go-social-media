@@ -191,7 +191,7 @@ func RunServer(socketServer *SocketServer) {
 			for k, s := range socketServer.Subscriptions {
 				if k == subsData.Name {
 					for conn := range s {
-						conn.WriteMessage(websocket.BinaryMessage, subsData.Data)
+						conn.WriteMessage(websocket.TextMessage, subsData.Data)
 					}
 					break
 				}
@@ -212,7 +212,7 @@ func RunServer(socketServer *SocketServer) {
 				if k == subsData.Name {
 					for conn, oid := range s {
 						if subsData.Exclude[oid] != true {
-							conn.WriteMessage(websocket.BinaryMessage, subsData.Data)
+							conn.WriteMessage(websocket.TextMessage, subsData.Data)
 						}
 					}
 					break

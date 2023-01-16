@@ -138,14 +138,24 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 									Type: "PRIVATE_MESSAGE",
 									Data: string(data),
 								})
-								socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-									Name: "inbox=" + recipientId.Hex(),
-									Data: outBytes,
-								}
-								// Also send the message to the sender because they need to be able to see their own message
-								socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-									Name: "inbox=" + uid.Hex(),
-									Data: outBytes,
+								if err != nil {
+									err := conn.WriteJSON(map[string]string{
+										"TYPE": "RESPONSE_MESSAGE",
+										"DATA": `{"msg":"Internal error","err":true}`,
+									})
+									if err != nil {
+										log.Println(err)
+									}
+								} else {
+									socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+										Name: "inbox=" + recipientId.Hex(),
+										Data: outBytes,
+									}
+									// Also send the message to the sender because they need to be able to see their own message
+									socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+										Name: "inbox=" + uid.Hex(),
+										Data: outBytes,
+									}
 								}
 							}
 						}
@@ -216,9 +226,19 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 										Type: "ROOM_MESSAGE",
 										Data: string(data),
 									})
-									socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-										Name: "room=" + roomId.Hex(),
-										Data: outBytes,
+									if err != nil {
+										err := conn.WriteJSON(map[string]string{
+											"TYPE": "RESPONSE_MESSAGE",
+											"DATA": `{"msg":"Internal error","err":true}`,
+										})
+										if err != nil {
+											log.Println(err)
+										}
+									} else {
+										socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+											Name: "room=" + roomId.Hex(),
+											Data: outBytes,
+										}
 									}
 								}
 							}

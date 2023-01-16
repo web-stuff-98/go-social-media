@@ -89,7 +89,9 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleMessage = useCallback((e: MessageEvent) => {
+    console.log(`Data before parse : `, e.data);
     const data = JSON.parse(e.data);
+    console.log(data);
     data["DATA"] = JSON.parse(data["DATA"]);
     if (instanceOfResponseMessageData(e.data)) {
       openModal("Message", {

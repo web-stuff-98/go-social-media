@@ -17,6 +17,17 @@ import (
 )
 
 /*
+
+	NEED TO ADD ERROR HANDLING TO JSON MARSHAL
+	------------------------------------------
+	NEED TO ADD ERROR HANDLING TO MONGO OPERATIONS
+	----------------------------------------------
+	NEED TO ADD PANIC RECOVERY
+	--------------------------
+	NEED TO ADD CLEANUP FUNCTION & SELF CLEANUP AFTER FAILURE & COMPLETION
+	----------------------------------------------------------------------
+
+
 	This is for attachment uploads. It takes in chunks of bytes from the client websocket connection
 	when they upload an attachment, it buffers the chunks in memory and saves them to the database every
 	2mb.
@@ -163,7 +174,7 @@ func RunServer(fileSocketServer *FileSocketServer, socketServer *socketserver.So
 							Bytes:     primitive.Binary{Data: append(fileSocketServer.AttachmentChunks[chunkData.MsgID], chunkData.Chunk...)},
 						})
 						if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[chunkData.MsgID]; ok {
-							outBytes, err := json.Marshal(socketmodels.OutMessage{
+							outBytes, _ := json.Marshal(socketmodels.OutMessage{
 								Type: "ATTACHMENT_PROGRESS",
 								Data: `{"ID":"` + chunkData.MsgID.Hex() + `","failed":false,"pending":true,"ratio":` + getProgressString(fileSocketServer.AttachmentBytesProcessed[chunkData.MsgID]) + `}`,
 							})
@@ -185,7 +196,7 @@ func RunServer(fileSocketServer *FileSocketServer, socketServer *socketserver.So
 						})
 						fileSocketServer.AttachmentNextChunkId[chunkData.MsgID] = nextChunkID
 						if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[chunkData.MsgID]; ok {
-							outBytes, err := json.Marshal(socketmodels.OutMessage{
+							outBytes, _ := json.Marshal(socketmodels.OutMessage{
 								Type: "ATTACHMENT_PROGRESS",
 								Data: `{"ID":"` + chunkData.MsgID.Hex() + `","failed":false,"pending":true,"ratio":` + getProgressString(fileSocketServer.AttachmentBytesProcessed[chunkData.MsgID]) + `}`,
 							})
@@ -247,7 +258,7 @@ func RunServer(fileSocketServer *FileSocketServer, socketServer *socketserver.So
 							"$set": bson.M{"next_id": primitive.NilObjectID},
 						})
 						if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[msgId]; ok {
-							outBytes, err := json.Marshal(socketmodels.OutMessage{
+							outBytes, _ := json.Marshal(socketmodels.OutMessage{
 								Type: "ATTACHMENT_PROGRESS",
 								Data: `{"ID":"` + msgId.Hex() + `","failed":false,"pending":false,"ratio":1}`,
 							})
@@ -288,13 +299,15 @@ func recursivelyFindAndNilNextChunkOnLastChunk(currentChunkId *primitive.ObjectI
 					Type: "ATTACHMENT_PROGRESS",
 					Data: `{"ID":"` + msgId.Hex() + `","failed":false,"pending":false,"ratio":1}`,
 				})
+				if err != nil {
+					return err
+				}
 				ss.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
 					Names: subscriptionNames,
 					Data:  outBytes,
 				}
-				log.Println(subscriptionNames)
 			} else {
-				log.Println("Not ok")
+				return fmt.Errorf("Couldnt find attachmnet subscription names while recursively looking for last chunk")
 			}
 			return nil
 		} else {
