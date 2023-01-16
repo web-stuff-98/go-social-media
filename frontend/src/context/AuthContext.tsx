@@ -3,7 +3,6 @@ import {
   useContext,
   createContext,
   useEffect,
-  useCallback,
 } from "react";
 import type { ReactNode } from "react";
 import { makeRequest } from "../services/makeRequest";
@@ -33,7 +32,7 @@ const AuthContext = createContext<{
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<IUser>();
-  const { socket, reconnectSocket, openSubscription, closeSubscription } =
+  const { socket, reconnectSocket, openSubscription } =
     useSocket();
 
   const login = async (username: string, password: string) => {

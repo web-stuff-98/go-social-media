@@ -88,7 +88,7 @@ export default function Conversations() {
       });
   };
 
-  const handleMessage = (e: MessageEvent) => {
+  const handleMessage = async (e: MessageEvent) => {
     const data = JSON.parse(e.data);
     data["DATA"] = JSON.parse(data["DATA"]);
     if (instanceOfPrivateMessageData(data)) {
@@ -113,6 +113,16 @@ export default function Conversations() {
           return [...newConversations];
         });
       } else {
+        // If recieving own message and an attachment was selected, upload it
+        if (fileRef.current) {
+          await uploadAttachment(
+            fileRef.current,
+            data.DATA.ID,
+            data.DATA.recipient_id
+          );
+          setFile(undefined);
+          fileRef.current = undefined;
+        }
         if (selectedConversationRef.current === data.DATA.recipient_id) {
           // If receiving own messages then put the
           // message inside the current conversation
@@ -189,14 +199,17 @@ export default function Conversations() {
       })
     );
     setMessageInput("");
+    // When the message is recieved back from the server, start the attachment upload
   };
 
+  const [file, setFile] = useState<File>();
+  const fileRef = useRef<File>();
   const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     if (!e.target.files[0]) return;
     const file = e.target.files[0];
-    window.alert("Uploading file")
-    uploadAttachment(file, "000000000000000000000000");
+    setFile(file);
+    fileRef.current = file;
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -220,8 +233,13 @@ export default function Conversations() {
           <input ref={fileInputRef} type="file" onChange={handleFile} />
           <IconBtn
             name="Select attachment"
-            ariaLabel="Select and attachment"
+            ariaLabel="Select an attachment"
             Icon={MdFileCopy}
+            style={
+              file
+                ? { color: "lime", filter: "drop-shadow(0px,2px,1px,black)" }
+                : {}
+            }
             onClick={() => fileInputRef.current?.click()}
           />
           <input

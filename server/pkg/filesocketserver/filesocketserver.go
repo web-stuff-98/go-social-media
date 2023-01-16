@@ -15,14 +15,14 @@ import (
 /*
 	This is for attachment uploads. It takes in chunks of bytes from the client websocket connection
 	when they upload an attachment, it buffers the chunks in memory and saves them to the database every
-	8mb.
+	2mb.
 
 	The client streams the attachment in chunks through to the file socket endpoint, with the first 24
 	bytes of the chunk being the message ID (24 characters)
 
 	The chunk is buffered in the AttachmentChunk map with the attachment ID, when a new chunk comes in it
 	appends to the chunk currently stored in the map, but first it checks if the chunk is larger than or
-	equal to 8, if it is then it saves the chunk the the MongoDB attachment chunk collection instead of
+	equal to 2mb, if it is then it saves the chunk the the MongoDB attachment chunk collection instead of
 	appending it to the buffer, and clears the buffer.
 
 	The ID of the first chunk will be the same as the ID of the message the attachment is for. Each chunk
@@ -30,11 +30,7 @@ import (
 
 	This works like GridFS except its my implementation.
 
-	It can be optimized by changing primitive.ObjectID to just string, so the conversion doesn't happen,
-	also the buffer sizes could tweaked.
-
-	I commented it because its confusing because the bytes come in and get stored in memory then are
-	chunked and saved into the database if the bytes are over the 8mb threshold.
+	I commented it a lot because its confusing and I didn't test it yet.
 */
 
 type ConnectionInfo struct {
@@ -120,7 +116,7 @@ func RunServer(fileSocketServer *FileSocketServer, colls *db.Collections) {
 				}
 			}()
 			/*
-				When a chunk comes in, append it to memory... if the chunk is big (8mb) then save it to the chunks collection in the
+				When a chunk comes in, append it to memory... if the chunk is big (2mb) then save it to the chunks collection in the
 				database and clear memory, and wait for the next chunks.
 
 				When the client is done uploading the last chunk the server will handle saving it to the database and cleaning up
@@ -130,8 +126,8 @@ func RunServer(fileSocketServer *FileSocketServer, colls *db.Collections) {
 			*/
 			chunkData := <-fileSocketServer.AttachmentChunksChan
 			if _, ok := fileSocketServer.AttachmentChunks[chunkData.MsgID]; ok {
-				if len(fileSocketServer.AttachmentChunks[chunkData.MsgID]) > 1024*1024*8 {
-					// If the chunk stored in memory is larger than 8mb then move on to saving it to the database
+				if len(fileSocketServer.AttachmentChunks[chunkData.MsgID]) > 1024*1024*2 {
+					// If the chunk stored in memory is larger than 2mb then move on to saving it to the database
 					count, err := colls.AttachmentChunksCollection.CountDocuments(context.Background(), bson.M{"_id": chunkData.MsgID})
 					if err != nil {
 						log.Panicln("Error finding chunk :", err)
@@ -175,7 +171,7 @@ func RunServer(fileSocketServer *FileSocketServer, colls *db.Collections) {
 				}
 			}()
 			/*
-				Here we finalize the upload of the attachment. If the bytes didn't go over the 8mb chunking threshold we save the file as a
+				Here we finalize the upload of the attachment. If the bytes didn't go over the 2mb chunking threshold we save the file as a
 				single chunk into the database using the bytes stored in memory. Otherwise we find the last chunk in the database using
 				recursion and set the NextChunk value on the last chunk to NilObjectID.
 			*/
@@ -195,18 +191,19 @@ func RunServer(fileSocketServer *FileSocketServer, colls *db.Collections) {
 					//Send internal error and panic
 				}
 			} else {
-				// Found the next chunk in the database. Find the last chunk using recursion and nil its NextChunk ID.....
+				// Found the first chunk in the database. Find the last chunk using recursion and nil its NextChunk ID.....
 				var nextChunk models.AttachmentChunk
-				if err := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"next_id": firstChunk.NextChunk}).Decode(&nextChunk); err != nil {
+				if err := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"_id": firstChunk.NextChunk}).Decode(&nextChunk); err != nil {
 					if err == mongo.ErrNoDocuments {
-						//Its the last chunk... so nil the NextChunkID
+						// The first chunk is the last chunk... so nil the NextChunkID
 						colls.AttachmentChunksCollection.UpdateByID(context.Background(), firstChunk.ID, bson.M{
-							"$set": bson.M{"next_id": primitive.NilObjectID}})
+							"$set": bson.M{"next_id": primitive.NilObjectID},
+						})
 					} else {
 						//Send internal error and panic
 					}
 				} else {
-					//It isn't the last chunk... so find the last chunk recursively and nil its ObjectID using the recursive function
+					// The first chunk isn't the last chunk... so find the last chunk recursively and nil its ObjectID using the recursive function
 					if err := recursivelyFindAndNilNextChunkOnLastChunk(&nextChunk.ID, &nextChunk.NextChunk, colls); err != nil {
 						//Send internal error and panic
 					}

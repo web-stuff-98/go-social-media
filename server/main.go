@@ -14,6 +14,7 @@ import (
 	"github.com/web-stuff-98/go-social-media/pkg/handlers"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers/middleware"
 	rdb "github.com/web-stuff-98/go-social-media/pkg/redis"
+	"github.com/web-stuff-98/go-social-media/pkg/seed"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -284,14 +285,22 @@ func main() {
 		RouteName:     "delete_room",
 	}, *redisClient, *Collections)).Methods(http.MethodDelete)
 
+	router.HandleFunc("/api/attachment/{msgId}/{recipientId}", middleware.BasicRateLimiter(h.HandleAttachmentMetadata, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 30,
+		MaxReqs:       20,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "attachment_metadata",
+	}, *redisClient, *Collections)).Methods(http.MethodPost)
+
 	router.HandleFunc("/api/ws", h.WebSocketEndpoint)
 	router.HandleFunc("/api/file/ws", h.FileWebSocketEndpoint)
 
 	log.Println("Creating changestreams")
 	changestreams.WatchCollections(DB, SocketServer)
 
-	//DB.Drop(context.TODO())
-	//go seed.SeedDB(Collections, 10, 20, 20)
+	DB.Drop(context.TODO())
+	go seed.SeedDB(Collections, 5, 5, 5)
 
 	log.Println("API open on port", os.Getenv("PORT"))
 	log.Fatal(http.ListenAndServe(fmt.Sprint(":", os.Getenv("PORT")), c.Handler(router)))

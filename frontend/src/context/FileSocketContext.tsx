@@ -2,6 +2,7 @@ import { useState, useContext, createContext, useEffect } from "react";
 import type { ReactNode } from "react";
 import { IResMsg } from "../components/ResMsg";
 import { useAuth } from "./AuthContext";
+import { makeRequest } from "../services/makeRequest";
 
 /*
     This handles the websocket connection to the file socket endpoint. The connection is
@@ -11,7 +12,8 @@ import { useAuth } from "./AuthContext";
 const FileSocketContext = createContext<{
   fileSocket?: WebSocket;
   connectFileSocket: () => void;
-  uploadAttachment: (file: File, msgId: string) => void;
+  // RecipientID can be either user or room
+  uploadAttachment: (file: File, msgId: string, recipientId: string) => void;
 }>({
   fileSocket: undefined,
   connectFileSocket: () => {},
@@ -34,8 +36,23 @@ export const FileSocketProvider = ({ children }: { children: ReactNode }) => {
     setFileSocket(fileSocket);
   };
 
-  // Upload attachment in 1mb chunks (with the first 24 bytes being the msg id)
-  const uploadAttachment = async (file: File, msgId: string) => {
+  //Recipient ID can be either another user or a room
+  const uploadAttachment = async (
+    file: File,
+    msgId: string,
+    recipientId: string
+  ) => {
+    // First send HTTP POST request to metadata endpoint
+    await makeRequest(`/api/attachment/${msgId}/${recipientId}`, {
+      withCredentials: true,
+      data: {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+      },
+      method:"POST"
+    });
+    // Upload attachment in 1mb chunks (with the first 24 bytes being the msg id)
     let startPointer = 0;
     let endPointer = file.size;
     let promises = [];
@@ -54,7 +71,6 @@ export const FileSocketProvider = ({ children }: { children: ReactNode }) => {
     }
     // When the attachment is finished uploading, send the message ID on its own, that way the server knows its done
     fileSocket?.send(msgId);
-    window.alert("Sent all bytes");
   };
 
   useEffect(() => {

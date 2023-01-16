@@ -25,5 +25,11 @@ type Room struct {
 }
 
 type PostComment struct {
-	Content string `json:"content" bson:"content"`
+	Content string `json:"content" validate:"required,min=1,max=200"`
+}
+
+type AttachmentMetadata struct {
+	MimeType string `json:"type" validate:"required,min=1,max=40"`
+	Name     string `json:"name" validate:"required,min=1,max=500"`
+	Size     int    `json:"size" validate:"required"`
 }

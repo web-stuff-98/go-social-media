@@ -159,7 +159,7 @@ func generatePost(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid prim
 	}
 	img = resize.Resize(1000, 0, img, resize.Lanczos2)
 	imgBlur = resize.Resize(10, 0, img, resize.Lanczos2)
-	imgThumb = resize.Resize(500, 0, img, resize.Lanczos2)
+	imgThumb = resize.Resize(550, 0, img, resize.Lanczos2)
 	buf := &bytes.Buffer{}
 	blurBuf := &bytes.Buffer{}
 	thumbBuf := &bytes.Buffer{}

@@ -56,6 +56,7 @@ type AttachmentMetadata struct {
 	ID       primitive.ObjectID `bson:"_id" json:"ID"` // Should be the same as message ID
 	MimeType string             `bson:"mime_type" json:"mime_type"`
 	Name     string             `bson:"name" json:"name"`
+	Size     int                `bson:"size" json:"size"`
 	Pending  bool               `bson:"pending"`
 }
 
