@@ -64,7 +64,7 @@ export const FileSocketProvider = ({ children }: { children: ReactNode }) => {
         },
         method: "POST",
       });
-      // Upload attachment in 1mb chunks (with the first 24 bytes being the msg id)
+      // Upload attachment in 256kb chunks (with the first 24 bytes being the msg id)
       let startPointer = 0;
       let endPointer = file.size;
       let promises = [];

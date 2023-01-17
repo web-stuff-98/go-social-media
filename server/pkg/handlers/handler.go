@@ -17,6 +17,7 @@ func responseMessage(w http.ResponseWriter, c int, m string) {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(c)
 	json.NewEncoder(w).Encode(map[string]string{"msg": m})
+	return
 }
 
 type handler struct {
