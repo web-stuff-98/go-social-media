@@ -14,6 +14,7 @@ import (
 	"github.com/web-stuff-98/go-social-media/pkg/handlers"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers/middleware"
 	rdb "github.com/web-stuff-98/go-social-media/pkg/redis"
+	"github.com/web-stuff-98/go-social-media/pkg/seed"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -291,6 +292,13 @@ func main() {
 		Message:       "Too many requests",
 		RouteName:     "attachment_metadata",
 	}, *redisClient, *Collections)).Methods(http.MethodPost)
+	router.HandleFunc("/api/attachment/{id}", middleware.BasicRateLimiter(h.DownloadAttachment, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 120,
+		MaxReqs:       4,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "download_attachment",
+	}, *redisClient, *Collections)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/ws", h.WebSocketEndpoint)
 	router.HandleFunc("/api/file/ws", h.FileWebSocketEndpoint)
@@ -298,8 +306,8 @@ func main() {
 	log.Println("Creating changestreams")
 	changestreams.WatchCollections(DB, SocketServer)
 
-	//DB.Drop(context.TODO())
-	//go seed.SeedDB(Collections, 5, 5, 5)
+	DB.Drop(context.TODO())
+	go seed.SeedDB(Collections, 5, 5, 5)
 
 	log.Println("API open on port", os.Getenv("PORT"))
 	log.Fatal(http.ListenAndServe(fmt.Sprint(":", os.Getenv("PORT")), c.Handler(router)))

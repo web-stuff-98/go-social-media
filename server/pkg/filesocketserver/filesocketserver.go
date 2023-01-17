@@ -17,25 +17,12 @@ import (
 )
 
 /*
-
-	NEED TO ADD ERROR HANDLING TO JSON MARSHAL
-	------------------------------------------
-	NEED TO ADD ERROR HANDLING TO MONGO OPERATIONS
-	----------------------------------------------
-	NEED TO ADD PANIC RECOVERY
-	--------------------------
-	NEED TO ADD CLEANUP FUNCTION & SELF CLEANUP AFTER FAILURE & COMPLETION
-	----------------------------------------------------------------------
-
-
-	This is for attachment uploads. It takes in chunks of bytes from the client websocket connection
-	when they upload an attachment, it buffers the chunks in memory and saves them to the database every
-	2mb.
+	This is for attachment uploads. Downloads are handled from API route using octet stream.
 
 	The client streams the attachment in chunks through to the file socket endpoint, with the first 24
 	bytes of the chunk being the message ID (24 characters)
 
-	The chunk is buffered in the AttachmentChunk map with the attachment ID, when a new chunk comes in it
+	The chunk is buffered in the AttachmentChunk map with the message ID, when a new chunk comes in it
 	appends to the chunk currently stored in the map, but first it checks if the chunk is larger than or
 	equal to 2mb, if it is then it saves the chunk the the MongoDB attachment chunk collection instead of
 	appending it to the buffer, and clears the buffer.
@@ -73,7 +60,9 @@ type FileSocketServer struct {
 	/* This is also set from the attachment metadata HTTP endpoint  */
 	AttachmentBytesProcessed map[primitive.ObjectID]BytesInfo
 
-	FinishAttachmentChan chan (primitive.ObjectID)
+	AttachmentSuccessChan      chan (primitive.ObjectID)
+	DeleteAttachmentChunksChan chan (primitive.ObjectID)
+	CleanupAttachmentMemory    chan (primitive.ObjectID)
 }
 
 type ChunkData struct {
@@ -93,7 +82,9 @@ func Init(socketServer *socketserver.SocketServer, colls *db.Collections) (*File
 		AttachmentSubscriptionNames: make(map[primitive.ObjectID][]string),
 		AttachmentBytesProcessed:    make(map[primitive.ObjectID]BytesInfo),
 
-		FinishAttachmentChan: make(chan primitive.ObjectID),
+		AttachmentSuccessChan:      make(chan primitive.ObjectID),
+		DeleteAttachmentChunksChan: make(chan primitive.ObjectID),
+		CleanupAttachmentMemory:    make(chan primitive.ObjectID),
 	}
 	RunServer(fileSocketServer, socketServer, colls)
 	return fileSocketServer, nil
@@ -173,6 +164,7 @@ func RunServer(fileSocketServer *FileSocketServer, socketServer *socketserver.So
 							NextChunk: nextChunkID,
 							Bytes:     primitive.Binary{Data: append(fileSocketServer.AttachmentChunks[chunkData.MsgID], chunkData.Chunk...)},
 						})
+						delete(fileSocketServer.AttachmentChunks, chunkData.MsgID)
 						if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[chunkData.MsgID]; ok {
 							outBytes, _ := json.Marshal(socketmodels.OutMessage{
 								Type: "ATTACHMENT_PROGRESS",
@@ -182,9 +174,6 @@ func RunServer(fileSocketServer *FileSocketServer, socketServer *socketserver.So
 								Names: subscriptionNames,
 								Data:  outBytes,
 							}
-							log.Println(subscriptionNames)
-						} else {
-							log.Println("Not ok")
 						}
 					} else {
 						// Save the chunk and create the ID for the next chunk, and send progress update
@@ -195,6 +184,7 @@ func RunServer(fileSocketServer *FileSocketServer, socketServer *socketserver.So
 							Bytes:     primitive.Binary{Data: append(fileSocketServer.AttachmentChunks[chunkData.MsgID], chunkData.Chunk...)},
 						})
 						fileSocketServer.AttachmentNextChunkId[chunkData.MsgID] = nextChunkID
+						delete(fileSocketServer.AttachmentChunks, chunkData.MsgID)
 						if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[chunkData.MsgID]; ok {
 							outBytes, _ := json.Marshal(socketmodels.OutMessage{
 								Type: "ATTACHMENT_PROGRESS",
@@ -204,18 +194,35 @@ func RunServer(fileSocketServer *FileSocketServer, socketServer *socketserver.So
 								Names: subscriptionNames,
 								Data:  outBytes,
 							}
-							log.Println(subscriptionNames)
-						} else {
-							log.Println("Not ok")
 						}
 					}
 				} else {
 					// Append the bit of the small chunk into existing chunk memory (not large enough to be saved in the database yet)
 					fileSocketServer.AttachmentChunks[chunkData.MsgID] = append(fileSocketServer.AttachmentChunks[chunkData.MsgID], chunkData.Chunk...)
+					if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[chunkData.MsgID]; ok {
+						outBytes, _ := json.Marshal(socketmodels.OutMessage{
+							Type: "ATTACHMENT_PROGRESS",
+							Data: `{"ID":"` + chunkData.MsgID.Hex() + `","failed":false,"pending":true,"ratio":` + getProgressString(fileSocketServer.AttachmentBytesProcessed[chunkData.MsgID]) + `}`,
+						})
+						socketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+							Names: subscriptionNames,
+							Data:  outBytes,
+						}
+					}
 				}
 			} else {
 				// The very first little chunk of data coming through the socket connection
 				fileSocketServer.AttachmentChunks[chunkData.MsgID] = chunkData.Chunk
+				if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[chunkData.MsgID]; ok {
+					outBytes, _ := json.Marshal(socketmodels.OutMessage{
+						Type: "ATTACHMENT_PROGRESS",
+						Data: `{"ID":"` + chunkData.MsgID.Hex() + `","failed":false,"pending":true,"ratio":` + getProgressString(fileSocketServer.AttachmentBytesProcessed[chunkData.MsgID]) + `}`,
+					})
+					socketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+						Names: subscriptionNames,
+						Data:  outBytes,
+					}
+				}
 			}
 		}
 	}()
@@ -233,8 +240,9 @@ func RunServer(fileSocketServer *FileSocketServer, socketServer *socketserver.So
 				single chunk into the database using the bytes stored in memory. Otherwise we find the last chunk in the database using
 				recursion and set the NextChunk value on the last chunk to NilObjectID.
 			*/
-			msgId := <-fileSocketServer.FinishAttachmentChan
-			log.Println("Attachment has finished uploading :", msgId)
+			msgId := <-fileSocketServer.AttachmentSuccessChan
+
+			log.Println("Attachment upload complete")
 
 			var firstChunk models.AttachmentChunk
 			if err := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"_id": msgId}).Decode(&firstChunk); err != nil {
@@ -245,8 +253,37 @@ func RunServer(fileSocketServer *FileSocketServer, socketServer *socketserver.So
 						NextChunk: primitive.NilObjectID,
 						Bytes:     primitive.Binary{Data: fileSocketServer.AttachmentChunks[msgId]},
 					})
+					if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[msgId]; ok {
+						outBytes, _ := json.Marshal(socketmodels.OutMessage{
+							Type: "ATTACHMENT_PROGRESS",
+							Data: `{"ID":"` + msgId.Hex() + `","failed":false,"pending":false}`,
+						})
+						socketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+							Names: subscriptionNames,
+							Data:  outBytes,
+						}
+					}
+					// Update the metadata
+					colls.AttachmentMetadataCollection.UpdateByID(context.Background(), msgId, bson.M{"$set": bson.M{
+						"pending": false,
+					}})
 				} else {
-					//Send internal error and panic
+					if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[msgId]; ok {
+						outBytes, _ := json.Marshal(socketmodels.OutMessage{
+							Type: "ATTACHMENT_PROGRESS",
+							Data: `{"ID":"` + msgId.Hex() + `","failed":true,"pending":false}`,
+						})
+						socketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+							Names: subscriptionNames,
+							Data:  outBytes,
+						}
+						fileSocketServer.DeleteAttachmentChunksChan <- msgId
+					}
+					// Update the metadata
+					colls.AttachmentMetadataCollection.UpdateByID(context.Background(), msgId, bson.M{"$set": bson.M{
+						"failed":  true,
+						"pending": false,
+					}})
 				}
 			} else {
 				// Found the first chunk in the database. Find the last chunk using recursion and nil its NextChunk ID.....
@@ -266,21 +303,91 @@ func RunServer(fileSocketServer *FileSocketServer, socketServer *socketserver.So
 								Names: subscriptionNames,
 								Data:  outBytes,
 							}
-							log.Println(subscriptionNames)
-						} else {
-							log.Println("Not ok")
 						}
+						// Update the metadata
+						colls.AttachmentMetadataCollection.UpdateByID(context.Background(), msgId, bson.M{"$set": bson.M{
+							"pending": false,
+						}})
 					} else {
-						//Send internal error and panic
+						if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[msgId]; ok {
+							outBytes, _ := json.Marshal(socketmodels.OutMessage{
+								Type: "ATTACHMENT_PROGRESS",
+								Data: `{"ID":"` + msgId.Hex() + `","failed":true,"pending":false}`,
+							})
+							socketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+								Names: subscriptionNames,
+								Data:  outBytes,
+							}
+							fileSocketServer.DeleteAttachmentChunksChan <- msgId
+						}
+						// Update the metadata
+						colls.AttachmentMetadataCollection.UpdateByID(context.Background(), msgId, bson.M{"$set": bson.M{
+							"pending": false,
+							"failed":  true,
+						}})
 					}
 				} else {
 					// The first chunk isn't the last chunk... so find the last chunk recursively and nil its ObjectID using the recursive function
 					// then send the progress update
 					if err := recursivelyFindAndNilNextChunkOnLastChunk(&nextChunk.ID, &nextChunk.NextChunk, colls, socketServer, fileSocketServer, &msgId); err != nil {
-						//Send internal error and panic
+						if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[msgId]; ok {
+							outBytes, _ := json.Marshal(socketmodels.OutMessage{
+								Type: "ATTACHMENT_PROGRESS",
+								Data: `{"ID":"` + msgId.Hex() + `","failed":true,"pending":false}`,
+							})
+							socketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+								Names: subscriptionNames,
+								Data:  outBytes,
+							}
+							fileSocketServer.DeleteAttachmentChunksChan <- msgId
+						}
+						// Update the metadata
+						colls.AttachmentMetadataCollection.UpdateByID(context.Background(), msgId, bson.M{"$set": bson.M{
+							"failed":  true,
+							"pending": false,
+						}})
+					} else {
+						if subscriptionNames, ok := fileSocketServer.AttachmentSubscriptionNames[msgId]; ok {
+							outBytes, _ := json.Marshal(socketmodels.OutMessage{
+								Type: "ATTACHMENT_PROGRESS",
+								Data: `{"ID":"` + msgId.Hex() + `","failed":false,"pending":false}`,
+							})
+							socketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+								Names: subscriptionNames,
+								Data:  outBytes,
+							}
+						}
+						// Update the metadata
+						colls.AttachmentMetadataCollection.UpdateByID(context.Background(), msgId, bson.M{"$set": bson.M{
+							"pending": false,
+						}})
 					}
 				}
 			}
+
+			fileSocketServer.CleanupAttachmentMemory <- msgId
+		}
+	}()
+	/* ----- Cleanup memory after failing / completing upload ----- */
+	go func() {
+		for {
+			oid := <-fileSocketServer.CleanupAttachmentMemory
+			delete(fileSocketServer.AttachmentChunks, oid)
+			delete(fileSocketServer.AttachmentNextChunkId, oid)
+			delete(fileSocketServer.AttachmentSubscriptionNames, oid)
+			delete(fileSocketServer.AttachmentBytesProcessed, oid)
+		}
+	}()
+	/* ----- Handle attachment failed uploading event ----- */
+	go func() {
+		for {
+			oid := <-fileSocketServer.DeleteAttachmentChunksChan
+			var firstChunk models.AttachmentChunk
+			err := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"_id": oid}).Decode(&firstChunk)
+			if err == nil {
+				recursivelyFindAndDeleteChunks(&firstChunk.ID, &firstChunk.NextChunk, colls, socketServer, fileSocketServer, &firstChunk.ID)
+			}
+			fileSocketServer.CleanupAttachmentMemory <- oid
 		}
 	}()
 }
@@ -307,13 +414,28 @@ func recursivelyFindAndNilNextChunkOnLastChunk(currentChunkId *primitive.ObjectI
 					Data:  outBytes,
 				}
 			} else {
-				return fmt.Errorf("Couldnt find attachmnet subscription names while recursively looking for last chunk")
+				return fmt.Errorf("Couldnt find attachment subscription names while recursively looking for last chunk")
 			}
 			return nil
 		} else {
 			return err
 		}
 	} else {
+		return recursivelyFindAndNilNextChunkOnLastChunk(nextChunkId, &nextChunk.NextChunk, colls, ss, fss, msgId)
+	}
+}
+
+func recursivelyFindAndDeleteChunks(currentChunkId *primitive.ObjectID, nextChunkId *primitive.ObjectID, colls *db.Collections, ss *socketserver.SocketServer, fss *FileSocketServer, msgId *primitive.ObjectID) error {
+	var nextChunk models.AttachmentChunk
+	if err := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"_id": nextChunkId}).Decode(&nextChunk); err != nil {
+		if err == mongo.ErrNoDocuments {
+			colls.AttachmentChunksCollection.DeleteOne(context.Background(), currentChunkId)
+			return nil
+		} else {
+			return err
+		}
+	} else {
+		colls.AttachmentChunksCollection.DeleteOne(context.Background(), currentChunkId)
 		return recursivelyFindAndNilNextChunkOnLastChunk(nextChunkId, &nextChunk.NextChunk, colls, ss, fss, msgId)
 	}
 }

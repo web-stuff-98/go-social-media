@@ -34,22 +34,30 @@ type Session struct {
 }
 
 type PrivateMessage struct {
-	ID            primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
-	Content       string             `bson:"content,maxlength=200" json:"content"`
-	Uid           primitive.ObjectID `bson:"uid" json:"uid"`
-	CreatedAt     primitive.DateTime `bson:"created_at" json:"created_at"`
-	UpdatedAt     primitive.DateTime `bson:"updated_at" json:"updated_at"`
-	HasAttachment bool               `bson:"has_attachment" json:"has_attachment"`
-	RecipientId   primitive.ObjectID `bson:"-" json:"recipient_id"`
+	ID                 primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
+	Content            string             `bson:"content,maxlength=200" json:"content"`
+	Uid                primitive.ObjectID `bson:"uid" json:"uid"`
+	CreatedAt          primitive.DateTime `bson:"created_at" json:"created_at"`
+	UpdatedAt          primitive.DateTime `bson:"updated_at" json:"updated_at"`
+	RecipientId        primitive.ObjectID `bson:"-" json:"recipient_id"`
+	HasAttachment      bool               `bson:"has_attachment" json:"has_attachment"`
+	AttachmentProgress AttachmentProgress `bson:"-" json:"attachment_progress"`
+}
+
+type AttachmentProgress struct {
+	Failed  bool    `json:"failed"`
+	Pending bool    `json:"pending"`
+	Ratio   float32 `json:"ratio"`
 }
 
 type RoomMessage struct {
-	ID            primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
-	Content       string             `bson:"content,maxlength=200" json:"content"`
-	Uid           primitive.ObjectID `bson:"uid" json:"uid"`
-	CreatedAt     primitive.DateTime `bson:"created_at" json:"created_at"`
-	UpdatedAt     primitive.DateTime `bson:"updated_at" json:"updated_at"`
-	HasAttachment bool               `bson:"has_attachment" json:"has_attachment"`
+	ID                 primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
+	Content            string             `bson:"content,maxlength=200" json:"content"`
+	Uid                primitive.ObjectID `bson:"uid" json:"uid"`
+	CreatedAt          primitive.DateTime `bson:"created_at" json:"created_at"`
+	UpdatedAt          primitive.DateTime `bson:"updated_at" json:"updated_at"`
+	HasAttachment      bool               `bson:"has_attachment" json:"has_attachment"`
+	AttachmentProgress AttachmentProgress `bson:"-" json:"attachment_progress"`
 }
 
 type AttachmentMetadata struct {

@@ -17,7 +17,7 @@ import { CommentForm } from "./CommentForm";
 import { useModal } from "../../context/ModalContext";
 import { useAuth } from "../../context/AuthContext";
 
-import { FaChevronUp, FaChevronDown } from "react-icons/fa";
+import { TiArrowSortedUp, TiArrowSortedDown } from "react-icons/ti";
 
 export interface IComment {
   ID: string;
@@ -74,7 +74,7 @@ export default function Comment({
                         ? { stroke: "1px" }
                         : { filter: "opacity(0.5)" }),
                     }}
-                    Icon={FaChevronUp}
+                    Icon={TiArrowSortedUp}
                     onClick={() => {
                       if (user)
                         voteOnPostComment(postId, comment.ID, true)
@@ -112,7 +112,7 @@ export default function Comment({
                         ? { stroke: "1px" }
                         : { filter: "opacity(0.5)" }),
                     }}
-                    Icon={FaChevronDown}
+                    Icon={TiArrowSortedDown}
                     onClick={() => {
                       if (user)
                         voteOnPostComment(postId, comment.ID, false)
@@ -183,14 +183,16 @@ export default function Comment({
           )}
           {err && <ErrorTip message={err} />}
         </div>
-        <div className={classes.icons}>
-          <IconBtn
-            onClick={() => setReplyingTo(comment.ID)}
-            Icon={FaReply}
-            name="Reply to comment..."
-            ariaLabel="Reply to comment..."
-          />
-        </div>
+        {user && (
+          <div className={classes.icons}>
+            <IconBtn
+              onClick={() => setReplyingTo(comment.ID)}
+              Icon={FaReply}
+              name="Reply to comment..."
+              ariaLabel="Reply to comment..."
+            />
+          </div>
+        )}
       </div>
       {replyingTo === comment.ID && (
         <div className={classes.commentForm}>

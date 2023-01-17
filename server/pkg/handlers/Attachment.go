@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -117,4 +119,63 @@ func (h handler) HandleAttachmentMetadata(w http.ResponseWriter, r *http.Request
 	}
 
 	responseMessage(w, http.StatusCreated, "Created attachment metadata")
+}
+
+// Download attachment using octet stream
+func (h handler) DownloadAttachment(w http.ResponseWriter, r *http.Request) {
+	rawAttachmentId := mux.Vars(r)["id"]
+	attachmentId, err := primitive.ObjectIDFromHex(rawAttachmentId)
+	if err != nil {
+		responseMessage(w, http.StatusBadRequest, "Invalid ID")
+		return
+	}
+
+	var metaData models.AttachmentMetadata
+	if h.Collections.AttachmentMetadataCollection.FindOne(r.Context(), bson.M{"_id": attachmentId}).Decode(&metaData); err != nil {
+		if err == mongo.ErrNoDocuments {
+			responseMessage(w, http.StatusNotFound, "Not found")
+		} else {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+		}
+		return
+	}
+
+	var firstChunk models.AttachmentChunk
+	if err := h.Collections.AttachmentChunksCollection.FindOne(r.Context(), bson.M{"_id": attachmentId}).Decode(&firstChunk); err != nil {
+		if err == mongo.ErrNoDocuments {
+			responseMessage(w, http.StatusNotFound, "Not found")
+		} else {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+		}
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/octet-stream")
+	w.Header().Add("Content-Disposition", `attachment; filename="`+metaData.Name+`"`)
+
+	w.Write(firstChunk.Bytes.Data)
+	log.Println("Wrote first chunk")
+
+	if firstChunk.NextChunk != primitive.NilObjectID {
+		recursivelyWriteAttachmentChunksToResponse(w, firstChunk.NextChunk, h.Collections.AttachmentChunksCollection, r.Context())
+	}
+}
+
+func recursivelyWriteAttachmentChunksToResponse(w http.ResponseWriter, NextChunkID primitive.ObjectID, chunkColl *mongo.Collection, ctx context.Context) error {
+	var chunk models.AttachmentChunk
+	if err := chunkColl.FindOne(ctx, bson.M{"_id": NextChunkID}).Decode(&chunk); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil
+		} else {
+			return err
+		}
+	} else {
+		w.Write(chunk.Bytes.Data)
+		log.Println("Wrote chunk")
+		if chunk.NextChunk != primitive.NilObjectID {
+			return recursivelyWriteAttachmentChunksToResponse(w, chunk.NextChunk, chunkColl, ctx)
+		} else {
+			return nil
+		}
+	}
 }

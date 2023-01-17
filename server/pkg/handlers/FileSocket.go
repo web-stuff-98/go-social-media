@@ -13,8 +13,8 @@ import (
 )
 
 var fileWsUpgrader = websocket.Upgrader{
-	ReadBufferSize:  1048576,
-	WriteBufferSize: 1048576,
+	ReadBufferSize:  262144,
+	WriteBufferSize: 262144,
 }
 
 /*
@@ -45,14 +45,15 @@ func fileWsReader(conn *websocket.Conn, uid *primitive.ObjectID, fileSocketServe
 
 		if size == 24 {
 			// If the binary size is 24 (just the ID) it means its has finished uploading
-			fileSocketServer.FinishAttachmentChan <- msgId
-		} else if size > 24 && size <= 1048576 {
+			fileSocketServer.AttachmentSuccessChan <- msgId
+		} else if size > 24 && size <= 262144 {
 			fileSocketServer.AttachmentChunksChan <- &filesocketserver.ChunkData{
 				MsgID: msgId,
 				Chunk: p[24:],
 			}
 		} else {
-			// If the size is less than 24, or larger than 1048576, that means hacks, so break the connection.
+			// If the size is less than 24, or larger than 262144, that means hacks probably, so break the connection.
+			log.Println("Connection broken")
 			break
 		}
 
@@ -79,6 +80,7 @@ func (h handler) FileWebSocketEndpoint(w http.ResponseWriter, r *http.Request) {
 		uid = user.ID
 	} else {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
+		return
 	}
 	h.FileSocketServer.RegisterConn <- filesocketserver.ConnectionInfo{
 		Conn: ws,

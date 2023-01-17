@@ -46,74 +46,113 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 			}
 		}()
 
-		if data["event_type"] != nil {
-			if data["event_type"] == "OPEN_SUBSCRIPTION" {
+		eventType, eventTypeOk := data["event_type"]
+
+		if eventTypeOk {
+			if eventType == "OPEN_SUBSCRIPTION" || eventType == "CLOSE_SUBSCRIPTION" {
 				// Authorization check for private subscriptions is done inside socketserver
-				socketServer.RegisterSubscriptionConn <- socketserver.SubscriptionConnectionInfo{
-					Name: data["name"].(string),
-					Uid:  *uid,
-					Conn: conn,
-				}
-			}
-			if data["event_type"] == "CLOSE_SUBSCRIPTION" {
-				socketServer.UnregisterSubscriptionConn <- socketserver.SubscriptionConnectionInfo{
-					Name: data["name"].(string),
-					Uid:  *uid,
-					Conn: conn,
-				}
-			}
-			if data["event_type"] == "OPEN_SUBSCRIPTIONS" {
-				names := data["names"].([]interface{})
-				for _, name := range names {
-					socketServer.RegisterSubscriptionConn <- socketserver.SubscriptionConnectionInfo{
-						Name: name.(string),
-						Uid:  *uid,
-						Conn: conn,
-					}
-				}
-			}
-			if data["event_type"] == "PRIVATE_MESSAGE" {
-				inBytes, err := json.Marshal(socketmodels.InMessage{
-					Content: data["content"].(string),
-				})
-				socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-					Name: "inbox=" + data["recipient_id"].(string),
-					Data: inBytes,
-				}
-				recipientId, err := primitive.ObjectIDFromHex(data["recipient_id"].(string))
-				if err != nil {
+				var inMsg socketmodels.OpenCloseSubscription
+				if err := json.Unmarshal(p, &inMsg); err != nil {
 					err := conn.WriteJSON(map[string]string{
 						"TYPE": "RESPONSE_MESSAGE",
-						"DATA": `{"msg":"Internal error","err":true}`,
+						"DATA": `{"msg":"Bad request","err":true}`,
 					})
 					if err != nil {
 						log.Println(err)
 					}
 				} else {
-					msg := &models.PrivateMessage{
-						ID:          primitive.NewObjectIDFromTimestamp(time.Now()),
-						Content:     data["content"].(string),
-						Uid:         *uid,
-						CreatedAt:   primitive.NewDateTimeFromTime(time.Now()),
-						UpdatedAt:   primitive.NewDateTimeFromTime(time.Now()),
-						RecipientId: recipientId,
+					if eventType == "OPEN_SUBSCRIPTION" {
+						socketServer.RegisterSubscriptionConn <- socketserver.SubscriptionConnectionInfo{
+							Name: inMsg.Name,
+							Uid:  *uid,
+							Conn: conn,
+						}
 					}
-					if _, err := colls.InboxCollection.UpdateByID(context.TODO(), uid, bson.M{
-						"$addToSet": bson.M{
-							"messages_sent_to": recipientId,
-						},
-					}); err != nil {
+					if eventType == "CLOSE_SUBSCRIPTION" {
+						socketServer.UnregisterSubscriptionConn <- socketserver.SubscriptionConnectionInfo{
+							Name: inMsg.Name,
+							Uid:  *uid,
+							Conn: conn,
+						}
+					}
+				}
+			}
+			if eventType == "OPEN_SUBSCRIPTIONS" {
+				var inMsg socketmodels.OpenCloseSubscriptions
+				if err := json.Unmarshal(p, &inMsg); err != nil {
+					err := conn.WriteJSON(map[string]string{
+						"TYPE": "RESPONSE_MESSAGE",
+						"DATA": `{"msg":"Bad request","err":true}`,
+					})
+					if err != nil {
+						log.Println(err)
+					}
+				} else {
+					for _, name := range inMsg.Names {
+						socketServer.RegisterSubscriptionConn <- socketserver.SubscriptionConnectionInfo{
+							Name: name,
+							Uid:  *uid,
+							Conn: conn,
+						}
+					}
+				}
+			}
+			if eventType == "PRIVATE_MESSAGE" {
+				var inMsg socketmodels.PrivateMessage
+				if err := json.Unmarshal(p, &inMsg); err != nil {
+					err := conn.WriteJSON(map[string]string{
+						"TYPE": "RESPONSE_MESSAGE",
+						"DATA": `{"msg":"Bad request","err":true}`,
+					})
+					if err != nil {
+						log.Println(err)
+					}
+				} else {
+					inBytes, err := json.Marshal(inMsg)
+					socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+						Name: "inbox=" + inMsg.RecipientId,
+						Data: inBytes,
+					}
+					recipientId, err := primitive.ObjectIDFromHex(inMsg.RecipientId)
+					if err != nil {
 						err := conn.WriteJSON(map[string]string{
 							"TYPE": "RESPONSE_MESSAGE",
-							"DATA": `{"msg":"Internal error","err":true}`,
+							"DATA": `{"msg":"Bad request","err":true}`,
 						})
 						if err != nil {
 							log.Println(err)
 						}
 					} else {
-						if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, bson.M{
-							"$push": bson.M{
-								"messages": msg,
+						var msg models.PrivateMessage
+						if inMsg.HasAttachment {
+							msg = models.PrivateMessage{
+								ID:            primitive.NewObjectIDFromTimestamp(time.Now()),
+								Content:       inMsg.Content,
+								HasAttachment: true,
+								Uid:           *uid,
+								CreatedAt:     primitive.NewDateTimeFromTime(time.Now()),
+								UpdatedAt:     primitive.NewDateTimeFromTime(time.Now()),
+								RecipientId:   recipientId,
+								AttachmentProgress: models.AttachmentProgress{
+									Failed:  false,
+									Pending: true,
+									Ratio:   0,
+								},
+							}
+						} else {
+							msg = models.PrivateMessage{
+								ID:            primitive.NewObjectIDFromTimestamp(time.Now()),
+								Content:       inMsg.Content,
+								HasAttachment: false,
+								Uid:           *uid,
+								CreatedAt:     primitive.NewDateTimeFromTime(time.Now()),
+								UpdatedAt:     primitive.NewDateTimeFromTime(time.Now()),
+								RecipientId:   recipientId,
+							}
+						}
+						if _, err := colls.InboxCollection.UpdateByID(context.TODO(), uid, bson.M{
+							"$addToSet": bson.M{
+								"messages_sent_to": recipientId,
 							},
 						}); err != nil {
 							err := conn.WriteJSON(map[string]string{
@@ -124,8 +163,11 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 								log.Println(err)
 							}
 						} else {
-							data, err := json.Marshal(msg)
-							if err != nil {
+							if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, bson.M{
+								"$push": bson.M{
+									"messages": msg,
+								},
+							}); err != nil {
 								err := conn.WriteJSON(map[string]string{
 									"TYPE": "RESPONSE_MESSAGE",
 									"DATA": `{"msg":"Internal error","err":true}`,
@@ -134,10 +176,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 									log.Println(err)
 								}
 							} else {
-								outBytes, err := json.Marshal(socketmodels.OutMessage{
-									Type: "PRIVATE_MESSAGE",
-									Data: string(data),
-								})
+								data, err := json.Marshal(msg)
 								if err != nil {
 									err := conn.WriteJSON(map[string]string{
 										"TYPE": "RESPONSE_MESSAGE",
@@ -147,14 +186,28 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 										log.Println(err)
 									}
 								} else {
-									socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-										Name: "inbox=" + recipientId.Hex(),
-										Data: outBytes,
-									}
-									// Also send the message to the sender because they need to be able to see their own message
-									socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-										Name: "inbox=" + uid.Hex(),
-										Data: outBytes,
+									outBytes, err := json.Marshal(socketmodels.OutMessage{
+										Type: "PRIVATE_MESSAGE",
+										Data: string(data),
+									})
+									if err != nil {
+										err := conn.WriteJSON(map[string]string{
+											"TYPE": "RESPONSE_MESSAGE",
+											"DATA": `{"msg":"Internal error","err":true}`,
+										})
+										if err != nil {
+											log.Println(err)
+										}
+									} else {
+										socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+											Name: "inbox=" + recipientId.Hex(),
+											Data: outBytes,
+										}
+										// Also send the message to the sender because they need to be able to see their own message
+										socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+											Name: "inbox=" + uid.Hex(),
+											Data: outBytes,
+										}
 									}
 								}
 							}
@@ -162,7 +215,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 					}
 				}
 			}
-			if data["event_type"] == "ROOM_MESSAGE" {
+			if eventType == "ROOM_MESSAGE" {
 				if *uid == primitive.NilObjectID {
 					err := conn.WriteJSON(map[string]string{
 						"TYPE": "RESPONSE_MESSAGE",
@@ -172,7 +225,8 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						log.Println(err)
 					}
 				} else {
-					if data["content"] == nil {
+					var inMsg socketmodels.RoomMessage
+					if err := json.Unmarshal(p, &inMsg); err != nil {
 						err := conn.WriteJSON(map[string]string{
 							"TYPE": "RESPONSE_MESSAGE",
 							"DATA": `{"msg":"Bad request","err":true}`,
@@ -181,7 +235,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 							log.Println(err)
 						}
 					} else {
-						roomId, err := primitive.ObjectIDFromHex(data["room_id"].(string))
+						roomId, err := primitive.ObjectIDFromHex(inMsg.RoomId)
 						if err != nil {
 							err := conn.WriteJSON(map[string]string{
 								"TYPE": "RESPONSE_MESSAGE",
@@ -193,11 +247,11 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						} else {
 							msg := &models.RoomMessage{
 								ID:            primitive.NewObjectID(),
-								Content:       data["content"].(string),
+								Content:       inMsg.Content,
+								HasAttachment: inMsg.HasAttachment,
 								Uid:           *uid,
 								CreatedAt:     primitive.NewDateTimeFromTime(time.Now()),
 								UpdatedAt:     primitive.NewDateTimeFromTime(time.Now()),
-								HasAttachment: false,
 							}
 							if _, err := colls.RoomMessagesCollection.UpdateByID(context.TODO(), roomId, bson.M{
 								"$push": bson.M{
@@ -245,6 +299,14 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						}
 					}
 				}
+			}
+		} else {
+			err := conn.WriteJSON(map[string]string{
+				"TYPE": "RESPONSE_MESSAGE",
+				"DATA": `{"msg":"Invalid socket event","err":true}`,
+			})
+			if err != nil {
+				log.Println(err)
 			}
 		}
 	}

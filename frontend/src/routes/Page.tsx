@@ -17,7 +17,7 @@ import Comments from "../components/comments/Comments";
 import { useUsers } from "../context/UsersContext";
 import User from "../components/User";
 
-import { FaChevronUp, FaChevronDown } from "react-icons/fa";
+import { TiArrowSortedUp, TiArrowSortedDown } from "react-icons/ti";
 import IconBtn from "../components/IconBtn";
 import { useModal } from "../context/ModalContext";
 import { useAuth } from "../context/AuthContext";
@@ -228,7 +228,7 @@ export default function Page() {
                       svgStyle={{
                         transform: "scale(1.166)",
                       }}
-                      Icon={FaChevronUp}
+                      Icon={TiArrowSortedUp}
                       type="button"
                       onClick={() =>
                         voteOnPost(post.ID, true)
@@ -271,7 +271,7 @@ export default function Page() {
                       svgStyle={{
                         transform: "scale(1.166)",
                       }}
-                      Icon={FaChevronDown}
+                      Icon={TiArrowSortedDown}
                       type="button"
                       onClick={() =>
                         voteOnPost(post.ID, false)

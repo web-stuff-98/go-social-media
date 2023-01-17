@@ -1,8 +1,17 @@
-import { useState, useContext, createContext, useEffect } from "react";
+import {
+  useState,
+  useContext,
+  createContext,
+  useEffect,
+  useCallback,
+} from "react";
 import type { ReactNode } from "react";
 import { IResMsg } from "../components/ResMsg";
 import { useAuth } from "./AuthContext";
 import { makeRequest } from "../services/makeRequest";
+import { useModal } from "./ModalContext";
+import useSocket from "./SocketContext";
+import { instanceOfAttachmentProgressData } from "../utils/DetermineSocketEvent";
 
 /*
     This handles the websocket connection to the file socket endpoint. The connection is
@@ -22,9 +31,11 @@ const FileSocketContext = createContext<{
 
 export const FileSocketProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
+  const { socket } = useSocket();
+  const { openModal } = useModal();
 
   const [fileSocket, setFileSocket] = useState<WebSocket>();
-  const [fileUploadsStatus, setFileUploadsStatus] = useState<IResMsg[]>([]);
+  const [failed, setFailed] = useState<string[]>([]);
 
   const connectFileSocket = () => {
     const fileSocket = new WebSocket(
@@ -42,35 +53,47 @@ export const FileSocketProvider = ({ children }: { children: ReactNode }) => {
     msgId: string,
     recipientId: string
   ) => {
-    // First send HTTP POST request to metadata endpoint
-    await makeRequest(`/api/attachment/${msgId}/${recipientId}`, {
-      withCredentials: true,
-      data: {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      },
-      method:"POST"
-    });
-    // Upload attachment in 1mb chunks (with the first 24 bytes being the msg id)
-    let startPointer = 0;
-    let endPointer = file.size;
-    let promises = [];
-    while (startPointer < endPointer) {
-      let newStartPointer = startPointer + 1048552;
-      promises.push(
-        new Blob([
-          msgId,
-          file.slice(startPointer, newStartPointer),
-        ]).arrayBuffer()
-      );
-      startPointer = newStartPointer;
+    try {
+      // First send HTTP POST request to metadata endpoint
+      await makeRequest(`/api/attachment/${msgId}/${recipientId}`, {
+        withCredentials: true,
+        data: {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+        },
+        method: "POST",
+      });
+      // Upload attachment in 1mb chunks (with the first 24 bytes being the msg id)
+      let startPointer = 0;
+      let endPointer = file.size;
+      let promises = [];
+      while (startPointer < endPointer) {
+        let newStartPointer = startPointer + 262120;
+        promises.push(
+          new Blob([
+            msgId,
+            file.slice(startPointer, newStartPointer),
+          ]).arrayBuffer()
+        );
+        startPointer = newStartPointer;
+      }
+      for await (const buff of promises) {
+        if (failed.includes(msgId)) {
+          setFailed((f) => [...f.filter((f) => f !== msgId)]);
+          return;
+        }
+        fileSocket?.send(buff);
+      }
+      // When the attachment is finished uploading, send the message ID on its own, that way the server knows its done
+      fileSocket?.send(msgId);
+    } catch (error) {
+      openModal("Message", {
+        msg: "Client attachment upload error: " + error,
+        pen: false,
+        err: true,
+      });
     }
-    for await (const buff of promises) {
-      fileSocket?.send(buff);
-    }
-    // When the attachment is finished uploading, send the message ID on its own, that way the server knows its done
-    fileSocket?.send(msgId);
   };
 
   useEffect(() => {
@@ -80,6 +103,24 @@ export const FileSocketProvider = ({ children }: { children: ReactNode }) => {
       if (fileSocket) setFileSocket(undefined);
     };
   }, [user]);
+
+  // Watch for failures, if an attachment failed stop sending bytes
+  const handleMessage = useCallback((e: MessageEvent) => {
+    const data = JSON.parse(e.data);
+    data["DATA"] = JSON.parse(data["DATA"]);
+    if (instanceOfAttachmentProgressData(data)) {
+      if (data.DATA.ID && data.DATA.failed) {
+        setFailed((f) => [...f, data.DATA.ID]);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    socket?.addEventListener("message", handleMessage);
+    return () => {
+      socket?.removeEventListener("message", handleMessage);
+    };
+  }, [socket]);
 
   return (
     <FileSocketContext.Provider

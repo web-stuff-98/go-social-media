@@ -16,7 +16,7 @@ import { useModal } from "../../../context/ModalContext";
 import { getConversations, getConversation } from "../../../services/chat";
 import ErrorTip from "../../ErrorTip";
 import useFileSocket from "../../../context/FileSocketContext";
-import { IMsgAttachmentData } from "../../Attachment";
+import { IMsgAttachmentProgress } from "../../Attachment";
 
 export interface IPrivateMessage {
   ID: string;
@@ -26,7 +26,7 @@ export interface IPrivateMessage {
   updated_at: string;
   has_attachment: boolean;
   recipient_id: string;
-  attachmentData?: IMsgAttachmentData;
+  attachment_progress?: IMsgAttachmentProgress;
 }
 export type Conversation = {
   uid: string;
@@ -154,27 +154,26 @@ export default function Conversations() {
       }
     }
     if (instanceOfAttachmentProgressData(data)) {
-      console.log(data.DATA);
-      if (selectedConversationIndex !== -1)
+      if (selectedConversationIndexRef.current !== -1) {
         setConversations((conversations) => {
           let newConversations = conversations;
-          const i = conversations[selectedConversationIndex].messages.findIndex(
-            (msg) => msg.ID === data.DATA.ID
-          );
+          const i = conversations[
+            selectedConversationIndexRef.current
+          ].messages.findIndex((msg) => msg.ID === data.DATA.ID);
           if (i !== -1) {
-            conversations[selectedConversationIndex].messages[
+            newConversations[selectedConversationIndexRef.current].messages[
               i
-            ].attachmentData = {
+            ].attachment_progress = {
               failed: data.DATA.failed,
               pending: data.DATA.pending,
               ratio: data.DATA.ratio,
             };
             return [...newConversations];
           } else {
-            console.log(i);
             return conversations;
           }
         });
+      }
     }
   };
 
@@ -228,7 +227,6 @@ export default function Conversations() {
       })
     );
     setMessageInput("");
-    // When the message is recieved back from the server, start the attachment upload
   };
 
   const [file, setFile] = useState<File>();

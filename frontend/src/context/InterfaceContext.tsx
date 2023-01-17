@@ -53,13 +53,13 @@ export const InterfaceProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const handleResize = () => {
-      const lo = 700;
+      const lo = 860;
       const hi = 1280;
       const a =
         (Math.min(hi, Math.max(window.innerWidth, lo)) - lo) / (hi - lo);
       const v = lerp(
         window.innerWidth / 6 / 2,
-        window.innerWidth / 1.866 / 2,
+        window.innerWidth / 2 / 2,
         Math.pow(a, 0.8)
       );
       document.documentElement.style.setProperty(

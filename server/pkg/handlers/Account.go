@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"sort"
 
 	"github.com/gorilla/mux"
 	"github.com/web-stuff-98/go-social-media/pkg/db/models"
@@ -379,13 +380,8 @@ func (h handler) GetConversation(w http.ResponseWriter, r *http.Request) {
 			"path": "$messages",
 		},
 	}
-	sort := bson.M{
-		"$sort": bson.M{
-			"messages.created_at": -1,
-		},
-	}
 
-	cursor, err := h.Collections.InboxCollection.Aggregate(r.Context(), []bson.M{match, lookup, unwind, sort})
+	cursor, err := h.Collections.InboxCollection.Aggregate(r.Context(), []bson.M{match, lookup, unwind})
 	defer cursor.Close(r.Context())
 
 	var messages = []models.PrivateMessage{}
@@ -403,7 +399,23 @@ func (h handler) GetConversation(w http.ResponseWriter, r *http.Request) {
 			responseMessage(w, http.StatusInternalServerError, "Internal error")
 			return
 		}
+		if msg.HasAttachment {
+			var metadata models.AttachmentMetadata
+			if err := h.Collections.AttachmentMetadataCollection.FindOne(r.Context(), bson.M{"_id": msg.ID}).Decode(&metadata); err != nil {
+				responseMessage(w, http.StatusInternalServerError, "Internal error")
+				return
+			} else {
+				msg.AttachmentProgress = models.AttachmentProgress{
+					Failed:  metadata.Failed,
+					Pending: metadata.Pending,
+					Ratio:   0.5,
+				}
+			}
+		}
 		messages = append(messages, msg)
+		sort.Slice(messages, func(i, j int) bool {
+			return messages[i].CreatedAt.Time().Before(messages[j].CreatedAt.Time())
+		})
 	}
 
 	if err := cursor.Err(); err != nil {

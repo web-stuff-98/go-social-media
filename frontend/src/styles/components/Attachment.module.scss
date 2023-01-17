@@ -1,5 +1,7 @@
 .container {
   width: 100%;
+  display: flex;
+
   svg {
     width: 1.25rem;
     height: 1.25rem;
@@ -15,7 +17,7 @@
   }
 
   .failed {
-    color:red;
+    color: red;
     font-weight: 600;
     svg {
       fill: red;
@@ -24,8 +26,16 @@
 
   .complete {
     font-weight: 600;
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
     svg {
       fill: var(--text-color);
     }
+  }
+
+  a {
+    display: none;
   }
 }

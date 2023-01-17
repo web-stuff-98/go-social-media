@@ -37,9 +37,10 @@ export default function PrivateMessage({
         {msg.has_attachment && (
           <div className={classes.attachmentContainer}>
             <Attachment
-              data={
-                msg.attachmentData || { failed: false, pending: true, ratio: 0 }
+              progressData={
+                msg.attachment_progress || { failed: false, pending: true, ratio: 0 }
               }
+              msgId={msg.ID}
             />
           </div>
         )}
