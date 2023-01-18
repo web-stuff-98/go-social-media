@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
@@ -95,25 +98,37 @@ func (h handler) HandleAttachmentMetadata(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	numChunks := math.Ceil(float64(metadataInput.Size) / float64(1024*1024*2))
+	chunkIDs := []primitive.ObjectID{msgId}
+	for i := 0; i < int(numChunks)+1; i++ { //add an extra object ID at the end that will not be used to avoid out of range error
+		chunkIDs = append(chunkIDs, primitive.NewObjectID())
+	}
+
+	log.Println("Attachment will be split into", numChunks, "chunks")
+
 	if _, err := h.Collections.AttachmentMetadataCollection.InsertOne(r.Context(), models.AttachmentMetadata{
-		ID:       msgId,
-		MimeType: metadataInput.MimeType,
-		Name:     metadataInput.Name,
-		Size:     metadataInput.Size,
-		Pending:  true,
-		Failed:   false,
+		ID:          msgId,
+		MimeType:    metadataInput.MimeType,
+		Name:        metadataInput.Name,
+		Size:        metadataInput.Size,
+		VideoLength: metadataInput.Length,
+		Pending:     true,
+		Failed:      false,
+		ChunkIDs:    chunkIDs[:len(chunkIDs)-1], //remove the last ID because its just there to stop the out of range error
 	}); err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
 	}
 
 	if isPrivateMsg {
-		h.FileSocketServer.AttachmentSubscriptionNames[msgId] = []string{"inbox=" + recipientId.Hex(), "inbox=" + user.ID.Hex()}
+		h.FileSocketServer.SubscriptionNames[msgId] = []string{"inbox=" + recipientId.Hex(), "inbox=" + user.ID.Hex()}
 	} else {
-		h.FileSocketServer.AttachmentSubscriptionNames[msgId] = []string{"room=" + recipientId.Hex()}
+		h.FileSocketServer.SubscriptionNames[msgId] = []string{"room=" + recipientId.Hex()}
 	}
 
-	h.FileSocketServer.AttachmentBytesProcessed[msgId] = filesocketserver.BytesInfo{
+	h.FileSocketServer.ChunksDone[msgId] = 0
+	h.FileSocketServer.ChunkIDs[msgId] = chunkIDs
+	h.FileSocketServer.BytesProcessed[msgId] = filesocketserver.BytesInfo{
 		TotalBytes: metadataInput.Size,
 		BytesDone:  0,
 	}
@@ -121,7 +136,7 @@ func (h handler) HandleAttachmentMetadata(w http.ResponseWriter, r *http.Request
 	responseMessage(w, http.StatusCreated, "Created attachment metadata")
 }
 
-// Download attachment using octet stream
+// Download attachment as a file using octet stream
 func (h handler) DownloadAttachment(w http.ResponseWriter, r *http.Request) {
 	rawAttachmentId := mux.Vars(r)["id"]
 	attachmentId, err := primitive.ObjectIDFromHex(rawAttachmentId)
@@ -151,10 +166,10 @@ func (h handler) DownloadAttachment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Add("Content-Type", "application/octet-stream")
+	w.Header().Add("Content-Length", strconv.Itoa(metaData.Size))
 	w.Header().Add("Content-Disposition", `attachment; filename="`+metaData.Name+`"`)
 
 	w.Write(firstChunk.Bytes.Data)
-	log.Println("Wrote first chunk")
 
 	if firstChunk.NextChunk != primitive.NilObjectID {
 		recursivelyWriteAttachmentChunksToResponse(w, firstChunk.NextChunk, h.Collections.AttachmentChunksCollection, r.Context())
@@ -171,11 +186,97 @@ func recursivelyWriteAttachmentChunksToResponse(w http.ResponseWriter, NextChunk
 		}
 	} else {
 		w.Write(chunk.Bytes.Data)
-		log.Println("Wrote chunk")
 		if chunk.NextChunk != primitive.NilObjectID {
 			return recursivelyWriteAttachmentChunksToResponse(w, chunk.NextChunk, chunkColl, ctx)
 		} else {
 			return nil
 		}
 	}
+}
+
+// Get partial content from attachment for video player
+func (h handler) GetVideoPartialContent(w http.ResponseWriter, r *http.Request) {
+	rangeString := r.Header.Get("Range")
+	log.Println(rangeString)
+	if rangeString == "" {
+		responseMessage(w, http.StatusBadRequest, "Bad request")
+		return
+	}
+	bytesPortion := strings.ReplaceAll(rangeString, "bytes=", "") // Returns the start-end portion of the header
+	if bytesPortion == "" {
+		responseMessage(w, http.StatusBadRequest, "Bad request")
+		return
+	}
+	bytesHeaderPortionArr := strings.Split(bytesPortion, "-")
+	if len(bytesHeaderPortionArr) == 0 {
+		responseMessage(w, http.StatusBadRequest, "Bad request")
+		return
+	}
+	rangeStart, err := strconv.Atoi(bytesHeaderPortionArr[0])
+	if err != nil {
+		responseMessage(w, http.StatusBadRequest, "Bad request")
+		return
+	}
+
+	rawId := mux.Vars(r)["id"]
+	id, err := primitive.ObjectIDFromHex(rawId)
+	if err != nil {
+		responseMessage(w, http.StatusBadRequest, "Invalid ID")
+		return
+	}
+
+	var metaData models.AttachmentMetadata
+	if err := h.Collections.AttachmentMetadataCollection.FindOne(r.Context(), bson.M{"_id": id}).Decode(&metaData); err != nil {
+		if err == mongo.ErrNoDocuments {
+			responseMessage(w, http.StatusNotFound, "Not found")
+		} else {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+		}
+		return
+	}
+	if metaData.MimeType != "video/mp4" {
+		responseMessage(w, http.StatusBadRequest, "File is not a video")
+		return
+	}
+	maxLength := int(math.Min(float64(metaData.Size-rangeStart), 1048576))
+	rangeEnd := rangeStart + maxLength
+
+	log.Println("Getting bytes", rangeStart, "to", rangeEnd)
+
+	// Determine which chunks are needed
+	startChunk := float64(rangeStart) / 1048576
+	endChunk := float64(rangeEnd) / 1048576
+	if rangeEnd < 1048576 {
+		endChunk = 0
+	}
+	chunkIDs := metaData.ChunkIDs[int32(startChunk):int32(endChunk)]
+	log.Println("Retrieving chunk ids", chunkIDs)
+	// Get the bytes from the chunks
+	vidBytes := []byte{}
+	cursor, err := h.Collections.AttachmentChunksCollection.Find(r.Context(), bson.M{"_id": bson.M{"$in": chunkIDs}})
+	defer cursor.Close(r.Context())
+	for cursor.Next(r.Context()) {
+		var chunk models.AttachmentChunk
+		err := cursor.Decode(&chunk)
+		if err != nil {
+			log.Println("DECODE ERROR : ", err)
+		}
+		vidBytes = append(vidBytes, chunk.Bytes.Data...)
+	}
+
+	log.Println("START CHUNK : ", startChunk)
+	log.Println("END CHUNK : ", endChunk)
+
+	bytesStartString := strconv.Itoa(rangeStart)
+	bytesEndString := strconv.Itoa(rangeEnd)
+	bytesSizeString := strconv.Itoa(metaData.Size)
+	w.Header().Add("Accept-Ranges", "bytes")
+	w.Header().Add("Content-Length", strconv.Itoa(maxLength))
+	w.Header().Add("Content-Range", bytesStartString+"-"+bytesEndString+"/"+bytesSizeString)
+	log.Println(w.Header().Get("Content-Range"))
+	w.Header().Add("Content-Type", "video/mp4")
+
+	/* Write bytes to response here - 206 partial content */
+	w.WriteHeader(http.StatusPartialContent)
+	w.Write(vidBytes)
 }

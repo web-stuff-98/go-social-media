@@ -152,4 +152,5 @@ func cleanUpPosts(colls *Collections) {
 			log.Fatal("ERROR IN POSTS CLEANUP DELETE COMMENTS OPERATION :", err)
 		}
 	}
+	defer cmtsCursor.Close(context.Background())
 }

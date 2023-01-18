@@ -299,6 +299,13 @@ func main() {
 		Message:       "Too many requests",
 		RouteName:     "download_attachment",
 	}, *redisClient, *Collections)).Methods(http.MethodGet)
+	router.HandleFunc("/api/attachment/video/{id}", middleware.BasicRateLimiter(h.GetVideoPartialContent, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 20,
+		MaxReqs:       20,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "get_video_chunk",
+	}, *redisClient, *Collections)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/ws", h.WebSocketEndpoint)
 	router.HandleFunc("/api/file/ws", h.FileWebSocketEndpoint)
@@ -307,7 +314,7 @@ func main() {
 	changestreams.WatchCollections(DB, SocketServer)
 
 	DB.Drop(context.TODO())
-	go seed.SeedDB(Collections, 5, 5, 5)
+	go seed.SeedDB(Collections, 5, 2, 0)
 
 	log.Println("API open on port", os.Getenv("PORT"))
 	log.Fatal(http.ListenAndServe(fmt.Sprint(":", os.Getenv("PORT")), c.Handler(router)))

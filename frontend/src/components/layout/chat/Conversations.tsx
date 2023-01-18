@@ -9,6 +9,7 @@ import { IUser, useAuth } from "../../../context/AuthContext";
 import PrivateMessage from "./PrivateMessage";
 import useSocket from "../../../context/SocketContext";
 import {
+  instanceOfAttachmentCompleteData,
   instanceOfAttachmentProgressData,
   instanceOfPrivateMessageData,
 } from "../../../utils/DetermineSocketEvent";
@@ -16,7 +17,8 @@ import { useModal } from "../../../context/ModalContext";
 import { getConversations, getConversation } from "../../../services/chat";
 import ErrorTip from "../../ErrorTip";
 import useFileSocket from "../../../context/FileSocketContext";
-import { IMsgAttachmentProgress } from "../../Attachment";
+import { IAttachmentData, IMsgAttachmentProgress } from "../../Attachment";
+import getDuration from "../../../utils/GetVideoDuration";
 
 export interface IPrivateMessage {
   ID: string;
@@ -27,6 +29,7 @@ export interface IPrivateMessage {
   has_attachment: boolean;
   recipient_id: string;
   attachment_progress?: IMsgAttachmentProgress;
+  attachment_metadata?: IAttachmentData;
 }
 export type Conversation = {
   uid: string;
@@ -175,6 +178,36 @@ export default function Conversations() {
         });
       }
     }
+    if (instanceOfAttachmentCompleteData(data)) {
+      if (selectedConversationIndexRef.current !== -1) {
+        setConversations((conversations) => {
+          let newConversations = conversations;
+          const i = conversations[
+            selectedConversationIndexRef.current
+          ].messages.findIndex((msg) => msg.ID === data.DATA.ID);
+          if (i !== -1) {
+            newConversations[selectedConversationIndexRef.current].messages[
+              i
+            ].attachment_progress = {
+              failed: false,
+              pending: false,
+              ratio: 1,
+            };
+            newConversations[selectedConversationIndexRef.current].messages[
+              i
+            ].attachment_metadata = {
+              size: data.DATA.size,
+              type: data.DATA.type,
+              name: data.DATA.name,
+              length: data.DATA.length,
+            };
+            return [...newConversations];
+          } else {
+            return conversations;
+          }
+        });
+      }
+    }
   };
 
   useEffect(() => {
@@ -231,7 +264,7 @@ export default function Conversations() {
 
   const [file, setFile] = useState<File>();
   const fileRef = useRef<File>();
-  const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     if (!e.target.files[0]) return;
     const file = e.target.files[0];

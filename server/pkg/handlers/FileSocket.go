@@ -36,23 +36,23 @@ func fileWsReader(conn *websocket.Conn, uid *primitive.ObjectID, fileSocketServe
 			log.Println(err)
 			return
 		}
-		idBytes := p[:24]
-		msgId, err := primitive.ObjectIDFromHex(string(idBytes))
 
 		size := binary.Size(p)
 
-		log.Println("Reading", size, "bytes")
+		idBytes := p[:24]
+		msgId, err := primitive.ObjectIDFromHex(string(idBytes))
 
 		if size == 24 {
-			// If the binary size is 24 (just the ID) it means its has finished uploading
-			fileSocketServer.AttachmentSuccessChan <- msgId
+			// If the binary size is 24 (just the ID) it means it has finished uploading
+			log.Println("Sent to success channel")
+			fileSocketServer.SuccessChan <- msgId
 		} else if size > 24 && size <= 262144 {
-			fileSocketServer.AttachmentChunksChan <- &filesocketserver.ChunkData{
+			fileSocketServer.ChunksChan <- &filesocketserver.ChunkData{
 				MsgID: msgId,
 				Chunk: p[24:],
 			}
 		} else {
-			// If the size is less than 24, or larger than 262144, that means hacks probably, so break the connection.
+			// If the size is less than 24, or larger than it should be, that shouldn't be possible, so break the connection.
 			log.Println("Connection broken")
 			break
 		}

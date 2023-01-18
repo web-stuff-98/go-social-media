@@ -408,8 +408,14 @@ func (h handler) GetConversation(w http.ResponseWriter, r *http.Request) {
 				msg.AttachmentProgress = models.AttachmentProgress{
 					Failed:  metadata.Failed,
 					Pending: metadata.Pending,
-					Ratio:   0.5,
+					Ratio:   0.2,
 				}
+			}
+			msg.AttachmentMetadata = models.OutAttachmentMetadata{
+				MimeType: metadata.MimeType,
+				Name:     metadata.Name,
+				Size:     metadata.Size,
+				Length:   metadata.VideoLength,
 			}
 		}
 		messages = append(messages, msg)

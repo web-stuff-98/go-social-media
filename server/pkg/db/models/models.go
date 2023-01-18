@@ -34,14 +34,15 @@ type Session struct {
 }
 
 type PrivateMessage struct {
-	ID                 primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
-	Content            string             `bson:"content,maxlength=200" json:"content"`
-	Uid                primitive.ObjectID `bson:"uid" json:"uid"`
-	CreatedAt          primitive.DateTime `bson:"created_at" json:"created_at"`
-	UpdatedAt          primitive.DateTime `bson:"updated_at" json:"updated_at"`
-	RecipientId        primitive.ObjectID `bson:"-" json:"recipient_id"`
-	HasAttachment      bool               `bson:"has_attachment" json:"has_attachment"`
-	AttachmentProgress AttachmentProgress `bson:"-" json:"attachment_progress"`
+	ID                 primitive.ObjectID    `bson:"_id,omitempty" json:"ID"`
+	Content            string                `bson:"content,maxlength=200" json:"content"`
+	Uid                primitive.ObjectID    `bson:"uid" json:"uid"`
+	CreatedAt          primitive.DateTime    `bson:"created_at" json:"created_at"`
+	UpdatedAt          primitive.DateTime    `bson:"updated_at" json:"updated_at"`
+	RecipientId        primitive.ObjectID    `bson:"-" json:"recipient_id"`
+	HasAttachment      bool                  `bson:"has_attachment" json:"has_attachment"`
+	AttachmentProgress AttachmentProgress    `bson:"-" json:"attachment_progress"`
+	AttachmentMetadata OutAttachmentMetadata `bson:"-" json:"attachment_metadata"`
 }
 
 type AttachmentProgress struct {
@@ -51,24 +52,35 @@ type AttachmentProgress struct {
 }
 
 type RoomMessage struct {
-	ID                 primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
-	Content            string             `bson:"content,maxlength=200" json:"content"`
-	Uid                primitive.ObjectID `bson:"uid" json:"uid"`
-	CreatedAt          primitive.DateTime `bson:"created_at" json:"created_at"`
-	UpdatedAt          primitive.DateTime `bson:"updated_at" json:"updated_at"`
-	HasAttachment      bool               `bson:"has_attachment" json:"has_attachment"`
-	AttachmentProgress AttachmentProgress `bson:"-" json:"attachment_progress"`
+	ID                 primitive.ObjectID    `bson:"_id,omitempty" json:"ID"`
+	Content            string                `bson:"content,maxlength=200" json:"content"`
+	Uid                primitive.ObjectID    `bson:"uid" json:"uid"`
+	CreatedAt          primitive.DateTime    `bson:"created_at" json:"created_at"`
+	UpdatedAt          primitive.DateTime    `bson:"updated_at" json:"updated_at"`
+	HasAttachment      bool                  `bson:"has_attachment" json:"has_attachment"`
+	AttachmentProgress AttachmentProgress    `bson:"-" json:"attachment_progress"`
+	AttachmentMetadata OutAttachmentMetadata `bson:"-" json:"attachment_metadata"`
 }
 
 type AttachmentMetadata struct {
-	ID       primitive.ObjectID `bson:"_id" json:"ID"` // Should be the same as message ID
-	MimeType string             `bson:"mime_type" json:"mime_type"`
-	Name     string             `bson:"name" json:"name"`
-	Size     int                `bson:"size" json:"size"`
-	Pending  bool               `bson:"pending"`
-	Failed   bool               `bson:"failed"`
+	ID          primitive.ObjectID   `bson:"_id" json:"ID"` // Should be the same as message ID
+	MimeType    string               `bson:"mime_type" json:"mime_type"`
+	Name        string               `bson:"name" json:"name"`
+	Size        int                  `bson:"size" json:"size"`
+	Pending     bool                 `bson:"pending"`
+	Failed      bool                 `bson:"failed"`
+	VideoLength float32              `bson:"video_length"` // (seconds) Will be 0 for files that are not mp4 videos
+	ChunkIDs    []primitive.ObjectID `bson:"chunk_ids"`    // Needed for video seeking, faster than going up the chain to find all the ids
 }
 
+type OutAttachmentMetadata struct {
+	MimeType string  `json:"type"`
+	Name     string  `json:"name"`
+	Size     int     `json:"size"`
+	Length   float32 `json:"length"`
+}
+
+// Chunkdata bytes is 2mb max
 type AttachmentChunk struct {
 	ID        primitive.ObjectID `bson:"_id"`     // The first chunk should be the same as the message ID
 	NextChunk primitive.ObjectID `bson:"next_id"` // If its the last chunk NextChunk will be nil ObjectID (000000000000000000000000)

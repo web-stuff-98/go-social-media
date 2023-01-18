@@ -38,6 +38,17 @@ export type AttachmentProgressData = {
   DATA: { ID: string; failed: boolean; pending: boolean; ratio: number };
 };
 
+export type AttachmentCompleteData = {
+  TYPE: "ATTACHMENT_COMPLETE";
+  DATA: {
+    ID: string;
+    type: string;
+    size: number;
+    name: string;
+    length: number;
+  };
+};
+
 export type SocketEventChangeMethod =
   | "UPDATE"
   | "INSERT"
@@ -86,4 +97,10 @@ export function instanceOfAttachmentProgressData(
   object: any
 ): object is AttachmentProgressData {
   return object.TYPE === "ATTACHMENT_PROGRESS";
+}
+
+export function instanceOfAttachmentCompleteData(
+  object: any
+): object is AttachmentCompleteData {
+  return object.TYPE === "ATTACHMENT_COMPLETE";
 }

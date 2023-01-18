@@ -6,12 +6,12 @@ import {
   useCallback,
 } from "react";
 import type { ReactNode } from "react";
-import { IResMsg } from "../components/ResMsg";
 import { useAuth } from "./AuthContext";
 import { makeRequest } from "../services/makeRequest";
 import { useModal } from "./ModalContext";
 import useSocket from "./SocketContext";
 import { instanceOfAttachmentProgressData } from "../utils/DetermineSocketEvent";
+import getDuration from "../utils/GetVideoDuration";
 
 /*
     This handles the websocket connection to the file socket endpoint. The connection is
@@ -54,6 +54,12 @@ export const FileSocketProvider = ({ children }: { children: ReactNode }) => {
     recipientId: string
   ) => {
     try {
+      let isVideo = false;
+      let length = 0;
+      if (file.type === "video/mp4") {
+        isVideo = true;
+        length = await getDuration(file);
+      }
       // First send HTTP POST request to metadata endpoint
       await makeRequest(`/api/attachment/${msgId}/${recipientId}`, {
         withCredentials: true,
@@ -61,10 +67,11 @@ export const FileSocketProvider = ({ children }: { children: ReactNode }) => {
           name: file.name,
           size: file.size,
           type: file.type,
+          length,
         },
         method: "POST",
       });
-      // Upload attachment in 256kb chunks (with the first 24 bytes being the msg id)
+      // Upload attachment in chunks (with the first 24 bytes being the msg id)
       let startPointer = 0;
       let endPointer = file.size;
       let promises = [];
@@ -83,8 +90,14 @@ export const FileSocketProvider = ({ children }: { children: ReactNode }) => {
           setFailed((f) => [...f.filter((f) => f !== msgId)]);
           return;
         }
-        fileSocket?.send(buff);
+        await new Promise<void>((resolve) => {
+          fileSocket?.send(buff);
+          setTimeout(() => {
+            resolve();
+          }, 500);
+        });
       }
+      await new Promise<void>((r) => setTimeout(() => r(), 100));
       // When the attachment is finished uploading, send the message ID on its own, that way the server knows its done
       fileSocket?.send(msgId);
     } catch (error) {

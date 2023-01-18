@@ -6,16 +6,14 @@
   flex-direction: column;
 
   span {
-    height: 2px;
+    height: 3px;
     background: linear-gradient(to top, lightgray 0%, black 100%);
-    border-radius: 2px;
-    border: 1px solid var(--base-pale);
     display: flex;
 
     span {
-        border: none;
+      border: none;
       background: lime;
-      transition: width 100ms ease;
+      transition: width 250ms ease;
     }
   }
 }
