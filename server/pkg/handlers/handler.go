@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/web-stuff-98/go-social-media/pkg/attachmentserver"
 	"github.com/web-stuff-98/go-social-media/pkg/db"
-	"github.com/web-stuff-98/go-social-media/pkg/filesocketserver"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,9 +24,9 @@ type handler struct {
 	DB               *mongo.Database
 	Collections      *db.Collections
 	SocketServer     *socketserver.SocketServer
-	FileSocketServer *filesocketserver.FileSocketServer
+	AttachmentServer *attachmentserver.AttachmentServer
 }
 
-func New(db *mongo.Database, collections *db.Collections, sserver *socketserver.SocketServer, fsserver *filesocketserver.FileSocketServer) handler {
-	return handler{db, collections, sserver, fsserver}
+func New(db *mongo.Database, collections *db.Collections, sserver *socketserver.SocketServer, aserver *attachmentserver.AttachmentServer) handler {
+	return handler{db, collections, sserver, aserver}
 }

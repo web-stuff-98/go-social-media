@@ -1,6 +1,6 @@
 import Layout from "./components/layout/Layout";
 import { AuthProvider } from "./context/AuthContext";
-import { FileSocketProvider } from "./context/FileSocketContext";
+import { FileSocketProvider } from "./context/AttachmentContext";
 import { InterfaceProvider } from "./context/InterfaceContext";
 import { ModalProvider } from "./context/ModalContext";
 import { MouseProvider } from "./context/MouseContext";

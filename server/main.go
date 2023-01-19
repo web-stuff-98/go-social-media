@@ -10,7 +10,6 @@ import (
 
 	"github.com/web-stuff-98/go-social-media/pkg/db"
 	"github.com/web-stuff-98/go-social-media/pkg/db/changestreams"
-	"github.com/web-stuff-98/go-social-media/pkg/filesocketserver"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers/middleware"
 	rdb "github.com/web-stuff-98/go-social-media/pkg/redis"
@@ -35,11 +34,10 @@ func main() {
 	}
 	DB, Collections := db.Init()
 	SocketServer, err := socketserver.Init()
-	FileSocketServer, err := filesocketserver.Init(SocketServer, Collections)
 	if err != nil {
 		log.Fatal("Failed to set up socket server ", err)
 	}
-	h := handlers.New(DB, Collections, SocketServer, FileSocketServer)
+	h := handlers.New(DB, Collections, SocketServer)
 	router := mux.NewRouter()
 
 	redisClient := rdb.Init()
@@ -307,7 +305,6 @@ func main() {
 	}, *redisClient, *Collections)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/ws", h.WebSocketEndpoint)
-	router.HandleFunc("/api/file/ws", h.FileWebSocketEndpoint)
 
 	log.Println("Creating changestreams")
 	changestreams.WatchCollections(DB, SocketServer)

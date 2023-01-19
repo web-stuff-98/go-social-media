@@ -16,7 +16,7 @@ import {
 import { useModal } from "../../../context/ModalContext";
 import { getConversations, getConversation } from "../../../services/chat";
 import ErrorTip from "../../ErrorTip";
-import useFileSocket from "../../../context/FileSocketContext";
+import useFileSocket from "../../../context/AttachmentContext";
 import { IAttachmentData, IMsgAttachmentProgress } from "../../Attachment";
 import getDuration from "../../../utils/GetVideoDuration";
 
