@@ -126,7 +126,8 @@ export default function Conversations() {
           await uploadAttachment(
             fileRef.current,
             data.DATA.ID,
-            data.DATA.recipient_id
+            data.DATA.recipient_id,
+            false
           );
           setFile(undefined);
           fileRef.current = undefined;

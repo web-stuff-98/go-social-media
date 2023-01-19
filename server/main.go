@@ -1,22 +1,19 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/web-stuff-98/go-social-media/pkg/attachmentserver"
 	"github.com/web-stuff-98/go-social-media/pkg/db"
 	"github.com/web-stuff-98/go-social-media/pkg/db/changestreams"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers/middleware"
 	rdb "github.com/web-stuff-98/go-social-media/pkg/redis"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -24,8 +21,7 @@ import (
 )
 
 /*
-	Some of this stuff should be moved to seperate files...
-	It isn't a problem at the moment though, it just looks messy.
+	Router stuff should be moved into a seperate file...
 */
 
 func main() {
@@ -37,23 +33,15 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to set up socket server ", err)
 	}
-	h := handlers.New(DB, Collections, SocketServer)
+	AttachmentServer, err := attachmentserver.Init()
+	if err != nil {
+		log.Fatal("Failed to set up attachment server ", err)
+	}
+
+	h := handlers.New(DB, Collections, SocketServer, AttachmentServer)
+
 	router := mux.NewRouter()
-
 	redisClient := rdb.Init()
-
-	Collections.PostCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
-		Keys: bson.M{
-			"title": "text",
-		},
-		Options: options.Index().SetName("title_text"),
-	})
-	Collections.RoomCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
-		Keys: bson.M{
-			"name": "text",
-		},
-		Options: options.Index().SetName("name_text"),
-	})
 
 	var origin string
 	if os.Getenv("PRODUCTION") == "true" {
@@ -282,14 +270,14 @@ func main() {
 		RouteName:     "delete_room",
 	}, *redisClient, *Collections)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/attachment/{msgId}/{recipientId}", middleware.BasicRateLimiter(h.HandleAttachmentMetadata, middleware.SimpleLimiterOpts{
+	router.HandleFunc("/api/attachment/metadata/{msgId}/{recipientId}", middleware.BasicRateLimiter(h.HandleAttachmentMetadata, middleware.SimpleLimiterOpts{
 		Window:        time.Second * 30,
 		MaxReqs:       20,
 		BlockDuration: time.Second * 3000,
 		Message:       "Too many requests",
 		RouteName:     "attachment_metadata",
 	}, *redisClient, *Collections)).Methods(http.MethodPost)
-	router.HandleFunc("/api/attachment/{id}", middleware.BasicRateLimiter(h.DownloadAttachment, middleware.SimpleLimiterOpts{
+	router.HandleFunc("/api/attachment/download/{id}", middleware.BasicRateLimiter(h.DownloadAttachment, middleware.SimpleLimiterOpts{
 		Window:        time.Second * 120,
 		MaxReqs:       4,
 		BlockDuration: time.Second * 3000,
@@ -303,6 +291,13 @@ func main() {
 		Message:       "Too many requests",
 		RouteName:     "get_video_chunk",
 	}, *redisClient, *Collections)).Methods(http.MethodGet)
+	router.HandleFunc("/api/attachment/chunk/{msgId}", middleware.BasicRateLimiter(h.UploadAttachmentChunk, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 120,
+		MaxReqs:       160,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "upload_chunk",
+	}, *redisClient, *Collections)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/ws", h.WebSocketEndpoint)
 

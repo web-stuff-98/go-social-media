@@ -1,6 +1,6 @@
 import Layout from "./components/layout/Layout";
 import { AuthProvider } from "./context/AuthContext";
-import { FileSocketProvider } from "./context/AttachmentContext";
+import { AttachmentProvider } from "./context/AttachmentContext";
 import { InterfaceProvider } from "./context/InterfaceContext";
 import { ModalProvider } from "./context/ModalContext";
 import { MouseProvider } from "./context/MouseContext";
@@ -16,7 +16,7 @@ function App() {
         <SocketProvider>
           <UserdropdownProvider>
             <AuthProvider>
-              <FileSocketProvider>
+              <AttachmentProvider>
                 <ModalProvider>
                   <PostsProvider>
                     <UsersProvider>
@@ -24,7 +24,7 @@ function App() {
                     </UsersProvider>
                   </PostsProvider>
                 </ModalProvider>
-              </FileSocketProvider>
+              </AttachmentProvider>
             </AuthProvider>
           </UserdropdownProvider>
         </SocketProvider>

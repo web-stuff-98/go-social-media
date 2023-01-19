@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"math"
@@ -15,6 +16,8 @@ import (
 	"github.com/web-stuff-98/go-social-media/pkg/attachmentserver"
 	"github.com/web-stuff-98/go-social-media/pkg/db/models"
 	"github.com/web-stuff-98/go-social-media/pkg/helpers"
+	"github.com/web-stuff-98/go-social-media/pkg/socketmodels"
+	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 	"github.com/web-stuff-98/go-social-media/pkg/validation"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -98,20 +101,24 @@ func (h handler) HandleAttachmentMetadata(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	numChunks := math.Ceil(float64(metadataInput.Size) / float64(1024*1024*2))
+	numChunks := math.Ceil(float64(metadataInput.Size) / float64(1048576))
 	chunkIDs := []primitive.ObjectID{msgId}
-	for i := 0; i < int(numChunks)+1; i++ { //add an extra object ID at the end that will not be used to avoid out of range error
+	log.Println("NUM CHUNKS:", numChunks)
+	for i := 1; i < int(numChunks); i++ { //add an extra object ID at the end that will not be used to avoid out of range error
 		chunkIDs = append(chunkIDs, primitive.NewObjectID())
 	}
+	chunkIDs = append(chunkIDs, primitive.NilObjectID)
+	log.Println("CHUNK IDS:", chunkIDs)
 
 	totalChunks := int(math.Ceil(float64(metadataInput.Size) / 1048576))
 	if _, ok := h.AttachmentServer.Uploaders[user.ID]; !ok {
 		h.AttachmentServer.Uploaders[user.ID] = make(map[primitive.ObjectID]attachmentserver.Upload)
 	}
 	h.AttachmentServer.Uploaders[user.ID][msgId] = attachmentserver.Upload{
-		ChunksDone:  0,
-		TotalChunks: totalChunks,
-		ChunkIDs:    chunkIDs,
+		ChunksDone:        0,
+		TotalChunks:       totalChunks,
+		ChunkIDs:          chunkIDs,
+		SubscriptionNames: metadataInput.SubscriptionNames,
 	}
 
 	if _, err := h.Collections.AttachmentMetadataCollection.InsertOne(r.Context(), models.AttachmentMetadata{
@@ -132,6 +139,8 @@ func (h handler) HandleAttachmentMetadata(w http.ResponseWriter, r *http.Request
 }
 
 func (h handler) UploadAttachmentChunk(w http.ResponseWriter, r *http.Request) {
+	log.Println("Chunk incoming")
+
 	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
@@ -140,7 +149,9 @@ func (h handler) UploadAttachmentChunk(w http.ResponseWriter, r *http.Request) {
 
 	rawMsgId := mux.Vars(r)["msgId"]
 	msgId, err := primitive.ObjectIDFromHex(rawMsgId)
+	log.Println(rawMsgId)
 	if err != nil {
+		log.Println(err)
 		responseMessage(w, http.StatusBadRequest, "Invalid ID")
 		return
 	}
@@ -148,7 +159,7 @@ func (h handler) UploadAttachmentChunk(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 
-	if r.ContentLength == -1 {
+	if r.ContentLength == -1 || r.ContentLength == 0 {
 		responseMessage(w, http.StatusBadRequest, "Bad request")
 		return
 	}
@@ -170,11 +181,39 @@ func (h handler) UploadAttachmentChunk(w http.ResponseWriter, r *http.Request) {
 
 	chunkID := upload.ChunkIDs[upload.ChunksDone]
 
-	h.Collections.AttachmentChunksCollection.InsertOne(r.Context(), models.AttachmentChunk{
+	if _, err := h.Collections.AttachmentChunksCollection.InsertOne(r.Context(), models.AttachmentChunk{
 		ID:        chunkID,
 		Bytes:     primitive.Binary{Data: body},
-		NextChunk: chunkID,
-	})
+		NextChunk: upload.ChunkIDs[upload.ChunksDone+1],
+	}); err != nil {
+		responseMessage(w, http.StatusInternalServerError, "Internal error")
+		return
+	}
+
+	if upload.ChunksDone == upload.TotalChunks-1 {
+		outBytes, _ := json.Marshal(socketmodels.OutMessage{
+			Type: "ATTACHMENT_PROGRESS",
+			Data: `{"ID":"` + rawMsgId + `","failed":false,"pending":false,"ratio":1}`,
+		})
+		h.Collections.AttachmentMetadataCollection.UpdateByID(r.Context(), msgId, bson.M{"$set": bson.M{"pending": false}})
+		h.SocketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+			Names: upload.SubscriptionNames,
+			Data:  outBytes,
+		}
+	} else {
+		outBytes, _ := json.Marshal(socketmodels.OutMessage{
+			Type: "ATTACHMENT_PROGRESS",
+			Data: `{"ID":"` + rawMsgId + `","failed":false,"pending":true,"ratio":` + getProgressString(upload) + `}`,
+		})
+		h.SocketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+			Names: upload.SubscriptionNames,
+			Data:  outBytes,
+		}
+		upload.ChunksDone++
+		h.AttachmentServer.Uploaders[user.ID][msgId] = upload
+	}
+
+	responseMessage(w, http.StatusCreated, "Chunk created")
 }
 
 // Download attachment as a file using octet stream
@@ -315,4 +354,8 @@ func (h handler) GetVideoPartialContent(w http.ResponseWriter, r *http.Request) 
 	w.Header().Add("Content-Type", "video/mp4")
 
 	w.Write(vidBytes)
+}
+
+func getProgressString(upload attachmentserver.Upload) string {
+	return fmt.Sprintf("%v", upload.ChunksDone/upload.TotalChunks)
 }

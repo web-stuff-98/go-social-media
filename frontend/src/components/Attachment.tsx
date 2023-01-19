@@ -78,7 +78,7 @@ export default function Attachment({
                     <>
                       <a
                         download
-                        href={`${baseURL}/api/attachment/${msgId}`}
+                        href={`${baseURL}/api/attachment/download/${msgId}`}
                         ref={hiddenDownloadLink}
                       />
                       <button

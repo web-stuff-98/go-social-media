@@ -77,6 +77,18 @@ func Init() (*mongo.Database, *Collections) {
 		AttachmentMetadataCollection: DB.Collection("attachment_metadata"),
 		AttachmentChunksCollection:   DB.Collection("attachment_chunks"),
 	}
+	colls.PostCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys: bson.M{
+			"title": "text",
+		},
+		Options: options.Index().SetName("title_text"),
+	})
+	colls.RoomCollection.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys: bson.M{
+			"name": "text",
+		},
+		Options: options.Index().SetName("name_text"),
+	})
 	cleanUp(colls)
 	return DB, colls
 }
