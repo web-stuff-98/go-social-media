@@ -13,8 +13,8 @@ import (
 )
 
 var fileWsUpgrader = websocket.Upgrader{
-	ReadBufferSize:  262144,
-	WriteBufferSize: 262144,
+	ReadBufferSize:  8096,
+	WriteBufferSize: 8096,
 }
 
 /*
@@ -46,7 +46,7 @@ func fileWsReader(conn *websocket.Conn, uid *primitive.ObjectID, fileSocketServe
 			// If the binary size is 24 (just the ID) it means it has finished uploading
 			log.Println("Sent to success channel")
 			fileSocketServer.SuccessChan <- msgId
-		} else if size > 24 && size <= 262144 {
+		} else if size > 24 && size <= 8096 {
 			fileSocketServer.ChunksChan <- &filesocketserver.ChunkData{
 				MsgID: msgId,
 				Chunk: p[24:],

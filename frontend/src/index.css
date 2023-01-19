@@ -90,7 +90,7 @@ button, .lightButton {
   --background: #f0f1f3;
   --button: rgb(24, 24, 24);
   --nav: rgb(14, 14, 14);
-  --header: radial-gradient(ellipse at center, rgb(37, 5, 220) 0%, rgb(11, 0, 112) 100%);
+  --header: linear-gradient(to top, rgb(90, 63, 239) 0%, rgb(6, 79, 156) 100%);
   --tag-selected: rgb(55, 62, 95);
 
   /* Component & Text Colours */

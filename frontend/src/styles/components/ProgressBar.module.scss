@@ -9,6 +9,8 @@
     height: 3px;
     background: linear-gradient(to top, lightgray 0%, black 100%);
     display: flex;
+    border: 1px inset var(--base-light);
+    border-radius: 2px;
 
     span {
       border: none;

@@ -194,10 +194,10 @@ func recursivelyWriteAttachmentChunksToResponse(w http.ResponseWriter, NextChunk
 	}
 }
 
-// Get partial content from attachment for video player
+// Get partial content from attachment for video player (this doesn't work on attachments that are larger than 2 chunks)
 func (h handler) GetVideoPartialContent(w http.ResponseWriter, r *http.Request) {
 	rangeString := r.Header.Get("Range")
-	log.Println(rangeString)
+	log.Println("range header: ", rangeString)
 	if rangeString == "" {
 		responseMessage(w, http.StatusBadRequest, "Bad request")
 		return
@@ -245,10 +245,10 @@ func (h handler) GetVideoPartialContent(w http.ResponseWriter, r *http.Request) 
 
 	// Determine which chunks are needed
 	startChunk := float64(rangeStart) / 1048576
-	endChunk := float64(rangeEnd) / 1048576
-	if rangeEnd < 1048576 {
-		endChunk = 0
-	}
+	endChunk := math.Ceil(float64(rangeEnd) / 1048576)
+
+	log.Println("From", int32(startChunk), "to", int32(endChunk))
+
 	chunkIDs := metaData.ChunkIDs[int32(startChunk):int32(endChunk)]
 	log.Println("Retrieving chunk ids", chunkIDs)
 	// Get the bytes from the chunks
@@ -257,26 +257,21 @@ func (h handler) GetVideoPartialContent(w http.ResponseWriter, r *http.Request) 
 	defer cursor.Close(r.Context())
 	for cursor.Next(r.Context()) {
 		var chunk models.AttachmentChunk
-		err := cursor.Decode(&chunk)
-		if err != nil {
+		if err := cursor.Decode(&chunk); err != nil {
 			log.Println("DECODE ERROR : ", err)
 		}
 		vidBytes = append(vidBytes, chunk.Bytes.Data...)
+		log.Println("Retrieved :", len(vidBytes))
 	}
-
-	log.Println("START CHUNK : ", startChunk)
-	log.Println("END CHUNK : ", endChunk)
 
 	bytesStartString := strconv.Itoa(rangeStart)
 	bytesEndString := strconv.Itoa(rangeEnd)
 	bytesSizeString := strconv.Itoa(metaData.Size)
+
 	w.Header().Add("Accept-Ranges", "bytes")
 	w.Header().Add("Content-Length", strconv.Itoa(maxLength))
 	w.Header().Add("Content-Range", bytesStartString+"-"+bytesEndString+"/"+bytesSizeString)
-	log.Println(w.Header().Get("Content-Range"))
 	w.Header().Add("Content-Type", "video/mp4")
 
-	/* Write bytes to response here - 206 partial content */
-	w.WriteHeader(http.StatusPartialContent)
 	w.Write(vidBytes)
 }

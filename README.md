@@ -1,1 +1,1 @@
-This is the second version of my Go project, it has much cleaner structure. It uses net/http, gorilla mux and gorilla websocket, it has chunked file streaming, which is broken
+This is the second version of my Go project, it has much cleaner structure. It uses net/http, gorilla mux and gorilla websocket, it has chunked file uploads through websockets, but its really slow. You can also watch videos by getting partial content and download files using octet stream.

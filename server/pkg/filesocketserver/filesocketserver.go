@@ -53,7 +53,6 @@ type FileSocketServer struct {
 	RegisterConn   chan ConnectionInfo
 	UnregisterConn chan ConnectionInfo
 
-	// oid is the message ID, byte array is the big chunk/final chunk currently being gathered from the smaller chunks
 	Chunks                map[primitive.ObjectID][]byte
 	ChunksChan            chan (*ChunkData)
 	AttachmentNextChunkId map[primitive.ObjectID]primitive.ObjectID
@@ -154,22 +153,18 @@ func RunServer(fss *FileSocketServer, ss *socketserver.SocketServer, colls *db.C
 			log.Println("Bytes incoming:", len(chunkData.Chunk))
 
 			if _, ok := fss.Chunks[chunkData.MsgID]; ok {
-				// Keep track of number of bytes processed
 				fss.BytesProcessed[chunkData.MsgID] = BytesInfo{
 					TotalBytes: fss.BytesProcessed[chunkData.MsgID].TotalBytes,
 					BytesDone:  fss.BytesProcessed[chunkData.MsgID].BytesDone + len(chunkData.Chunk),
 				}
 				if len(fss.Chunks[chunkData.MsgID]) > 1048576 {
 					// If the chunk stored in memory is larger than 1mb then save it to the database
-					count, err := colls.AttachmentChunksCollection.CountDocuments(context.TODO(), bson.M{"_id": chunkData.MsgID})
-					if err != nil {
-						log.Panicln("Error finding chunk :", err)
-					}
-					nextChunkID := fss.ChunkIDs[chunkData.MsgID][fss.ChunksDone[chunkData.MsgID]]
-					if count == 0 {
+					res := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"_id": chunkData.MsgID})
+					nextChunkID := fss.ChunkIDs[chunkData.MsgID][fss.ChunksDone[chunkData.MsgID]+1]
+					if res.Err() == mongo.ErrNoDocuments {
 						// Save the first chunk, create the ID for the next chunk, and send the progress update
 						fss.AttachmentNextChunkId[chunkData.MsgID] = nextChunkID
-						colls.AttachmentChunksCollection.InsertOne(context.TODO(), models.AttachmentChunk{
+						colls.AttachmentChunksCollection.InsertOne(context.Background(), models.AttachmentChunk{
 							ID:        chunkData.MsgID,
 							NextChunk: nextChunkID,
 							Bytes:     primitive.Binary{Data: append(fss.Chunks[chunkData.MsgID], chunkData.Chunk...)},
@@ -189,7 +184,7 @@ func RunServer(fss *FileSocketServer, ss *socketserver.SocketServer, colls *db.C
 						delete(fss.Chunks, chunkData.MsgID)
 					} else {
 						// Save the chunk and create the ID for the next chunk, and send progress update
-						colls.AttachmentChunksCollection.InsertOne(context.TODO(), models.AttachmentChunk{
+						colls.AttachmentChunksCollection.InsertOne(context.Background(), models.AttachmentChunk{
 							ID:        fss.AttachmentNextChunkId[chunkData.MsgID],
 							NextChunk: nextChunkID,
 							Bytes:     primitive.Binary{Data: append(fss.Chunks[chunkData.MsgID], chunkData.Chunk...)},
@@ -249,14 +244,14 @@ func RunServer(fss *FileSocketServer, ss *socketserver.SocketServer, colls *db.C
 			log.Println("Success channel")
 
 			metaData := &models.AttachmentMetadata{}
-			colls.AttachmentMetadataCollection.FindOne(context.TODO(), bson.M{"_id": msgId}).Decode(&metaData)
+			colls.AttachmentMetadataCollection.FindOne(context.Background(), bson.M{"_id": msgId}).Decode(&metaData)
 
 			var firstChunk models.AttachmentChunk
-			if err := colls.AttachmentChunksCollection.FindOne(context.TODO(), bson.M{"_id": msgId}).Decode(&firstChunk); err != nil {
+			if err := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"_id": msgId}).Decode(&firstChunk); err != nil {
 				if err == mongo.ErrNoDocuments {
 					log.Println("Couldn't find first chunk in database... saving bytes as first and only chunk.")
 					// Couldn't find a chunk in the database, so save the bytes that are in memory as the only chunk
-					colls.AttachmentChunksCollection.InsertOne(context.TODO(), models.AttachmentChunk{
+					colls.AttachmentChunksCollection.InsertOne(context.Background(), models.AttachmentChunk{
 						ID:        msgId,
 						NextChunk: primitive.NilObjectID,
 						Bytes:     primitive.Binary{Data: fss.Chunks[msgId]},
@@ -276,12 +271,13 @@ func RunServer(fss *FileSocketServer, ss *socketserver.SocketServer, colls *db.C
 						log.Println("Subscription names not ok")
 					}
 					// Update the metadata
-					colls.AttachmentMetadataCollection.UpdateByID(context.TODO(), msgId, bson.M{"$set": bson.M{
+					colls.AttachmentMetadataCollection.UpdateByID(context.Background(), msgId, bson.M{"$set": bson.M{
 						"pending": false,
 					}})
 					log.Println("Updated metadata")
 				} else {
 					// Internal error
+					log.Println("INTERNAL ERROR :", err)
 					if subscriptionNames, ok := fss.SubscriptionNames[msgId]; ok {
 						log.Println("Subscription names are ok")
 						outBytes, _ := json.Marshal(socketmodels.OutMessage{
@@ -292,12 +288,12 @@ func RunServer(fss *FileSocketServer, ss *socketserver.SocketServer, colls *db.C
 							Names: subscriptionNames,
 							Data:  outBytes,
 						}
-						fss.DeleteChunksChan <- msgId
 					} else {
 						log.Println("Subscription names not ok")
 					}
+					fss.DeleteChunksChan <- msgId
 					// Update the metadata
-					colls.AttachmentMetadataCollection.UpdateByID(context.TODO(), msgId, bson.M{"$set": bson.M{
+					colls.AttachmentMetadataCollection.UpdateByID(context.Background(), msgId, bson.M{"$set": bson.M{
 						"failed":  true,
 						"pending": false,
 					}})
@@ -307,23 +303,24 @@ func RunServer(fss *FileSocketServer, ss *socketserver.SocketServer, colls *db.C
 				// then find the last chunk using recursion and nil its NextChunk ID.....
 				log.Println("Found first chunk in database... saving remaining bytes as last chunk, if there are any")
 				var nextChunk models.AttachmentChunk
-				if err := colls.AttachmentChunksCollection.FindOne(context.TODO(), bson.M{"_id": firstChunk.NextChunk}).Decode(&nextChunk); err != nil {
+				if err := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"_id": firstChunk.NextChunk}).Decode(&nextChunk); err != nil {
 					if err == mongo.ErrNoDocuments {
 						bytes, ok := fss.Chunks[msgId]
 						if ok {
 							// There are bytes remaining... save the 2nd chunk
-							colls.AttachmentChunksCollection.InsertOne(context.TODO(), models.AttachmentChunk{
+							colls.AttachmentChunksCollection.InsertOne(context.Background(), models.AttachmentChunk{
 								ID:        firstChunk.NextChunk,
 								NextChunk: primitive.NilObjectID,
 								Bytes:     primitive.Binary{Data: bytes},
 							})
+							log.Println("Wrote remaining bytes as last chunk")
 						} else {
 							// The first chunk is the last chunk and there aren't any bytes remaining... so nil the NextChunkID and send the progress update
-							colls.AttachmentChunksCollection.UpdateByID(context.TODO(), firstChunk.ID, bson.M{
+							colls.AttachmentChunksCollection.UpdateByID(context.Background(), firstChunk.ID, bson.M{
 								"$set": bson.M{"next_id": primitive.NilObjectID},
 							})
+							log.Println("Wrote last and only chunk")
 						}
-						log.Println("Wrote chunk")
 						if subscriptionNames, ok := fss.SubscriptionNames[msgId]; ok {
 							log.Println("Subscription names are ok")
 							outBytes, _ := json.Marshal(socketmodels.OutMessage{
@@ -338,12 +335,13 @@ func RunServer(fss *FileSocketServer, ss *socketserver.SocketServer, colls *db.C
 							log.Println("Subscription names not ok")
 						}
 						// Update the metadata
-						colls.AttachmentMetadataCollection.UpdateByID(context.TODO(), msgId, bson.M{"$set": bson.M{
+						colls.AttachmentMetadataCollection.UpdateByID(context.Background(), msgId, bson.M{"$set": bson.M{
 							"pending": false,
 						}})
 						log.Println("Updated metadata")
 					} else {
 						// Internal error
+						log.Println("INTERNAL ERROR :", err)
 						if subscriptionNames, ok := fss.SubscriptionNames[msgId]; ok {
 							log.Println("Subscription names are ok")
 							outBytes, _ := json.Marshal(socketmodels.OutMessage{
@@ -354,12 +352,12 @@ func RunServer(fss *FileSocketServer, ss *socketserver.SocketServer, colls *db.C
 								Names: subscriptionNames,
 								Data:  outBytes,
 							}
-							fss.DeleteChunksChan <- msgId
 						} else {
 							log.Println("Subscription names not ok")
 						}
+						fss.DeleteChunksChan <- msgId
 						// Update the metadata
-						colls.AttachmentMetadataCollection.UpdateByID(context.TODO(), msgId, bson.M{"$set": bson.M{
+						colls.AttachmentMetadataCollection.UpdateByID(context.Background(), msgId, bson.M{"$set": bson.M{
 							"pending": false,
 							"failed":  true,
 						}})
@@ -370,6 +368,7 @@ func RunServer(fss *FileSocketServer, ss *socketserver.SocketServer, colls *db.C
 					// If there are bytes remaining then the recursive function will automatically save the last chunk
 					// then send the progress update
 					if err := finalizeChunksChain(&nextChunk.ID, &nextChunk.NextChunk, colls, ss, fss, &msgId, *metaData); err != nil {
+						log.Println("INTERNAL ERROR FROM CHUNK CHAIN :", err)
 						if subscriptionNames, ok := fss.SubscriptionNames[msgId]; ok {
 							log.Println("Subscription names are ok")
 							outBytes, _ := json.Marshal(socketmodels.OutMessage{
@@ -380,12 +379,12 @@ func RunServer(fss *FileSocketServer, ss *socketserver.SocketServer, colls *db.C
 								Names: subscriptionNames,
 								Data:  outBytes,
 							}
-							fss.DeleteChunksChan <- msgId
 						} else {
 							log.Println("Subscription names not ok")
 						}
+						fss.DeleteChunksChan <- msgId
 						// Update the metadata
-						colls.AttachmentMetadataCollection.UpdateByID(context.TODO(), msgId, bson.M{"$set": bson.M{
+						colls.AttachmentMetadataCollection.UpdateByID(context.Background(), msgId, bson.M{"$set": bson.M{
 							"failed":  true,
 							"pending": false,
 						}})
@@ -405,7 +404,7 @@ func RunServer(fss *FileSocketServer, ss *socketserver.SocketServer, colls *db.C
 							log.Println("Subscription names not ok")
 						}
 						// Update the metadata
-						colls.AttachmentMetadataCollection.UpdateByID(context.TODO(), msgId, bson.M{"$set": bson.M{
+						colls.AttachmentMetadataCollection.UpdateByID(context.Background(), msgId, bson.M{"$set": bson.M{
 							"pending": false,
 						}})
 						log.Println("Updated metadata")
@@ -433,7 +432,7 @@ func RunServer(fss *FileSocketServer, ss *socketserver.SocketServer, colls *db.C
 		for {
 			oid := <-fss.DeleteChunksChan
 			var firstChunk models.AttachmentChunk
-			err := colls.AttachmentChunksCollection.FindOne(context.TODO(), bson.M{"_id": oid}).Decode(&firstChunk)
+			err := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"_id": oid}).Decode(&firstChunk)
 			if err == nil {
 				recursivelyFindAndDeleteChunks(&firstChunk.ID, &firstChunk.NextChunk, colls, ss, fss, &firstChunk.ID, models.AttachmentMetadata{})
 			}
@@ -444,18 +443,18 @@ func RunServer(fss *FileSocketServer, ss *socketserver.SocketServer, colls *db.C
 
 func finalizeChunksChain(currentChunkId *primitive.ObjectID, nextChunkId *primitive.ObjectID, colls *db.Collections, ss *socketserver.SocketServer, fss *FileSocketServer, msgId *primitive.ObjectID, metaData models.AttachmentMetadata) error {
 	var nextChunk models.AttachmentChunk
-	if err := colls.AttachmentChunksCollection.FindOne(context.TODO(), bson.M{"_id": nextChunkId}).Decode(&nextChunk); err != nil {
+	if err := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"_id": nextChunkId}).Decode(&nextChunk); err != nil {
 		if err == mongo.ErrNoDocuments {
 			if remainingBytes, ok := fss.Chunks[*msgId]; ok {
 				// If theres remaining bytes save them as the last chunk with nil NextChunkID
-				colls.AttachmentChunksCollection.InsertOne(context.TODO(), models.AttachmentChunk{
+				colls.AttachmentChunksCollection.InsertOne(context.Background(), models.AttachmentChunk{
 					ID:        *nextChunkId,
 					NextChunk: primitive.NilObjectID,
 					Bytes:     primitive.Binary{Data: remainingBytes},
 				})
 			} else {
 				// If theres no remaining bytes then just nil the NextChunkID
-				if _, err := colls.AttachmentChunksCollection.UpdateByID(context.TODO(), currentChunkId, bson.M{
+				if _, err := colls.AttachmentChunksCollection.UpdateByID(context.Background(), currentChunkId, bson.M{
 					"$set": bson.M{"next_id": primitive.NilObjectID},
 				}); err != nil {
 					return err
@@ -489,15 +488,15 @@ func finalizeChunksChain(currentChunkId *primitive.ObjectID, nextChunkId *primit
 
 func recursivelyFindAndDeleteChunks(currentChunkId *primitive.ObjectID, nextChunkId *primitive.ObjectID, colls *db.Collections, ss *socketserver.SocketServer, fss *FileSocketServer, msgId *primitive.ObjectID, metaData models.AttachmentMetadata) error {
 	var nextChunk models.AttachmentChunk
-	if err := colls.AttachmentChunksCollection.FindOne(context.TODO(), bson.M{"_id": nextChunkId}).Decode(&nextChunk); err != nil {
+	if err := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"_id": nextChunkId}).Decode(&nextChunk); err != nil {
 		if err == mongo.ErrNoDocuments {
-			colls.AttachmentChunksCollection.DeleteOne(context.TODO(), currentChunkId)
+			colls.AttachmentChunksCollection.DeleteOne(context.Background(), currentChunkId)
 			return nil
 		} else {
 			return err
 		}
 	} else {
-		colls.AttachmentChunksCollection.DeleteOne(context.TODO(), currentChunkId)
+		colls.AttachmentChunksCollection.DeleteOne(context.Background(), currentChunkId)
 		return recursivelyFindAndDeleteChunks(nextChunkId, &nextChunk.NextChunk, colls, ss, fss, msgId, metaData)
 	}
 }

@@ -65,7 +65,7 @@ export default function Attachment({
                 {
                   video: (
                     <div className={classes.videoPlayerContainer}>
-                      <video id="videoPlayer" width="80" height="100" controls>
+                      <video id="videoPlayer" width="110" height="70" controls autoPlay>
                         <source
                           src={`${baseURL}/api/attachment/video/${msgId}`}
                           type="video/mp4"

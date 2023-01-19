@@ -76,7 +76,7 @@ export const FileSocketProvider = ({ children }: { children: ReactNode }) => {
       let endPointer = file.size;
       let promises = [];
       while (startPointer < endPointer) {
-        let newStartPointer = startPointer + 262120;
+        let newStartPointer = startPointer + 8072;
         promises.push(
           new Blob([
             msgId,
@@ -90,15 +90,13 @@ export const FileSocketProvider = ({ children }: { children: ReactNode }) => {
           setFailed((f) => [...f.filter((f) => f !== msgId)]);
           return;
         }
-        await new Promise<void>((resolve) => {
+        // await new Promise<void>((r) => {
           fileSocket?.send(buff);
-          setTimeout(() => {
-            resolve();
-          }, 500);
-        });
+        //  setTimeout(() => {
+        //    r();
+        //  }, 500);
+        //});
       }
-      await new Promise<void>((r) => setTimeout(() => r(), 100));
-      // When the attachment is finished uploading, send the message ID on its own, that way the server knows its done
       fileSocket?.send(msgId);
     } catch (error) {
       openModal("Message", {
