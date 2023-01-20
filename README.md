@@ -1,3 +1,15 @@
-This is the second version of my Go project, it has much cleaner structure. It uses net/http, gorilla mux and gorilla websocket, you can download and upload attachments and watch the progress bar. It uploads the files in chunks, its also slow because it's using MongoDB for storing attachments. Also you can make embedded comments, group chat, send direct messages by clicking on other users, and sort/filter/paginate posts. When you upload/delete/edit a post the change should show right away for all users.
+This is the second version of my Go project, it has much cleaner structure and actually works properly.
 
-I wasted about 1 week trying to do file uploads over websockets and getting video attachment playback to work so I just gave up and removed it eventually. I wanted to use MongoDB to handle everything instead of setting up a seperate storage bucket for binary data. The code for the video playback API route is still there but commented out.
+It uses net/http, gorilla mux and gorilla websocket, you can download and upload attachments and watch the progress bar. It uploads the files in chunks, its also really slow because it's using MongoDB for storage on the free tier.
+
+I wasted about 1 week trying to do uploads over websockets and getting video attachment streaming to work. The code for the video playback API route is still there but commented out. You can download videos instead of watching them in the browser, uploads are handled with a HTTP endpoint that takes in chunks of binary data.
+
+### Main features
+- Nested comments
+- Live updates for everything
+- File attachments
+- Rate limiting
+- Pagination/Filtering/Sorting
+- Updates & DB cleanup via changestreams
+- Recursion for deleting orphans & downloading files
+- Refresh tokens
