@@ -7,7 +7,8 @@ import { useAuth } from "./AuthContext";
 
 /*
     This handles uploading attachments. It used to be handle via socket but I
-    couldn't get it to work so I'm uploading chunks to a HTTP endpoint now instead.
+    couldn't get it to work because of a typo so I rewrote everything to use
+    HTTP endpoints instead.
 */
 
 const AttachmentContext = createContext<{
@@ -24,7 +25,7 @@ const AttachmentContext = createContext<{
 
 type FileUploadChunks = {
   ID: string;
-  Chunks: Promise<ArrayBuffer>[]; //1mb chunks
+  Chunks: Promise<ArrayBuffer>[]; //2mb chunks
 };
 
 export const AttachmentProvider = ({ children }: { children: ReactNode }) => {

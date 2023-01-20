@@ -9,7 +9,6 @@ import (
 	"math"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
@@ -101,14 +100,12 @@ func (h handler) HandleAttachmentMetadata(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	numChunks := math.Ceil(float64(metadataInput.Size) / float64(1048576))
+	numChunks := math.Ceil(float64(metadataInput.Size) / float64(1048576)) // +1
 	chunkIDs := []primitive.ObjectID{msgId}
-	log.Println("NUM CHUNKS:", numChunks)
-	for i := 1; i < int(numChunks); i++ { //add an extra object ID at the end that will not be used to avoid out of range error
+	for i := 1; i < int(numChunks); i++ {
 		chunkIDs = append(chunkIDs, primitive.NewObjectID())
 	}
 	chunkIDs = append(chunkIDs, primitive.NilObjectID)
-	log.Println("CHUNK IDS:", chunkIDs)
 
 	totalChunks := int(math.Ceil(float64(metadataInput.Size) / 1048576))
 	if _, ok := h.AttachmentServer.Uploaders[user.ID]; !ok {
@@ -149,7 +146,6 @@ func (h handler) UploadAttachmentChunk(w http.ResponseWriter, r *http.Request) {
 
 	rawMsgId := mux.Vars(r)["msgId"]
 	msgId, err := primitive.ObjectIDFromHex(rawMsgId)
-	log.Println(rawMsgId)
 	if err != nil {
 		log.Println(err)
 		responseMessage(w, http.StatusBadRequest, "Invalid ID")
@@ -190,28 +186,33 @@ func (h handler) UploadAttachmentChunk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println(upload.ChunksDone)
+	log.Println(upload.TotalChunks)
+
 	if upload.ChunksDone == upload.TotalChunks-1 {
 		outBytes, _ := json.Marshal(socketmodels.OutMessage{
 			Type: "ATTACHMENT_PROGRESS",
-			Data: `{"ID":"` + rawMsgId + `","failed":false,"pending":false,"ratio":1}`,
+			Data: `{"ID":"` + msgId.Hex() + `","failed":false,"pending":false,"ratio":1}`,
 		})
 		h.Collections.AttachmentMetadataCollection.UpdateByID(r.Context(), msgId, bson.M{"$set": bson.M{"pending": false}})
 		h.SocketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
 			Names: upload.SubscriptionNames,
 			Data:  outBytes,
 		}
+		log.Println("DONE LAST CHUNK")
 	} else {
 		outBytes, _ := json.Marshal(socketmodels.OutMessage{
 			Type: "ATTACHMENT_PROGRESS",
-			Data: `{"ID":"` + rawMsgId + `","failed":false,"pending":true,"ratio":` + getProgressString(upload) + `}`,
+			Data: `{"ID":"` + msgId.Hex() + `","failed":false,"pending":true,"ratio":` + getProgressString(upload) + `}`,
 		})
 		h.SocketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
 			Names: upload.SubscriptionNames,
 			Data:  outBytes,
 		}
-		upload.ChunksDone++
-		h.AttachmentServer.Uploaders[user.ID][msgId] = upload
 	}
+
+	upload.ChunksDone++
+	h.AttachmentServer.Uploaders[user.ID][msgId] = upload
 
 	responseMessage(w, http.StatusCreated, "Chunk created")
 }
@@ -274,33 +275,11 @@ func recursivelyWriteAttachmentChunksToResponse(w http.ResponseWriter, NextChunk
 	}
 }
 
-// Get partial content from attachment for video player (this doesn't work on attachments that are larger than 2 chunks)
-func (h handler) GetVideoPartialContent(w http.ResponseWriter, r *http.Request) {
-	rangeString := r.Header.Get("Range")
-	log.Println("range header: ", rangeString)
-	if rangeString == "" {
-		responseMessage(w, http.StatusBadRequest, "Bad request")
-		return
-	}
-	bytesPortion := strings.ReplaceAll(rangeString, "bytes=", "") // Returns the start-end portion of the header
-	if bytesPortion == "" {
-		responseMessage(w, http.StatusBadRequest, "Bad request")
-		return
-	}
-	bytesHeaderPortionArr := strings.Split(bytesPortion, "-")
-	if len(bytesHeaderPortionArr) == 0 {
-		responseMessage(w, http.StatusBadRequest, "Bad request")
-		return
-	}
-	rangeStart, err := strconv.Atoi(bytesHeaderPortionArr[0])
-	if err != nil {
-		responseMessage(w, http.StatusBadRequest, "Bad request")
-		return
-	}
-
+// BROKEN - CLIENT CANT PLAY BACK VIDEO FOR SOME REASON, I GIVE UP AFTER WASTING 5 DAYS
+/*func (h handler) GetVideoPartialContent(w http.ResponseWriter, r *http.Request) {
 	rawId := mux.Vars(r)["id"]
 	id, err := primitive.ObjectIDFromHex(rawId)
-	if err != nil {
+	if err != nil {s
 		responseMessage(w, http.StatusBadRequest, "Invalid ID")
 		return
 	}
@@ -318,44 +297,76 @@ func (h handler) GetVideoPartialContent(w http.ResponseWriter, r *http.Request) 
 		responseMessage(w, http.StatusBadRequest, "File is not a video")
 		return
 	}
-	maxLength := int(math.Min(float64(metaData.Size-rangeStart), 1048576))
-	rangeEnd := rangeStart + maxLength
 
-	log.Println("Getting bytes", rangeStart, "to", rangeEnd)
+	// Process the range header
+	var maxLength int64
+	var start, end int64
+	if rangeHeader := r.Header.Get("Range"); rangeHeader != "" {
+		_, err := fmt.Sscanf(rangeHeader, "bytes=%d-", &start)
+		if err != nil {
+			responseMessage(w, http.StatusBadRequest, "Invalid range header")
+			return
+		}
+		maxLength = 1 * 1024 * 1024
+		if start+maxLength > int64(metaData.Size) {
+			maxLength = int64(metaData.Size) - start
+		}
+		// check if end is present in the range header
+		if i := strings.Index(rangeHeader, "-"); i != -1 {
+			end, err = strconv.ParseInt(rangeHeader[i+1:], 10, 64)
+			if err != nil {
+				// if end is absent, set it
+				end = start + maxLength
+			}
+		} else {
+			// if end is absent, set it
+			end = start + maxLength
+		}
+	}
 
-	// Determine which chunks are needed
-	startChunk := float64(rangeStart) / 1048576
-	endChunk := math.Ceil(float64(rangeEnd) / 1048576)
+	// Calculate the start and end chunk indexes
+	startChunkIndex := int(start / (1 * 1024 * 1024))
+	endChunkIndex := startChunkIndex + 1
 
-	log.Println("From", int32(startChunk), "to", int32(endChunk))
+	log.Println("START CHUNK INDEX:", startChunkIndex)
+	log.Println("END CHUNK INDEX:", endChunkIndex)
 
-	chunkIDs := metaData.ChunkIDs[int32(startChunk):int32(endChunk)]
-	log.Println("Retrieving chunk ids", chunkIDs)
-	// Get the bytes from the chunks
-	vidBytes := []byte{}
-	cursor, err := h.Collections.AttachmentChunksCollection.Find(r.Context(), bson.M{"_id": bson.M{"$in": chunkIDs}})
-	defer cursor.Close(r.Context())
+	// Retrieve the chunks
+	chunkBytes := []byte{}
+	cursor, err := h.Collections.AttachmentChunksCollection.Find(r.Context(), bson.M{"_id": bson.M{"$in": metaData.ChunkIDs[startChunkIndex:endChunkIndex]}})
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			responseMessage(w, http.StatusNotFound, "Not found")
+		} else {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+		}
+		return
+	}
+	i := 0
 	for cursor.Next(r.Context()) {
 		var chunk models.AttachmentChunk
 		if err := cursor.Decode(&chunk); err != nil {
-			log.Println("DECODE ERROR : ", err)
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+			return
 		}
-		vidBytes = append(vidBytes, chunk.Bytes.Data...)
-		log.Println("Retrieved :", len(vidBytes))
+		if i == 0 {
+			chunkBytes = append(chunkBytes, chunk.Bytes.Data[start-(int64(startChunkIndex)*1*1024*1024):]...)
+		} else {
+			chunkBytes = append(chunkBytes, chunk.Bytes.Data...)
+		}
+		i++
 	}
 
-	bytesStartString := strconv.Itoa(rangeStart)
-	bytesEndString := strconv.Itoa(rangeEnd)
-	bytesSizeString := strconv.Itoa(metaData.Size)
+	log.Println(len(chunkBytes))
 
 	w.Header().Add("Accept-Ranges", "bytes")
-	w.Header().Add("Content-Length", strconv.Itoa(maxLength))
-	w.Header().Add("Content-Range", bytesStartString+"-"+bytesEndString+"/"+bytesSizeString)
+	w.Header().Add("Content-Length", fmt.Sprint(maxLength))
+	w.Header().Add("Content-Range", fmt.Sprint(start)+"-"+fmt.Sprint(end)+"/"+fmt.Sprint(metaData.Size))
 	w.Header().Add("Content-Type", "video/mp4")
 
-	w.Write(vidBytes)
-}
+	w.Write(chunkBytes[:maxLength])
+}*/
 
 func getProgressString(upload attachmentserver.Upload) string {
-	return fmt.Sprintf("%v", upload.ChunksDone/upload.TotalChunks)
+	return fmt.Sprintf("%v", float32(upload.ChunksDone+1)/float32(upload.TotalChunks))
 }

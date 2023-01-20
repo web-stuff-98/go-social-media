@@ -231,9 +231,13 @@ func RunServer(socketServer *SocketServer) {
 			}()
 			subsData := <-socketServer.SendDataToSubscriptions
 			for _, v := range subsData.Names {
-				socketServer.SendDataToSubscription <- SubscriptionDataMessage{
-					Name: v,
-					Data: subsData.Data,
+				for k, s := range socketServer.Subscriptions {
+					if k == v {
+						for conn, _ := range s {
+							conn.WriteMessage(websocket.TextMessage, subsData.Data)
+						}
+						break
+					}
 				}
 			}
 		}
@@ -249,10 +253,15 @@ func RunServer(socketServer *SocketServer) {
 			}()
 			subsData := <-socketServer.SendDataToSubscriptionsExclusive
 			for _, v := range subsData.Names {
-				socketServer.SendDataToSubscriptionExclusive <- ExclusiveSubscriptionDataMessage{
-					Name:    v,
-					Data:    subsData.Data,
-					Exclude: subsData.Exclude,
+				for k, s := range socketServer.Subscriptions {
+					if k == v {
+						for conn, oid := range s {
+							if subsData.Exclude[oid] != true {
+								conn.WriteMessage(websocket.TextMessage, subsData.Data)
+							}
+						}
+						break
+					}
 				}
 			}
 		}
@@ -272,7 +281,6 @@ func RunServer(socketServer *SocketServer) {
 		for {
 			select {
 			case <-cleanupTicker.C:
-				// Remove subscriptions nobody is connected to
 				for k, v := range socketServer.Subscriptions {
 					if len(v) == 0 {
 						socketServer.DestroySubscription <- k

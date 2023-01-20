@@ -89,6 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.warn(e);
       });
   }, []);
+  
   useEffect(() => {
     const i = setInterval(async () => {
       try {

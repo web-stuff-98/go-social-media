@@ -122,16 +122,6 @@ export default function Conversations() {
         });
       } else {
         // If recieving own message and an attachment was selected, upload it
-        if (fileRef.current) {
-          await uploadAttachment(
-            fileRef.current,
-            data.DATA.ID,
-            data.DATA.recipient_id,
-            false
-          );
-          setFile(undefined);
-          fileRef.current = undefined;
-        }
         if (selectedConversationRef.current === data.DATA.recipient_id) {
           // If receiving own messages then put the
           // message inside the current conversation
@@ -154,6 +144,16 @@ export default function Conversations() {
             });
             return [...newConversations];
           });
+        }
+        if (fileRef.current) {
+          setFile(undefined);
+          await uploadAttachment(
+            fileRef.current,
+            data.DATA.ID,
+            data.DATA.recipient_id,
+            false
+          );
+          fileRef.current = undefined;
         }
       }
     }

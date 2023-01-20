@@ -4,7 +4,6 @@ import { useMemo, useRef } from "react";
 import { BiError } from "react-icons/bi";
 import { AiOutlineDownload } from "react-icons/ai";
 import { baseURL } from "../services/makeRequest";
-import ReactPlayer from "react-player";
 
 export interface IMsgAttachmentProgress {
   ratio: number;
@@ -33,9 +32,9 @@ export default function Attachment({
   const type = useMemo(
     () =>
       metaData
-        ? metaData?.type === "video/mp4"
-          ? "video"
-          : metaData?.type === "image/jpeg" || metaData?.type === "image/png"
+        ? metaData.type === "image/jpeg" ||
+          metaData.type === "image/jpg" ||
+          metaData.type === "image/png"
           ? "image"
           : "file"
         : "incomplete",
@@ -63,16 +62,6 @@ export default function Attachment({
             <>
               {
                 {
-                  video: (
-                    <div className={classes.videoPlayerContainer}>
-                      <video id="videoPlayer" width="110" height="70" controls autoPlay>
-                        <source
-                          src={`${baseURL}/api/attachment/video/${msgId}`}
-                          type="video/mp4"
-                        />
-                      </video>
-                    </div>
-                  ),
                   image: <h1>Image</h1>,
                   file: (
                     <>

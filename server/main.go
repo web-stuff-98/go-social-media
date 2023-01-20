@@ -29,13 +29,13 @@ func main() {
 		log.Fatal("DOTENV ERROR : ", err)
 	}
 	DB, Collections := db.Init()
-	SocketServer, err := socketserver.Init()
-	if err != nil {
-		log.Fatal("Failed to set up socket server ", err)
-	}
 	AttachmentServer, err := attachmentserver.Init()
 	if err != nil {
 		log.Fatal("Failed to set up attachment server ", err)
+	}
+	SocketServer, err := socketserver.Init()
+	if err != nil {
+		log.Fatal("Failed to set up socket server ", err)
 	}
 
 	h := handlers.New(DB, Collections, SocketServer, AttachmentServer)
@@ -52,8 +52,8 @@ func main() {
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{origin},
-		AllowCredentials: true,
 		AllowedMethods:   []string{"GET", "HEAD", "POST", "PATCH", "DELETE"},
+		AllowCredentials: true,
 	})
 
 	router.HandleFunc("/api/users/{id}", middleware.BasicRateLimiter(h.GetUser, middleware.SimpleLimiterOpts{
@@ -284,16 +284,18 @@ func main() {
 		Message:       "Too many requests",
 		RouteName:     "download_attachment",
 	}, *redisClient, *Collections)).Methods(http.MethodGet)
-	router.HandleFunc("/api/attachment/video/{id}", middleware.BasicRateLimiter(h.GetVideoPartialContent, middleware.SimpleLimiterOpts{
-		Window:        time.Second * 20,
-		MaxReqs:       20,
-		BlockDuration: time.Second * 3000,
-		Message:       "Too many requests",
-		RouteName:     "get_video_chunk",
-	}, *redisClient, *Collections)).Methods(http.MethodGet)
+	/*
+		BROKEN
+		router.HandleFunc("/api/attachment/video/{id}", middleware.BasicRateLimiter(h.GetVideoPartialContent, middleware.SimpleLimiterOpts{
+			Window:        time.Second * 20,
+			MaxReqs:       20,
+			BlockDuration: time.Second * 3000,
+			Message:       "Too many requests",
+			RouteName:     "get_video_chunk",
+		}, *redisClient, *Collections)).Methods(http.MethodGet)*/
 	router.HandleFunc("/api/attachment/chunk/{msgId}", middleware.BasicRateLimiter(h.UploadAttachmentChunk, middleware.SimpleLimiterOpts{
-		Window:        time.Second * 120,
-		MaxReqs:       160,
+		Window:        time.Second * 60,
+		MaxReqs:       60,
 		BlockDuration: time.Second * 3000,
 		Message:       "Too many requests",
 		RouteName:     "upload_chunk",

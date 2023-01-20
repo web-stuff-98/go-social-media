@@ -90,7 +90,7 @@ button, .lightButton {
   --background: #f0f1f3;
   --button: rgb(24, 24, 24);
   --nav: rgb(14, 14, 14);
-  --header: linear-gradient(to top, rgb(90, 63, 239) 0%, rgb(6, 79, 156) 100%);
+  --header: linear-gradient(to top, rgb(50, 54, 169) 0%, rgb(0, 123, 255) 100%);
   --tag-selected: rgb(55, 62, 95);
 
   /* Component & Text Colours */
@@ -108,13 +108,13 @@ button, .lightButton {
   --base-pale-contrast: rgba(255, 255, 255, 0.066);
 
   /* Border radius */
-  --border-radius: 0.275rem;
-  --border-radius-medium: 0.15rem;
-  --border-radius-small: 0.075rem;
+  --border-radius: 4px;
+  --border-radius-medium: 3px;
+  --border-radius-small: 2px;
 
   /* Padding/Margin */
-  --padding: 6px;
-  --padding-medium: 4px;
+  --padding: 4px;
+  --padding-medium: 3px;
   --padding-small: 2px;
 
   /* Whitespace & Dimensions */

@@ -10,7 +10,7 @@ import (
 
 type Upload struct {
 	ChunksDone        int
-	TotalChunks       int
+	TotalChunks       int // +1... starts at 0
 	ChunkIDs          []primitive.ObjectID
 	SubscriptionNames []string // Where to send progress updates to (inboxes / roomID)
 }
