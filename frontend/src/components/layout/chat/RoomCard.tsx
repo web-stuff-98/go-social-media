@@ -1,6 +1,7 @@
 import classes from "../../../styles/components/chat/Rooms.module.scss";
 import IconBtn from "../../IconBtn";
 import { BiDoorOpen } from "react-icons/bi";
+import { AiFillEdit } from "react-icons/ai";
 import { useState, useEffect } from "react";
 import { getRoomImage } from "../../../services/rooms";
 import useSocket from "../../../context/SocketContext";
@@ -9,7 +10,7 @@ import { IRoomCard } from "./Rooms";
 
 export default function RoomCard({ r }: { r: IRoomCard }) {
   const { openSubscription, closeSubscription } = useSocket();
-  const { openRoom } = useChat();
+  const { openRoom, openRoomEditor } = useChat();
   const [imgURL, setImgURL] = useState("");
 
   useEffect(() => {
@@ -43,6 +44,13 @@ export default function RoomCard({ r }: { r: IRoomCard }) {
     >
       {r.name}
       <div className={classes.icons}>
+        <IconBtn
+          name="Edit room"
+          ariaLabel="Edit room"
+          style={{ color: "white" }}
+          onClick={() => openRoomEditor(r.ID)}
+          Icon={AiFillEdit}
+        />
         <IconBtn
           name="Enter room"
           ariaLabel="Enter room"

@@ -27,6 +27,13 @@ const getRoomImage = async (id: string) => {
   return URL.createObjectURL(blob);
 };
 
+const getRoomImageAsBlob = async (id: string) => {
+  const data = await makeRequest(`/api/rooms/${id}/image`, {
+    responseType: "arraybuffer",
+  });
+  return new Blob([data], { type: "image/jpeg" })
+};
+
 const deleteRoom = (id: string) =>
   makeRequest(`/api/rooms/${id}/delete`, {
     withCredentials: true,
@@ -56,4 +63,5 @@ export {
   deleteRoom,
   getRoomPage,
   getRoom,
+  getRoomImageAsBlob
 };

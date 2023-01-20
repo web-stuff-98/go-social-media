@@ -15,19 +15,23 @@ export enum ChatSection {
   "CONVS" = "Conversations",
   "ROOMS" = "Rooms",
   "ROOM" = "Room",
-  "EDITOR" = "Room editor",
+  "EDITOR" = "Editor",
 }
 
 const ChatContext = createContext<{
   section: ChatSection;
   setSection: (to: ChatSection) => void;
   openRoom: (id: string) => void;
+  openRoomEditor: (id: string) => void;
   roomId: string;
+  editRoomId: string;
 }>({
   section: ChatSection.MENU,
   setSection: () => {},
   openRoom: () => {},
+  openRoomEditor: () => {},
   roomId: "",
+  editRoomId: "",
 });
 
 export const useChat = () => useContext(ChatContext);
@@ -35,10 +39,18 @@ export const useChat = () => useContext(ChatContext);
 export default function Chat() {
   const { pathname } = useLocation();
   const [section, setSection] = useState<ChatSection>(ChatSection.MENU);
+
   const [roomId, setRoomId] = useState("");
+
   const openRoom = (id: string) => {
     setRoomId(id);
     setSection(ChatSection.ROOM);
+  };
+
+  const [editRoomId, setEditRoomId] = useState("");
+  const openRoomEditor = (id: string) => {
+    setEditRoomId(id);
+    setSection(ChatSection.EDITOR);
   };
 
   return (
@@ -67,17 +79,19 @@ export default function Chat() {
           section,
           setSection,
           roomId,
+          editRoomId,
           openRoom,
+          openRoomEditor,
         }}
       >
         <div className={classes.inner}>
           {
             {
-              ["Conversations"]: <Conversations />,
-              ["Rooms"]: <Rooms />,
-              ["Room"]: <Room />,
-              ["Room editor"]: <RoomEditor />,
-              ["Menu"]: <Menu />,
+              Conversations: <Conversations />,
+              Rooms: <Rooms />,
+              Room: <Room />,
+              Editor: <RoomEditor />,
+              Menu: <Menu />,
             }[section]
           }
         </div>

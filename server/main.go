@@ -29,13 +29,13 @@ func main() {
 		log.Fatal("DOTENV ERROR : ", err)
 	}
 	DB, Collections := db.Init()
-	AttachmentServer, err := attachmentserver.Init()
-	if err != nil {
-		log.Fatal("Failed to set up attachment server ", err)
-	}
 	SocketServer, err := socketserver.Init()
 	if err != nil {
 		log.Fatal("Failed to set up socket server ", err)
+	}
+	AttachmentServer, err := attachmentserver.Init(Collections, SocketServer)
+	if err != nil {
+		log.Fatal("Failed to set up attachment server ", err)
 	}
 
 	h := handlers.New(DB, Collections, SocketServer, AttachmentServer)
@@ -304,7 +304,7 @@ func main() {
 	router.HandleFunc("/api/ws", h.WebSocketEndpoint)
 
 	log.Println("Creating changestreams")
-	changestreams.WatchCollections(DB, SocketServer)
+	changestreams.WatchCollections(DB, SocketServer, AttachmentServer)
 
 	//DB.Drop(context.TODO())
 	//go seed.SeedDB(Collections, 5, 2, 0)

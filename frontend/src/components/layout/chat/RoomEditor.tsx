@@ -2,22 +2,54 @@ import { useFormik } from "formik";
 import classes from "../../../styles/components/chat/RoomEditor.module.scss";
 import formClasses from "../../../styles/FormClasses.module.scss";
 import ResMsg, { IResMsg } from "../../ResMsg";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { ChangeEvent } from "react";
-import { createRoom, uploadRoomImage } from "../../../services/rooms";
+import {
+  createRoom,
+  getRoom,
+  getRoomImageAsBlob,
+  updateRoom,
+  uploadRoomImage,
+} from "../../../services/rooms";
 import axios from "axios";
 import { IRoomCard } from "./Rooms";
-
 import { z } from "zod";
 import FieldErrorTip from "../../FieldErrorTip";
-import ErrorTip from "../../ErrorTip";
+import { useChat } from "./Chat";
 
 export default function RoomEditor() {
+  const { editRoomId } = useChat();
+
+  useEffect(() => {
+    if (!editRoomId) return;
+    loadRoom();
+  }, [editRoomId]);
+
+  const [originalImageChanged, setOriginalImageChanged] = useState(false);
+  const [imgURL, setImgURL] = useState("");
   const [resMsg, setResMsg] = useState<IResMsg>({
     msg: "",
     err: false,
     pen: false,
   });
+
+  const loadRoom = () => {
+    setResMsg({ msg: "", err: false, pen: true });
+    getRoom(editRoomId)
+      .then((r: IRoomCard) => {
+        formik.setFieldValue("name", r.name);
+        getRoomImageAsBlob(editRoomId)
+          .then((b) => {
+            formik.setFieldValue("image", b);
+            setImgURL(URL.createObjectURL(b));
+          })
+          .catch(() => {});
+        setResMsg({ msg: "", err: false, pen: false });
+      })
+      .catch((e) => {
+        setResMsg({ msg: `${e}`, err: true, pen: false });
+      });
+  };
 
   const Schema = z.object({
     name: z.string().max(16).min(2),
@@ -40,11 +72,27 @@ export default function RoomEditor() {
       if (validationErrs.length > 0) return;
       try {
         setResMsg({ msg: "", err: false, pen: true });
-        const id = await createRoom(vals as Pick<IRoomCard, "name">);
-        if (vals.image) {
+        let id: string;
+        if (editRoomId) {
+          id = editRoomId;
+          await updateRoom({
+            ...(vals as Pick<IRoomCard, "name">),
+            ID: editRoomId,
+          });
+        } else {
+          id = await createRoom(vals as Pick<IRoomCard, "name">);
+        }
+        if (
+          (vals.image && !editRoomId) ||
+          (editRoomId && originalImageChanged && vals.image)
+        ) {
           await uploadRoomImage(vals.image, id);
         }
-        setResMsg({ msg: "Room created", err: false, pen: false });
+        setResMsg({
+          msg: editRoomId ? "Room updated" : "Room created",
+          err: false,
+          pen: false,
+        });
       } catch (e) {
         setResMsg({ msg: `${e}`, err: true, pen: false });
       }
@@ -58,6 +106,8 @@ export default function RoomEditor() {
     });
     const file = new File([res.data], "image.jpg", { type: "image/jpeg" });
     formik.setFieldValue("image", file);
+    setImgURL(URL.createObjectURL(file));
+    setOriginalImageChanged(true);
   };
 
   const handleImageInput = (e: ChangeEvent<HTMLInputElement>) => {
@@ -65,6 +115,8 @@ export default function RoomEditor() {
     if (!e.target.files[0]) return;
     const file = e.target.files[0];
     formik.setFieldValue("image", file);
+    setImgURL(URL.createObjectURL(file));
+    setOriginalImageChanged(true);
   };
 
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -118,7 +170,7 @@ export default function RoomEditor() {
           ref={imgRef}
           alt="Preview"
           className={classes.imgPreview}
-          src={URL.createObjectURL(formik.values.image)}
+          src={imgURL}
         />
       )}
       {resMsg.pen ||
