@@ -43,7 +43,7 @@ func WatchCollections(DB *mongo.Database, ss *socketserver.SocketServer, as *att
 	go watchUserDeletes(DB, ss, as)
 	go watchUserPfpUpdates(DB, ss)
 
-	go watchPostImageInserts(DB, ss) //Watch for changes in images collection instead of posts collection because we need to wait for the image to be uploaded
+	go watchPostImageInserts(DB, ss) //Watch for inserts in images collection instead of posts collection because post images are required
 	go watchPostImageUpdates(DB, ss)
 	go watchPostDeletes(DB, ss)
 	go watchPostUpdates(DB, ss)
@@ -70,7 +70,7 @@ func watchUserDeletes(db *mongo.Database, ss *socketserver.SocketServer, as *att
 		uid := changeEv["documentKey"].(bson.M)["_id"].(primitive.ObjectID)
 		db.Collection("posts").DeleteMany(context.Background(), bson.M{"author_id": uid})
 		db.Collection("rooms").DeleteMany(context.Background(), bson.M{"author_id": uid})
-		db.Collection("pfps").DeleteOne(context.Background(), bson.M{"id": uid})
+		db.Collection("pfps").DeleteOne(context.Background(), bson.M{"_id": uid})
 		db.Collection("sessions").DeleteOne(context.Background(), bson.M{"_uid": uid})
 		inbox := &models.Inbox{}
 		res := db.Collection("inboxes").FindOneAndDelete(context.Background(), bson.M{"_id": uid}).Decode(&inbox)
@@ -330,18 +330,13 @@ func watchRoomDeletes(db *mongo.Database, ss *socketserver.SocketServer, as *att
 			Data:   `{"ID":"` + roomId.Hex() + `"}`,
 		})
 
-		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-			Name: "room_card=" + roomId.Hex(),
-			Data: outBytes,
-		}
-		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-			Name: "room=" + roomId.Hex(),
-			Data: outBytes,
+		ss.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+			Names: []string{"room_card=" + roomId.Hex(), "room=" + roomId.Hex(), "room_feed"},
+			Data:  outBytes,
 		}
 
 		ss.DestroySubscription <- "room=" + roomId.Hex()
 		ss.DestroySubscription <- "room_card=" + roomId.Hex()
-		ss.DestroySubscription <- "room_feed" + roomId.Hex()
 	}
 }
 
@@ -365,13 +360,9 @@ func watchRoomImageUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
 			Data:   `{"ID":"` + roomId.Hex() + `"}`,
 		})
 
-		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-			Name: "room_card=" + roomId.Hex(),
-			Data: outBytes,
-		}
-		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-			Name: "room=" + roomId.Hex(),
-			Data: outBytes,
+		ss.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+			Names: []string{"room_card=" + roomId.Hex(), "room=" + roomId.Hex()},
+			Data:  outBytes,
 		}
 	}
 }
@@ -408,13 +399,9 @@ func watchRoomUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
 			Data:   string(data),
 		})
 
-		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-			Name: "room_card=" + roomId.Hex(),
-			Data: outBytes,
-		}
-		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-			Name: "room=" + roomId.Hex(),
-			Data: outBytes,
+		ss.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+			Names: []string{"room_card=" + roomId.Hex(), "room=" + roomId.Hex()},
+			Data:  outBytes,
 		}
 	}
 }
