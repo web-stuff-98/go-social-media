@@ -57,7 +57,7 @@ func WatchCollections(DB *mongo.Database, ss *socketserver.SocketServer, as *att
 }
 
 func watchUserDeletes(db *mongo.Database, ss *socketserver.SocketServer, as *attachmentserver.AttachmentServer) {
-	cs, err := db.Collection("users").Watch(context.Background(), mongo.Pipeline{deletePipeline})
+	cs, err := db.Collection("users").Watch(context.Background(), mongo.Pipeline{deletePipeline}, options.ChangeStream().SetFullDocument(options.UpdateLookup))
 	if err != nil {
 		log.Panicln("CS ERR : ", err.Error())
 	}
@@ -68,30 +68,41 @@ func watchUserDeletes(db *mongo.Database, ss *socketserver.SocketServer, as *att
 			log.Fatal(err)
 		}
 		uid := changeEv["documentKey"].(bson.M)["_id"].(primitive.ObjectID)
-		db.Collection("posts").DeleteMany(context.TODO(), bson.M{"author_id": uid})
-		db.Collection("rooms").DeleteMany(context.TODO(), bson.M{"author_id": uid})
-		db.Collection("pfps").DeleteOne(context.TODO(), bson.M{"id": uid})
-		db.Collection("sessions").DeleteOne(context.TODO(), bson.M{"_uid": uid})
+		db.Collection("posts").DeleteMany(context.Background(), bson.M{"author_id": uid})
+		db.Collection("rooms").DeleteMany(context.Background(), bson.M{"author_id": uid})
+		db.Collection("pfps").DeleteOne(context.Background(), bson.M{"id": uid})
+		db.Collection("sessions").DeleteOne(context.Background(), bson.M{"_uid": uid})
 		inbox := &models.Inbox{}
-		res := db.Collection("inboxes").FindOneAndDelete(context.TODO(), bson.M{"_id": uid}).Decode(&inbox)
+		res := db.Collection("inboxes").FindOneAndDelete(context.Background(), bson.M{"_id": uid}).Decode(&inbox)
 		if res.Error() == "" {
 			for _, m := range inbox.Messages {
 				if m.HasAttachment {
 					as.DeleteChunksChan <- m.ID
-					db.Collection("attachment_metadata").DeleteOne(context.TODO(), bson.M{"_id": m.ID})
+					db.Collection("attachment_metadata").DeleteOne(context.Background(), bson.M{"_id": m.ID})
 				}
 			}
 		}
 		for _, recipient := range inbox.MessagesSentTo {
 			inbox := &models.Inbox{}
-			if err := db.Collection("inboxes").FindOne(context.TODO(), bson.M{"_id": recipient}).Decode(&inbox); err == nil {
+			if err := db.Collection("inboxes").FindOne(context.Background(), bson.M{"_id": recipient}).Decode(&inbox); err == nil {
 				for _, m := range inbox.Messages {
 					if m.HasAttachment && m.Uid == uid {
 						as.DeleteChunksChan <- m.ID
-						db.Collection("attachment_metadata").DeleteOne(context.TODO(), bson.M{"_id": m.ID})
+						db.Collection("attachment_metadata").DeleteOne(context.Background(), bson.M{"_id": m.ID})
 					}
 				}
 				db.Collection("inboxes").UpdateByID(context.Background(), recipient, bson.M{"$pull": bson.M{"messages": bson.M{"uid": uid}, "messages_sent_to": uid}})
+			}
+		}
+		for _, roomId := range changeEv["fullDocument"].(bson.M)["rooms_in"].([]primitive.ObjectID) {
+			var roomMsgs models.RoomMessages
+			if err := db.Collection("room_messages").FindOneAndUpdate(context.Background(), roomId, bson.M{"$pull": bson.M{"messages": bson.M{"uid": uid}}}).Decode(&roomMsgs); err == nil {
+				for _, rm := range roomMsgs.Messages {
+					if rm.HasAttachment {
+						as.DeleteChunksChan <- rm.ID
+						db.Collection("attachment_metadata").DeleteOne(context.Background(), bson.M{"_id": rm.ID})
+					}
+				}
 			}
 		}
 	}
@@ -161,10 +172,10 @@ func watchPostDeletes(db *mongo.Database, ss *socketserver.SocketServer) {
 		}
 		postId := changeEv["documentKey"].(bson.M)["_id"].(primitive.ObjectID)
 
-		db.Collection("post_images").DeleteOne(context.TODO(), bson.M{"_id": postId})
-		db.Collection("post_thumbs").DeleteOne(context.TODO(), bson.M{"_id": postId})
-		db.Collection("post_votes").DeleteOne(context.TODO(), bson.M{"_id": postId})
-		db.Collection("post_comments").DeleteOne(context.TODO(), bson.M{"_id": postId})
+		db.Collection("post_images").DeleteOne(context.Background(), bson.M{"_id": postId})
+		db.Collection("post_thumbs").DeleteOne(context.Background(), bson.M{"_id": postId})
+		db.Collection("post_votes").DeleteOne(context.Background(), bson.M{"_id": postId})
+		db.Collection("post_comments").DeleteOne(context.Background(), bson.M{"_id": postId})
 
 		outBytes, err := json.Marshal(socketmodels.OutChangeMessage{
 			Type:   "CHANGE",
@@ -196,7 +207,7 @@ func watchPostImageInserts(db *mongo.Database, ss *socketserver.SocketServer) {
 		}
 		postId := changeEv["documentKey"].(bson.M)["_id"].(primitive.ObjectID)
 		post := &models.Post{}
-		if err := db.Collection("posts").FindOne(context.TODO(), bson.M{"_id": postId}).Decode(&post); err != nil {
+		if err := db.Collection("posts").FindOne(context.Background(), bson.M{"_id": postId}).Decode(&post); err != nil {
 			log.Println("CS INSERT DECODE ERROR : ", err)
 			return
 		}
@@ -301,14 +312,14 @@ func watchRoomDeletes(db *mongo.Database, ss *socketserver.SocketServer, as *att
 			log.Fatal(err)
 		}
 		roomId := changeEv["documentKey"].(bson.M)["_id"].(primitive.ObjectID)
-		db.Collection("room_images").DeleteOne(context.TODO(), bson.M{"_id": roomId})
+		db.Collection("room_images").DeleteOne(context.Background(), bson.M{"_id": roomId})
 
 		msgs := &models.RoomMessages{}
-		db.Collection("room_messages").FindOneAndDelete(context.TODO(), bson.M{"_id": roomId}).Decode(&msgs)
+		db.Collection("room_messages").FindOneAndDelete(context.Background(), bson.M{"_id": roomId}).Decode(&msgs)
 		for _, m := range msgs.Messages {
 			if m.HasAttachment {
 				as.DeleteChunksChan <- m.ID
-				db.Collection("attachment_metadata").DeleteOne(context.TODO(), bson.M{"_id": m.ID})
+				db.Collection("attachment_metadata").DeleteOne(context.Background(), bson.M{"_id": m.ID})
 			}
 		}
 

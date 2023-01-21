@@ -291,6 +291,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 											Name: "room=" + roomId.Hex(),
 											Data: outBytes,
 										}
+										colls.UserCollection.UpdateByID(context.Background(), uid, bson.M{"$addToSet": bson.M{"rooms_in": roomId}})
 									}
 								}
 							}

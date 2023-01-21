@@ -11,10 +11,11 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 */
 
 type User struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
-	Username  string             `bson:"username,maxlength=15" json:"username"`
-	Password  string             `bson:"password" json:"-"`
-	Base64pfp string             `bson:"-" json:"base64pfp,omitempty"`
+	ID        primitive.ObjectID   `bson:"_id,omitempty" json:"ID"`
+	Username  string               `bson:"username,maxlength=15" json:"username"`
+	Password  string               `bson:"password" json:"-"`
+	Base64pfp string               `bson:"-" json:"base64pfp,omitempty"`
+	RoomsIn   []primitive.ObjectID `bson:"rooms_in" json:"-"`
 }
 
 type Inbox struct {
