@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"reflect"
 	"strings"
 	"time"
 
@@ -71,8 +72,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						}
 					}
 				}
-			}
-			if eventType == "OPEN_SUBSCRIPTIONS" {
+			} else if eventType == "OPEN_SUBSCRIPTIONS" {
 				var inMsg socketmodels.OpenCloseSubscriptions
 				if err := json.Unmarshal(p, &inMsg); err != nil {
 					sendErrorMessageThroughSocket(conn)
@@ -85,8 +85,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						}
 					}
 				}
-			}
-			if eventType == "PRIVATE_MESSAGE" {
+			} else if eventType == "PRIVATE_MESSAGE" {
 				var inMsg socketmodels.PrivateMessage
 				if err := json.Unmarshal(p, &inMsg); err != nil {
 					err := conn.WriteJSON(map[string]string{
@@ -193,8 +192,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						}
 					}
 				}
-			}
-			if eventType == "ROOM_MESSAGE" {
+			} else if eventType == "ROOM_MESSAGE" {
 				if *uid == primitive.NilObjectID {
 					err := conn.WriteJSON(map[string]string{
 						"TYPE": "RESPONSE_MESSAGE",
@@ -287,8 +285,8 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						}
 					}
 				}
-			}
-			if eventType == "VID_SENDING_SIGNAL_IN" {
+			} else if eventType == "VID_SENDING_SIGNAL_IN" {
+				log.Println("Sending peer signal")
 				var inMsg socketmodels.InVidChatSendingSignal
 				if err := json.Unmarshal(p, &inMsg); err != nil {
 					sendErrorMessageThroughSocket(conn)
@@ -307,8 +305,8 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						}
 					}
 				}
-			}
-			if eventType == "VID_RETURNING_SIGNAL_IN" {
+			} else if eventType == "VID_RETURNING_SIGNAL_IN" {
+				log.Println("Returning peer signal")
 				var inMsg socketmodels.InVidChatReturningSignal
 				if err := json.Unmarshal(p, &inMsg); err != nil {
 					sendErrorMessageThroughSocket(conn)
@@ -327,8 +325,8 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						}
 					}
 				}
-			}
-			if eventType == "VID_JOIN" {
+			} else if eventType == "VID_JOIN" {
+				log.Println("Received video chat join request")
 				var inMsg socketmodels.InVidChatJoin
 				if err := json.Unmarshal(p, &inMsg); err != nil {
 					sendErrorMessageThroughSocket(conn)
@@ -347,7 +345,9 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 								for k, v := range socketServer.Subscriptions {
 									if strings.ReplaceAll(k, "room=", "") == inMsg.JoinID {
 										for _, oi := range v {
-											allUsers = append(allUsers, oi.Hex())
+											if oi != *uid {
+												allUsers = append(allUsers, oi.Hex())
+											}
 										}
 										break
 									}
@@ -358,23 +358,78 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 							allUsers = append(allUsers, inMsg.JoinID)
 						}
 						// Send all uids back to conn
-						outBytes, err := json.Marshal(socketmodels.OutVidChatAllUsers{
-							UIDs: allUsers,
-						})
-						if err != nil {
-							sendErrorMessageThroughSocket(conn)
+						socketServer.SendDataToUser <- socketserver.UserDataMessage{
+							Type: "VID_ALL_USERS",
+							Uid:  *uid,
+							Data: socketmodels.OutVidChatAllUsers{
+								UIDs: allUsers,
+							},
+						}
+					}
+				}
+			} else if eventType == "VID_LEAVE" {
+				var inMsg socketmodels.InVidChatLeave
+				if err := json.Unmarshal(p, &inMsg); err != nil {
+					sendErrorMessageThroughSocket(conn)
+				} else {
+					id, err := primitive.ObjectIDFromHex(inMsg.ID)
+					if err != nil {
+						sendErrorMessageThroughSocket(conn)
+					} else {
+						if inMsg.IsRoom {
+							room := &models.Room{}
+							if err := colls.RoomCollection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&room); err != nil {
+								sendErrorMessageThroughSocket(conn)
+							} else {
+								// Find all the users connected to the room
+								for k, v := range socketServer.Subscriptions {
+									if strings.ReplaceAll(k, "room=", "") == inMsg.ID {
+										for _, oi := range v {
+											// Tell all the other users the user has left
+											socketServer.SendDataToUser <- socketserver.UserDataMessage{
+												Uid: oi,
+												Data: socketmodels.OutVidChatUserLeft{
+													UID: uid.Hex(),
+												},
+											}
+										}
+										break
+									}
+								}
+							}
 						} else {
-							// Could use conn.WriteJSON but I need to send TYPE too so this is easier
+							// Tell the other user the user has left
 							socketServer.SendDataToUser <- socketserver.UserDataMessage{
-								Type: "VID_ALL_USERS",
-								Uid:  *uid,
-								Data: outBytes,
+								Uid: id,
+								Data: socketmodels.OutVidChatUserLeft{
+									UID: uid.Hex(),
+								},
 							}
 						}
 					}
 				}
+			} else {
+				// eventType is not recognized, send error
+				if reflect.TypeOf(eventType).String() == "string" {
+					err := conn.WriteJSON(map[string]string{
+						"TYPE": "RESPONSE_MESSAGE",
+						"DATA": `{"msg":"Unrecognized socket event : ` + eventType.(string) + `","err":true}`,
+					})
+					if err != nil {
+						log.Println(err)
+					}
+				} else {
+					err := conn.WriteJSON(map[string]string{
+						"TYPE": "RESPONSE_MESSAGE",
+						"DATA": `{"msg":"Event type must be a string","err":true}`,
+					})
+					if err != nil {
+						log.Println(err)
+					}
+				}
 			}
 		} else {
+			// eventType was not sent. Send error.
 			sendErrorMessageThroughSocket(conn)
 		}
 	}

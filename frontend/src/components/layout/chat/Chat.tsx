@@ -169,7 +169,7 @@ export default function Chat() {
     peer.on("signal", (signal) => {
       socket?.send(
         JSON.stringify({
-          TYPE: "VID_SENDING_SIGNAL_IN",
+          event_type: "VID_SENDING_SIGNAL_IN",
           signal_json: JSON.stringify(signal),
           user_to_signal: id,
         })
@@ -189,7 +189,7 @@ export default function Chat() {
       peer.on("signal", (signal) => {
         socket?.send(
           JSON.stringify({
-            TYPE: "VID_RETURNING_SIGNAL_IN",
+            event_type: "VID_RETURNING_SIGNAL_IN",
             signal_json: JSON.stringify(signal),
             caller_uid: callerUID,
           })
@@ -205,24 +205,23 @@ export default function Chat() {
 
   const handleMessage = useCallback((e: MessageEvent) => {
     const data = JSON.parse(e.data);
-    data["DATA"] = JSON.parse(data["DATA"]);
     if (instanceOfReceivingReturnedSignal(data)) {
       handleVidChatReceivingReturningSignal(
-        JSON.parse(data.DATA.signal_json),
-        data.DATA.uid
+        JSON.parse(data.signal_json),
+        data.uid
       );
     }
     if (instanceOfVidAllUsers(data)) {
-      handleVidChatAllUsers(data.DATA.uids);
+      handleVidChatAllUsers(data.uids);
     }
     if (instanceOfVidUserJoined(data)) {
       handleVidChatUserJoined(
-        JSON.parse(data.DATA.signal_json) as Peer.SignalData,
-        data.DATA.caller_uid
+        JSON.parse(data.signal_json) as Peer.SignalData,
+        data.caller_uid
       );
     }
     if (instanceOfVidUserLeft(data)) {
-      handleVidChatUserLeft(data.DATA.uid);
+      handleVidChatUserLeft(data.uid);
     }
   }, []);
 

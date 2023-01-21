@@ -289,7 +289,12 @@ func RunServer(socketServer *SocketServer) {
 			data := <-socketServer.SendDataToUser
 			for conn, uid := range socketServer.Connections {
 				if data.Uid == uid {
-					outBytes, err := json.Marshal(data.Data)
+					var m map[string]interface{}
+					outBytesNoTypeKey, err := json.Marshal(data.Data)
+					json.Unmarshal(outBytesNoTypeKey, &m)
+					m["TYPE"] = data.Type
+					log.Println(m)
+					outBytes, err := json.Marshal(m)
 					if err == nil {
 						conn.WriteMessage(websocket.TextMessage, outBytes)
 					} else {

@@ -2,9 +2,14 @@ package socketmodels
 
 /*
 	Models for messages sent through the websocket, encoded into []bytes from json marshal
+
+	When a socket message is sent out the "event type" is keyed as TYPE, when a socket message
+	is recieved on the server it should be keyed as event_type, this is just so that its a bit
+	easier to tell which models for sending data out, and which are for receiving data from
+	the client.
 */
 
-// TYPE: PRIVATE_MESSAGE (in)
+// TYPE: PRIVATE_MESSAGE (type needs to be TYPE, not event_type, because this goes OUT not in)
 type PrivateMessage struct {
 	Type          string `json:"TYPE"`
 	RecipientId   string `json:"recipient_id"`
@@ -12,7 +17,7 @@ type PrivateMessage struct {
 	HasAttachment bool   `json:"has_attachment"`
 }
 
-// TYPE: ROOM_MESSAGE (in)
+// TYPE: ROOM_MESSAGE (type needs to be TYPE, not event_type, because this goes OUT not in)
 type RoomMessage struct {
 	Type          string `json:"TYPE"`
 	RoomId        string `json:"room_id"`
@@ -89,21 +94,24 @@ type OutVidChatAllUsers struct {
 
 // TYPE: VID_SENDING_SIGNAL_IN
 type InVidChatSendingSignal struct {
-	Type         string `json:"TYPE"`
 	SignalJSON   string `json:"signal_json"`
 	UserToSignal string `json:"user_to_signal"`
 }
 
 // TYPE: VID_RETURNING_SIGNAL_IN
 type InVidChatReturningSignal struct {
-	Type       string `json:"TYPE"`
 	SignalJSON string `json:"signal_json"`
 	CallerUID  string `json:"caller_uid"`
 }
 
 // TYPE: VID_JOIN
 type InVidChatJoin struct {
-	Type   string `json:"TYPE"`
 	JoinID string `json:"join_id"` // Can be either a room ID or another user ID
+	IsRoom bool   `json:"is_room"`
+}
+
+// TYPE: VID_LEAVE
+type InVidChatLeave struct {
+	ID     string `json:"id"` // Can be either a room ID or another user ID
 	IsRoom bool   `json:"is_room"`
 }

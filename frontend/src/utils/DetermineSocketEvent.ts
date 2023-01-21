@@ -104,19 +104,21 @@ export function instanceOfAttachmentCompleteData(
 
 export type VidReceivingReturnedSignal = {
   TYPE: "VID_RECEIVING_RETURNED_SIGNAL";
-  DATA: { signal_json: string; uid: string };
+  signal_json: string;
+  uid: string;
 };
 export type VidAllUsersData = {
   TYPE: "VID_ALL_USERS";
-  DATA: { uids: string[] };
+  uids: string[];
 };
 export type VidUserLeftData = {
   TYPE: "VID_USER_LEFT";
-  DATA: { uid: string };
+  uid: string;
 };
 export type VidUserJoinedData = {
   TYPE: "VID_USER_JOINED";
-  DATA: { signal_json: string; caller_uid: string };
+  signal_json: string;
+  caller_uid: string;
 };
 
 export function instanceOfReceivingReturnedSignal(

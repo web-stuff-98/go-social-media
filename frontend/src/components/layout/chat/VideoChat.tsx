@@ -5,13 +5,55 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { PeerWithID, useChat } from "./Chat";
 import { useUsers } from "../../../context/UsersContext";
+import useSocket from "../../../context/SocketContext";
+
+export default function VideoChat({
+  isRoom,
+  id,
+}: {
+  isRoom: boolean;
+  // ID can be either another user or a room ID
+  id: string;
+}) {
+  const { user } = useAuth();
+  const { socket } = useSocket();
+  const { userStream, isStreaming, peers, initVideo } = useChat();
+
+  useEffect(() => {
+    initVideo();
+    socket?.send(
+      JSON.stringify({
+        event_type: "VID_JOIN",
+        join_id: id,
+        is_room: isRoom,
+      })
+    );
+    return () => {
+      socket?.send(
+        JSON.stringify({
+          event_type: "VID_LEAVE",
+          is_room: isRoom
+        })
+      );
+    };
+  }, []);
+
+  return (
+    <div className={classes.container}>
+      {isStreaming && (
+        <VideoWindow uid={user?.ID as string} stream={userStream} ownVideo />
+      )}
+      {peers.map((p) => (
+        <PeerVideoWindow peerWithID={p} />
+      ))}
+    </div>
+  );
+}
 
 function PeerVideoWindow({ peerWithID }: { peerWithID: PeerWithID }) {
   const [stream, setStream] = useState<MediaStream | undefined>(undefined);
 
-  const handleStream = (stream: MediaStream) => {
-    setStream(stream);
-  };
+  const handleStream = (stream: MediaStream) => setStream(stream);
 
   useEffect(() => {
     peerWithID.peer.on("stream", handleStream);
@@ -44,7 +86,11 @@ function VideoWindow({
     }
   }, [stream]);
 
-  const getUserName = () => getUserData(uid).username || "";
+  const getUserName = () => {
+    const u = getUserData(uid);
+    if (u) return u.username;
+    return "";
+  };
 
   return (
     <div className={classes.videoWindow}>
@@ -68,26 +114,6 @@ function VideoWindow({
         </div>
         <video muted={ownVideo || muted} autoPlay playsInline ref={videoRef} />
       </div>
-    </div>
-  );
-}
-
-export default function VideoChat() {
-  const { user } = useAuth();
-  const { userStream, isStreaming, peers, initVideo } = useChat();
-
-  useEffect(() => {
-    initVideo();
-  }, []);
-
-  return (
-    <div className={classes.container}>
-      {isStreaming && (
-        <VideoWindow uid={user?.ID as string} stream={userStream} ownVideo />
-      )}
-      {peers.map((p) => (
-        <PeerVideoWindow peerWithID={p} />
-      ))}
     </div>
   );
 }

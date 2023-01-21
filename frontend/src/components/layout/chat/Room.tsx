@@ -24,6 +24,10 @@ import { useModal } from "../../../context/ModalContext";
 import { IAttachmentData, IMsgAttachmentProgress } from "../../Attachment";
 import VideoChat from "./VideoChat";
 
+import Peer from "simple-peer";
+import * as process from "process";
+(window as any).process = process;
+
 export interface IRoomMessage {
   ID: string;
   uid: string;
@@ -180,7 +184,7 @@ export default function Room() {
     <div className={classes.container}>
       {room ? (
         <div className={classes.messagesAndVideoChat}>
-          <VideoChat />
+          <VideoChat isRoom id={room.ID} />
           {room.messages.length > 0 ? (
             <div className={classes.messages}>
               {room.messages.map((msg) => (
