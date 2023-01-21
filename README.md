@@ -6,6 +6,7 @@ I wasted about 1 week trying to do uploads over websockets and getting video att
 
 ### Main features
 - Nested comments
+- Types & models for socket events
 - Live updates for everything
 - File attachments
 - Rate limiting

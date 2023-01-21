@@ -7,8 +7,10 @@ import { getRoomImage } from "../../../services/rooms";
 import useSocket from "../../../context/SocketContext";
 import { useChat } from "./Chat";
 import { IRoomCard } from "./Rooms";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function RoomCard({ r }: { r: IRoomCard }) {
+  const { user } = useAuth();
   const { openSubscription, closeSubscription } = useSocket();
   const { openRoom, openRoomEditor } = useChat();
   const [imgURL, setImgURL] = useState("");
@@ -44,13 +46,15 @@ export default function RoomCard({ r }: { r: IRoomCard }) {
     >
       {r.name}
       <div className={classes.icons}>
-        <IconBtn
-          name="Edit room"
-          ariaLabel="Edit room"
-          style={{ color: "white" }}
-          onClick={() => openRoomEditor(r.ID)}
-          Icon={AiFillEdit}
-        />
+        {user && r.author_id === user.ID && (
+          <IconBtn
+            name="Edit room"
+            ariaLabel="Edit room"
+            style={{ color: "white" }}
+            onClick={() => openRoomEditor(r.ID)}
+            Icon={AiFillEdit}
+          />
+        )}
         <IconBtn
           name="Enter room"
           ariaLabel="Enter room"

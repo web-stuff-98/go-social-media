@@ -26,6 +26,8 @@ const getPage = (
     }
   );
 
+const getNewestPosts = () => makeRequest("/api/posts/newest");
+
 const submitComment = (comment: string, postId: string, parentId: string) =>
   makeRequest(
     `/api/posts/${postId}/comment${parentId && "?parent_id=" + parentId}`,
@@ -149,4 +151,5 @@ export {
   submitComment,
   deleteComment,
   updateComment,
+  getNewestPosts,
 };

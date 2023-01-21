@@ -52,76 +52,88 @@ func Init(colls *db.Collections, SocketServer *socketserver.SocketServer) (*Atta
 
 		DeleteChunksChan: make(chan primitive.ObjectID),
 	}
+	RunServer(colls, SocketServer, AttachmentServer)
+	cleanUp(AttachmentServer, colls)
+	return AttachmentServer, nil
+}
+
+func RunServer(colls *db.Collections, SocketServer *socketserver.SocketServer, AttachmentServer *AttachmentServer) {
 	/* ------ Handle delete attachment chunks ------ */
 	go func() {
-		msgId := <-AttachmentServer.DeleteChunksChan
-		var metaData models.AttachmentMetadata
-		if err := colls.AttachmentMetadataCollection.FindOne(context.Background(), bson.M{"_id": msgId}).Decode(&metaData); err != nil {
-			if err == mongo.ErrNoDocuments {
-				// If message metadata could not be found, find the chunk using the message Id instead
-				var firstChunk models.AttachmentChunk
-				if err := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"_id": msgId}).Decode(&firstChunk); err == nil {
-					// Found the chunk. Recursively delete chained chunks
-					recursivelyDeleteChunks(firstChunk.ID, colls)
+		for {
+			msgId := <-AttachmentServer.DeleteChunksChan
+			var metaData models.AttachmentMetadata
+			if err := colls.AttachmentMetadataCollection.FindOne(context.Background(), bson.M{"_id": msgId}).Decode(&metaData); err != nil {
+				if err == mongo.ErrNoDocuments {
+					// If message metadata could not be found, find the chunk using the message Id instead
+					var firstChunk models.AttachmentChunk
+					if err := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"_id": msgId}).Decode(&firstChunk); err == nil {
+						// Found the chunk. Recursively delete chained chunks
+						recursivelyDeleteChunks(firstChunk.ID, colls)
+					}
 				}
+			} else {
+				colls.AttachmentChunksCollection.DeleteMany(context.Background(), bson.M{"_id": bson.M{"$in": metaData.ChunkIDs}})
 			}
-		} else {
-			colls.AttachmentChunksCollection.DeleteMany(context.Background(), bson.M{"_id": bson.M{"$in": metaData.ChunkIDs}})
 		}
 	}()
 	/* ------ Handle attachment failed ------ */
 	go func() {
-		info := <-AttachmentServer.UploadFailedChan
-		if _, uploaderOk := AttachmentServer.Uploaders[info.Uid]; uploaderOk {
-			if upload, uploadOk := AttachmentServer.Uploaders[info.Uid][info.MsgID]; uploadOk {
-				outBytes, _ := json.Marshal(socketmodels.OutMessage{
-					Type: "ATTACHMENT_PROGRESS",
-					Data: `{"ID":"` + info.MsgID.Hex() + `","failed":true,"pending":false}`,
-				})
-				SocketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
-					Names: upload.SubscriptionNames,
-					Data:  outBytes,
+		for {
+			info := <-AttachmentServer.UploadFailedChan
+			if _, uploaderOk := AttachmentServer.Uploaders[info.Uid]; uploaderOk {
+				if upload, uploadOk := AttachmentServer.Uploaders[info.Uid][info.MsgID]; uploadOk {
+					outBytes, _ := json.Marshal(socketmodels.OutMessage{
+						Type: "ATTACHMENT_PROGRESS",
+						Data: `{"ID":"` + info.MsgID.Hex() + `","failed":true,"pending":false}`,
+					})
+					SocketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+						Names: upload.SubscriptionNames,
+						Data:  outBytes,
+					}
 				}
 			}
+			AttachmentServer.DeleteChunksChan <- info.MsgID
+			go colls.AttachmentMetadataCollection.UpdateByID(context.Background(), info.MsgID, bson.M{"$set": bson.M{"failed": true, "pending": false}})
 		}
-		AttachmentServer.DeleteChunksChan <- info.MsgID
-		go colls.AttachmentMetadataCollection.UpdateByID(context.Background(), info.MsgID, bson.M{"$set": bson.M{"failed": true, "pending": false}})
 	}()
 	/* ------ Handle attachment complete ------ */
 	go func() {
-		info := <-AttachmentServer.UploadCompleteChan
-		if _, uploaderOk := AttachmentServer.Uploaders[info.Uid]; uploaderOk {
-			if upload, uploadOk := AttachmentServer.Uploaders[info.Uid][info.MsgID]; uploadOk {
-				outBytes, _ := json.Marshal(socketmodels.OutMessage{
-					Type: "ATTACHMENT_PROGRESS",
-					Data: `{"ID":"` + info.MsgID.Hex() + `","failed":false,"pending":false}`,
-				})
-				SocketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
-					Names: upload.SubscriptionNames,
-					Data:  outBytes,
+		for {
+			info := <-AttachmentServer.UploadCompleteChan
+			if _, uploaderOk := AttachmentServer.Uploaders[info.Uid]; uploaderOk {
+				if upload, uploadOk := AttachmentServer.Uploaders[info.Uid][info.MsgID]; uploadOk {
+					outBytes, _ := json.Marshal(socketmodels.OutMessage{
+						Type: "ATTACHMENT_PROGRESS",
+						Data: `{"ID":"` + info.MsgID.Hex() + `","failed":false,"pending":false}`,
+					})
+					SocketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+						Names: upload.SubscriptionNames,
+						Data:  outBytes,
+					}
 				}
 			}
+			go colls.AttachmentMetadataCollection.UpdateByID(context.Background(), info.MsgID, bson.M{"$set": bson.M{"failed": false, "pending": false}})
 		}
-		go colls.AttachmentMetadataCollection.UpdateByID(context.Background(), info.MsgID, bson.M{"$set": bson.M{"failed": false, "pending": false}})
 	}()
 	/* ------ Handle attachment progress ------ */
 	go func() {
-		info := <-AttachmentServer.UploadProgressChan
-		if _, uploaderOk := AttachmentServer.Uploaders[info.Uid]; uploaderOk {
-			if upload, uploadOk := AttachmentServer.Uploaders[info.Uid][info.MsgID]; uploadOk {
-				outBytes, _ := json.Marshal(socketmodels.OutMessage{
-					Type: "ATTACHMENT_PROGRESS",
-					Data: `{"ID":"` + info.MsgID.Hex() + `","failed":false,"pending":true,"ratio":` + getProgressString(upload) + `}`,
-				})
-				SocketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
-					Names: upload.SubscriptionNames,
-					Data:  outBytes,
+		for {
+			info := <-AttachmentServer.UploadProgressChan
+			if _, uploaderOk := AttachmentServer.Uploaders[info.Uid]; uploaderOk {
+				if upload, uploadOk := AttachmentServer.Uploaders[info.Uid][info.MsgID]; uploadOk {
+					outBytes, _ := json.Marshal(socketmodels.OutMessage{
+						Type: "ATTACHMENT_PROGRESS",
+						Data: `{"ID":"` + info.MsgID.Hex() + `","failed":false,"pending":true,"ratio":` + getProgressString(upload) + `}`,
+					})
+					SocketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+						Names: upload.SubscriptionNames,
+						Data:  outBytes,
+					}
 				}
 			}
 		}
 	}()
-	cleanUp(AttachmentServer, colls)
-	return AttachmentServer, nil
 }
 
 func recursivelyDeleteChunks(chunkID primitive.ObjectID, colls *db.Collections) error {
@@ -150,12 +162,12 @@ func cleanUp(as *AttachmentServer, colls *db.Collections) {
 					if len(v) == 0 {
 						delete(as.Uploaders, oi)
 					} else {
-						// If uploads are stale delete them
+						// If upload info stored in memory hasn't been updated delete it
 						for msgId, u := range v {
 							if u.LastUpdate.Before(time.Now().Add(-time.Minute * 10)) {
 								// If the upload never finished delete the chunks aswell
 								if u.ChunksDone < u.TotalChunks-1 {
-									go recursivelyDeleteChunks(msgId, colls)
+									recursivelyDeleteChunks(msgId, colls)
 								}
 								delete(as.Uploaders[oi], msgId)
 							}
@@ -171,5 +183,5 @@ func cleanUp(as *AttachmentServer, colls *db.Collections) {
 }
 
 func getProgressString(upload Upload) string {
-	return fmt.Sprintf("%v", float32(upload.ChunksDone+1)/float32(upload.TotalChunks))
+	return fmt.Sprintf("%v", float32(upload.ChunksDone)/float32(upload.TotalChunks))
 }

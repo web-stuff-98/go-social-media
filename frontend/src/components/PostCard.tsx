@@ -280,6 +280,7 @@ export default function PostCard({
                 className={classes.userContainer}
               >
                 {renderUser(post.author_id)}
+                <a href={`/post/${post.slug}`}>View page</a>
               </div>
             </div>
           </>

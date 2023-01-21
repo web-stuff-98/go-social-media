@@ -6,7 +6,7 @@
   flex-direction: column;
 
   span {
-    height: 3px;
+    height: 2px;
     background: linear-gradient(to top, lightgray 0%, black 100%);
     display: flex;
     border: 1px inset var(--base-light);
@@ -15,7 +15,7 @@
     span {
       border: none;
       background: lime;
-      transition: width 1000ms ease;
+      transition: width 700ms ease;
     }
   }
 }

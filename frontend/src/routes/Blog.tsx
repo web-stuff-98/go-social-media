@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { ChangeEvent } from "react";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import { FaSearch } from "react-icons/fa";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import AsidePostCard from "../components/AsidePostCard";
 import Dropdown from "../components/Dropdown";
 import IconBtn from "../components/IconBtn";
 import PostCard from "../components/PostCard";
@@ -42,6 +43,7 @@ export default function Blog() {
     getTermFromParams,
     posts,
     postsCount,
+    newPosts,
     nextPage,
     prevPage,
     getPageWithParams,
@@ -126,6 +128,14 @@ export default function Blog() {
               <button onClick={() => addOrRemoveTagInParams(t)}>{t}</button>
             ))}
           </div>
+          <>
+            <h3 className={classes.recentPostsHeading}>New posts</h3>
+            <div className={classes.posts}>
+              {newPosts.map((p) => (
+                <AsidePostCard post={p} />
+              ))}
+            </div>
+          </>
         </div>
       </aside>
       <div className={classes.paginationControls}>
@@ -134,7 +144,7 @@ export default function Blog() {
         </button>
         <div className={classes.text}>
           <span aria-label="Page number">
-            {page}/{Math.ceil(postsCount / 30)}
+            {page}/{Math.ceil(postsCount / 20)}
           </span>
           <span aria-label="Number of posts">
             {posts?.length}/{postsCount}

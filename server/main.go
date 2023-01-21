@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,7 +14,10 @@ import (
 	"github.com/web-stuff-98/go-social-media/pkg/handlers"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers/middleware"
 	rdb "github.com/web-stuff-98/go-social-media/pkg/redis"
+	"github.com/web-stuff-98/go-social-media/pkg/seed"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -128,6 +132,13 @@ func main() {
 		RouteName:     "get_conversation",
 	}, *redisClient, *Collections)).Methods(http.MethodGet)
 
+	router.HandleFunc("/api/posts/newest", middleware.BasicRateLimiter(h.GetNewestPosts, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 10,
+		MaxReqs:       20,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "get_new_posts",
+	}, *redisClient, *Collections)).Methods(http.MethodGet)
 	router.HandleFunc("/api/posts/page/{page}", middleware.BasicRateLimiter(h.GetPage, middleware.SimpleLimiterOpts{
 		Window:        time.Second * 10,
 		MaxReqs:       20,
@@ -306,8 +317,18 @@ func main() {
 	log.Println("Creating changestreams")
 	changestreams.WatchCollections(DB, SocketServer, AttachmentServer)
 
-	//DB.Drop(context.TODO())
-	//go seed.SeedDB(Collections, 5, 2, 0)
+	DB.Drop(context.TODO())
+	protectedUids, _, _, _ := seed.SeedDB(Collections, 15, 35, 5)
+
+	deleteAccountTicker := time.NewTicker(20 * time.Minute)
+	go func() {
+		for {
+			select {
+			case <-deleteAccountTicker.C:
+				h.Collections.UserCollection.DeleteMany(context.Background(), bson.M{"created_at": bson.M{"$lt": primitive.NewDateTimeFromTime(time.Now().Add(-time.Minute * 20))}, "_id": bson.M{"$nin": protectedUids}})
+			}
+		}
+	}()
 
 	log.Println("API open on port", os.Getenv("PORT"))
 	log.Fatal(http.ListenAndServe(fmt.Sprint(":", os.Getenv("PORT")), c.Handler(router)))

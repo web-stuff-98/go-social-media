@@ -129,7 +129,7 @@ export default function User({
                 ...(small
                   ? {
                       fontSize: "0.833rem",
-                      lineHeight:"0.7"
+                      lineHeight:"0.9"
                     }
                   : {}),
               }}

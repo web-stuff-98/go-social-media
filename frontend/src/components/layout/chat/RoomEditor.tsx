@@ -123,68 +123,69 @@ export default function RoomEditor() {
   const imgRef = useRef<HTMLImageElement>(null);
   return (
     <form onSubmit={formik.handleSubmit} className={classes.container}>
-      <div className={formClasses.inputLabelWrapper}>
-        <label htmlFor="name">Room name</label>
-        <input
-          onChange={formik.handleChange}
-          value={formik.values.name}
-          name="name"
-          id="name"
-          type="text"
-        />
-        <FieldErrorTip fieldName="name" validationErrs={validationErrs} />
-      </div>
-      <div className={formClasses.inputLabelWrapper}>
-        <input
-          onChange={handleImageInput}
-          ref={imageInputRef}
-          name="image"
-          id="image"
-          type="file"
-          accept=".jpeg,.jpg,.png"
-        />
-        <button
-          onClick={() => imageInputRef.current?.click()}
-          name="Select image"
-          aria-label="Select image"
-          type="button"
-        >
-          Select image
-        </button>
-      </div>
-      <button
-        name="Random image"
-        onClick={() =>
-          randomImage().catch((e) =>
-            setResMsg({ msg: `${e}`, err: true, pen: false })
-          )
-        }
-        aria-label="Random image"
-        type="button"
-      >
-        Random image
-      </button>
-      <button type="submit">Create</button>
-      {formik.values.image && (
-        <img
-          ref={imgRef}
-          alt="Preview"
-          className={classes.imgPreview}
-          src={imgURL}
-        />
-      )}
-      {resMsg.pen ||
-        (resMsg.msg && (
-          <div
-            style={{
-              width: `${
-                imgRef.current ? `${imgRef.current.width}px` : "12rem"
-              }`,
-            }}
-          >
-            <ResMsg resMsg={resMsg} />
+      {!resMsg.pen && (
+        <>
+          <div className={formClasses.inputLabelWrapper}>
+            <label htmlFor="name">Room name</label>
+            <input
+              onChange={formik.handleChange}
+              value={formik.values.name}
+              name="name"
+              id="name"
+              type="text"
+            />
+            <FieldErrorTip fieldName="name" validationErrs={validationErrs} />
           </div>
-        ))}
+          <div className={formClasses.inputLabelWrapper}>
+            <input
+              onChange={handleImageInput}
+              ref={imageInputRef}
+              name="image"
+              id="image"
+              type="file"
+              accept=".jpeg,.jpg,.png"
+            />
+            <button
+              onClick={() => imageInputRef.current?.click()}
+              name="Select image"
+              aria-label="Select image"
+              type="button"
+            >
+              Select image
+            </button>
+          </div>
+          <button
+            name="Random image"
+            onClick={() =>
+              randomImage().catch((e) =>
+                setResMsg({ msg: `${e}`, err: true, pen: false })
+              )
+            }
+            aria-label="Random image"
+            type="button"
+          >
+            Random image
+          </button>
+          <button type="submit">Create</button>
+          {formik.values.image && (
+            <img
+              ref={imgRef}
+              alt="Preview"
+              className={classes.imgPreview}
+              src={imgURL}
+            />
+          )}
+        </>
+      )}
+      {(resMsg.pen || resMsg.msg) && (
+        <div
+          style={{
+            width: `${imgRef.current ? `${imgRef.current.width}px` : "12rem"}`,
+          }}
+        >
+          <ResMsg resMsg={resMsg} />
+        </div>
+      )}
     </form>
   );
 }

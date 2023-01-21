@@ -123,32 +123,22 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 							log.Println(err)
 						}
 					} else {
-						var msg models.PrivateMessage
+						msg := &models.PrivateMessage{
+							ID:            primitive.NewObjectIDFromTimestamp(time.Now()),
+							Content:       inMsg.Content,
+							HasAttachment: true,
+							Uid:           *uid,
+							CreatedAt:     primitive.NewDateTimeFromTime(time.Now()),
+							UpdatedAt:     primitive.NewDateTimeFromTime(time.Now()),
+							RecipientId:   recipientId,
+						}
 						if inMsg.HasAttachment {
-							msg = models.PrivateMessage{
-								ID:            primitive.NewObjectIDFromTimestamp(time.Now()),
-								Content:       inMsg.Content,
-								HasAttachment: true,
-								Uid:           *uid,
-								CreatedAt:     primitive.NewDateTimeFromTime(time.Now()),
-								UpdatedAt:     primitive.NewDateTimeFromTime(time.Now()),
-								RecipientId:   recipientId,
-								AttachmentProgress: models.AttachmentProgress{
-									Failed:  false,
-									Pending: true,
-									Ratio:   0,
-								},
+							msg.AttachmentProgress = models.AttachmentProgress{
+								Failed:  false,
+								Pending: true,
+								Ratio:   0,
 							}
-						} else {
-							msg = models.PrivateMessage{
-								ID:            primitive.NewObjectIDFromTimestamp(time.Now()),
-								Content:       inMsg.Content,
-								HasAttachment: false,
-								Uid:           *uid,
-								CreatedAt:     primitive.NewDateTimeFromTime(time.Now()),
-								UpdatedAt:     primitive.NewDateTimeFromTime(time.Now()),
-								RecipientId:   recipientId,
-							}
+							msg.HasAttachment = true
 						}
 						if _, err := colls.InboxCollection.UpdateByID(context.TODO(), uid, bson.M{
 							"$addToSet": bson.M{
@@ -252,6 +242,14 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 								Uid:           *uid,
 								CreatedAt:     primitive.NewDateTimeFromTime(time.Now()),
 								UpdatedAt:     primitive.NewDateTimeFromTime(time.Now()),
+							}
+							if inMsg.HasAttachment {
+								msg.HasAttachment = true
+								msg.AttachmentProgress = models.AttachmentProgress{
+									Failed:  false,
+									Pending: true,
+									Ratio:   0,
+								}
 							}
 							if _, err := colls.RoomMessagesCollection.UpdateByID(context.TODO(), roomId, bson.M{
 								"$push": bson.M{

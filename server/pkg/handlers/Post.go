@@ -513,6 +513,32 @@ func (h handler) UpdatePostComment(w http.ResponseWriter, r *http.Request) {
 	responseMessage(w, http.StatusOK, "Comment updated")
 }
 
+func (h handler) GetNewestPosts(w http.ResponseWriter, r *http.Request) {
+	findOptions := options.Find()
+	findOptions.SetLimit(15)
+	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
+
+	var posts []models.Post
+	cursor, err := h.Collections.PostCollection.Find(r.Context(), bson.M{"image_pending": false}, findOptions)
+	if err != nil {
+		responseMessage(w, http.StatusInternalServerError, "Internal error")
+		return
+	}
+	for cursor.Next(r.Context()) {
+		var post models.Post
+		err := cursor.Decode(&post)
+		if err != nil {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+			return
+		}
+		posts = append(posts, post)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(posts)
+}
+
 func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 	user, _, _ := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 
@@ -522,7 +548,7 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 		responseMessage(w, http.StatusBadRequest, "Invalid page")
 		return
 	}
-	pageSize := 30
+	pageSize := 20
 	sortOrder := "DESC"
 	term := ""
 	sortMode := "DATE"

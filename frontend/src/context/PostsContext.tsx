@@ -9,7 +9,12 @@ import {
 import type { ReactNode } from "react";
 import { IPostCard } from "../routes/Blog";
 import { IResMsg } from "../components/ResMsg";
-import { getPage, SortMode, SortOrder } from "../services/posts";
+import {
+  getNewestPosts,
+  getPage,
+  SortMode,
+  SortOrder,
+} from "../services/posts";
 import useSocket from "./SocketContext";
 import {
   instanceOfChangeData,
@@ -28,6 +33,7 @@ import debounce from "lodash/debounce";
 const PostsContext = createContext<{
   posts: IPostCard[];
   postsCount: number;
+  newPosts: IPostCard[];
 
   postEnteredView: (id: string) => void;
   postLeftView: (id: string) => void;
@@ -54,6 +60,7 @@ const PostsContext = createContext<{
 }>({
   posts: [],
   postsCount: 0,
+  newPosts: [],
 
   postEnteredView: () => {},
   postLeftView: () => {},
@@ -84,8 +91,8 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const { cacheUserData } = useUsers();
   const navigate = useNavigate();
   const { page } = useParams();
-  let [searchParams] = useSearchParams();
   const { search: queryString } = useLocation();
+  let [searchParams] = useSearchParams();
 
   //if value is an empty string, it removes the param from the url
   const addUpdateOrRemoveParamsAndNavigateToUrl = (
@@ -154,6 +161,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const setTermInParams = (term: string) =>
     addUpdateOrRemoveParamsAndNavigateToUrl("term", term.replaceAll(" ", "+"));
 
+  const [newPosts, setNewPosts] = useState<IPostCard[]>([]);
   const [posts, setPosts] = useState<IPostCard[]>([]);
   const [postsCount, setPostsCount] = useState(0); // Document count of all posts matching query... not the count of posts on the page
   const [resMsg, setResMsg] = useState<IResMsg>({
@@ -203,6 +211,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
       .catch((e) => {
         setResMsg({ msg: `${e}`, err: true, pen: false });
       });
+    getNewestPosts().then((p: IPostCard[] | null) => setNewPosts(p || []));
   };
 
   const updatePostCard = (data: Partial<IPostCard>) =>
@@ -232,12 +241,30 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     setPosts((o) => [...o.filter((p) => p.ID !== id)]);
 
   const createPostCard = (data: IPostCard, addToStart?: boolean) => {
-    if (addToStart) setPosts((o) => [data, ...o].slice(0, 30));
-    else setPosts((o) => [...o, data].slice(0, 30));
+    if (addToStart) setPosts((o) => [data, ...o].slice(0, 20));
+    else setPosts((o) => [...o, data].slice(0, 20));
   };
+
+  const createPostCardOnNewest = (data: IPostCard) =>
+    setNewPosts((p) => [data, ...p].slice(0, 15));
+
+  const removePostCardFromNewest = (id: string) =>
+    setNewPosts((p) => [...p.filter((p) => p.ID !== id)]);
+
+  const updatePostCardOnNewest = (data: IPostCard) =>
+    setNewPosts((p) => {
+      let newPosts = p;
+      const i = p.findIndex((p) => p.ID === data.ID);
+      if (i === -1) return p;
+      newPosts[i] = { ...newPosts[i], ...data };
+      return [...newPosts];
+    });
 
   const isPostOnPage = (id: string) =>
     Boolean(posts.findIndex((p) => p.ID === id));
+
+  const isPostOnNewestFeed = (id: string) =>
+    Boolean(newPosts.findIndex((p) => p.ID === id));
 
   const handleMessage = useCallback((e: MessageEvent) => {
     const data = JSON.parse(e.data);
@@ -246,10 +273,14 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
       if (data.ENTITY === "POST") {
         if (data.METHOD === "DELETE") {
           if (isPostOnPage(data.DATA.ID)) removePostCard(data.DATA.ID);
+          if (isPostOnNewestFeed(data.DATA.ID))
+            removePostCardFromNewest(data.DATA.ID);
           return;
         }
         if (data.METHOD === "UPDATE") {
           if (isPostOnPage(data.DATA.ID)) updatePostCard(data.DATA);
+          if (isPostOnNewestFeed(data.DATA.ID))
+            updatePostCardOnNewest(data.DATA as IPostCard);
           return;
         }
         if (data.METHOD === "UPDATE_IMAGE") {
@@ -258,6 +289,9 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
         if (data.METHOD === "INSERT") {
+          // Add new posts to new posts array
+          createPostCardOnNewest(data.DATA as IPostCard);
+          setPostsCount(p => p + 1);
           if (getSortModeFromParams === "DATE") {
             if (getSortOrderFromParams === "DESC" && page === "1") {
               /* If sorting by most recent posts and
@@ -265,7 +299,6 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
           of the feed */
               //@ts-ignore
               cacheUserData(String(data.DATA.author_id));
-              setPostsCount(postsCount + 1);
               createPostCard(data.DATA as IPostCard, true);
               if (posts[0]) {
                 removePostCard(posts[0].ID);
@@ -327,6 +360,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
       value={{
         posts,
         postsCount,
+        newPosts,
         postEnteredView,
         postLeftView,
         getPageWithParams,
@@ -339,9 +373,9 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
         getSortOrderFromParams,
         getSortModeFromParams,
         getTermFromParams,
+        resMsg,
         nextPage,
         prevPage,
-        resMsg,
         addOrRemoveTagInParams,
       }}
     >

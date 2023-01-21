@@ -1,0 +1,32 @@
+.container {
+  display: flex;
+  padding: var(--padding);
+  background: var(--foreground);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-align: center;
+
+  .text {
+    h3,
+    p {
+      line-height: 1;
+      margin: 0;
+    }
+    h3 {
+      font-size: var(--font-xs);
+    }
+    p {
+      font-size: var(--font-xs);
+    }
+  }
+  img {
+    border-radius: var(--border-radius-medium);
+    border: 1px solid var(--base-medium);
+    width: 100%;
+    height: 5rem;
+  }
+}
+.container:hover {
+  border: 1px solid var(--base-pale);
+  border-radius: var(--border-radius-medium);
+}

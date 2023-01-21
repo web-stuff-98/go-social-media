@@ -127,8 +127,8 @@ func generatePost(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid prim
 	wordsInTitle := rand.Intn(maxWordsInTitle-minWordsInTitle) + minWordsInTitle
 	wordsInDescription := rand.Intn(maxWordsInDescription-minWordsInDescription) + minWordsInDescription
 
-	title := strings.Title(lipsum.Words(wordsInTitle))
-	description := strings.Title(lipsum.Words(wordsInDescription))
+	title := strings.Title(strings.ReplaceAll(lipsum.Words(wordsInTitle+8), "Lorem Ipsum Dolor Sit Amet Consectetur Adipiscing Elit", ""))
+	description := strings.Title(strings.ReplaceAll(lipsum.Words(wordsInDescription+8), "Lorem Ipsum Dolor Sit Amet Consectetur Adipiscing Elit", ""))
 	tags := []string{}
 
 	rb := helpers.DownloadURL("https://loripsum.net/api/link/ul/ol/dl/bq/code/headers/decorate/long")

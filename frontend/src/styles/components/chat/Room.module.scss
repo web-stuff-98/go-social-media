@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   width: 16rem;
-  gap:var(--padding-medium);
+  gap: var(--padding-medium);
 
   .messages {
     display: flex;
@@ -18,21 +18,29 @@
     border-radius: var(--border-radius-medium);
 
     p {
-        text-align: center;
-        margin: auto;
-        padding: var(--padding);
+      text-align: center;
+      margin: auto;
+      padding: var(--padding);
     }
 
     .message {
       display: flex;
       align-items: center;
       width: 100%;
-      padding: var(--padding-small) 0;
+      flex-grow: 1;
 
       .content {
         flex-grow: 1;
-        font-size: var(--font-xs);
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
         padding: var(--padding);
+        .text {
+          flex-grow: 1;
+          font-size: var(--font-xs);
+          width: 100%;
+        }
       }
     }
   }
@@ -40,7 +48,10 @@
   .messageForm {
     display: flex;
     align-items: center;
-position: relative;
+    position: relative;
+    input[type="file"] {
+      display: none;
+    }
     input {
       flex-grow: 1;
     }
