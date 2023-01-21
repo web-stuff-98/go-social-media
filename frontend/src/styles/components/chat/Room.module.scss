@@ -6,40 +6,46 @@
   width: 16rem;
   gap: var(--padding-medium);
 
-  .messages {
+  .messagesAndVideoChat {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
     width: 100%;
-    padding: 0 var(--padding-small);
     border: 1px solid var(--base-medium);
     box-sizing: border-box;
     border-radius: var(--border-radius-medium);
 
-    p {
-      text-align: center;
-      margin: auto;
-      padding: var(--padding);
-    }
-
-    .message {
+    .messages {
       display: flex;
-      align-items: center;
-      width: 100%;
-      flex-grow: 1;
+      flex-direction: column;
+      overflow-y: auto;
+      min-height: 10rem;
+      height: 10rem;
 
-      .content {
-        flex-grow: 1;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+      p {
+        text-align: center;
+        margin: auto;
         padding: var(--padding);
-        .text {
+      }
+
+      .message {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        padding: var(--padding-medium);
+        box-sizing: border-box;
+
+        .content {
           flex-grow: 1;
-          font-size: var(--font-xs);
           width: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding: var(--padding);
+          .text {
+            flex-grow: 1;
+            font-size: var(--font-xs);
+            width: 100%;
+          }
         }
       }
     }

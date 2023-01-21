@@ -102,14 +102,6 @@ export function instanceOfAttachmentCompleteData(
   Determine video chat events
 */
 
-export type VidSendingSignalData = {
-  TYPE: "VID_SENDING_SIGNAL_OUT";
-  DATA: { signal_json: string; caller_uid: string; user_to_signal: string };
-};
-export type VidReturningSignalData = {
-  TYPE: "VID_RETURNING_SIGNAL_OUT";
-  DATA: { signal_json: string; caller_uid: string };
-};
 export type VidReceivingReturnedSignal = {
   TYPE: "VID_RECEIVING_RETURNED_SIGNAL";
   DATA: { signal_json: string; uid: string };
@@ -127,16 +119,6 @@ export type VidUserJoinedData = {
   DATA: { signal_json: string; caller_uid: string };
 };
 
-export function instanceOfVidSendingSignal(
-  object: any
-): object is VidSendingSignalData {
-  return object.TYPE === "VID_SENDING_SIGNAL_OUT";
-}
-export function instanceOfVidReturningSignal(
-  object: any
-): object is VidReturningSignalData {
-  return object.TYPE === "VID_RETURNING_SIGNAL_OUT";
-}
 export function instanceOfReceivingReturnedSignal(
   object: any
 ): object is VidReceivingReturnedSignal {

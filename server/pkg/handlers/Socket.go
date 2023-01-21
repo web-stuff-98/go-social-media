@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/web-stuff-98/go-social-media/pkg/db"
@@ -327,6 +328,52 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 					}
 				}
 			}
+			if eventType == "VID_JOIN" {
+				var inMsg socketmodels.InVidChatJoin
+				if err := json.Unmarshal(p, &inMsg); err != nil {
+					sendErrorMessageThroughSocket(conn)
+				} else {
+					joinID, err := primitive.ObjectIDFromHex(inMsg.JoinID)
+					if err != nil {
+						sendErrorMessageThroughSocket(conn)
+					} else {
+						var allUsers []string
+						if inMsg.IsRoom {
+							room := &models.Room{}
+							if err := colls.RoomCollection.FindOne(context.Background(), bson.M{"_id": joinID}).Decode(&room); err != nil {
+								sendErrorMessageThroughSocket(conn)
+							} else {
+								// Find all the users connected to the room
+								for k, v := range socketServer.Subscriptions {
+									if strings.ReplaceAll(k, "room=", "") == inMsg.JoinID {
+										for _, oi := range v {
+											allUsers = append(allUsers, oi.Hex())
+										}
+										break
+									}
+								}
+							}
+						} else {
+							// The only other user is the user receiving the direct video
+							allUsers = append(allUsers, inMsg.JoinID)
+						}
+						// Send all uids back to conn
+						outBytes, err := json.Marshal(socketmodels.OutVidChatAllUsers{
+							UIDs: allUsers,
+						})
+						if err != nil {
+							sendErrorMessageThroughSocket(conn)
+						} else {
+							// Could use conn.WriteJSON but I need to send TYPE too so this is easier
+							socketServer.SendDataToUser <- socketserver.UserDataMessage{
+								Type: "VID_ALL_USERS",
+								Uid:  *uid,
+								Data: outBytes,
+							}
+						}
+					}
+				}
+			}
 		} else {
 			sendErrorMessageThroughSocket(conn)
 		}
@@ -336,7 +383,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 func sendErrorMessageThroughSocket(conn *websocket.Conn) {
 	err := conn.WriteJSON(map[string]string{
 		"TYPE": "RESPONSE_MESSAGE",
-		"DATA": `{"msg":"Bad request","err":true}`,
+		"DATA": `{"msg":"Socket error","err":true}`,
 	})
 	if err != nil {
 		log.Println(err)

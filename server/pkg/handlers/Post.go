@@ -1076,8 +1076,8 @@ func (h handler) UploadPostImage(w http.ResponseWriter, r *http.Request) {
 	} else {
 		img = resize.Resize(uint(width), 0, img, resize.Lanczos2)
 	}
-	if width > 500 {
-		thumbImg = resize.Resize(500, 0, thumbImg, resize.Lanczos3)
+	if width > 600 {
+		thumbImg = resize.Resize(600, 0, thumbImg, resize.Lanczos3)
 	} else {
 		thumbImg = resize.Resize(uint(width/2), 0, thumbImg, resize.Lanczos3)
 	}

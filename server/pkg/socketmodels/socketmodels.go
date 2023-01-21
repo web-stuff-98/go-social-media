@@ -100,3 +100,10 @@ type InVidChatReturningSignal struct {
 	SignalJSON string `json:"signal_json"`
 	CallerUID  string `json:"caller_uid"`
 }
+
+// TYPE: VID_JOIN
+type InVidChatJoin struct {
+	Type   string `json:"TYPE"`
+	JoinID string `json:"join_id"` // Can be either a room ID or another user ID
+	IsRoom bool   `json:"is_room"`
+}

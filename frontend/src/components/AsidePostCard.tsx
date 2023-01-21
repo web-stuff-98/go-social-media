@@ -9,7 +9,6 @@ export default function AsidePostCard({ post }: { post?: IPostCard }) {
         <a href={`/post/${post.slug}`}>
           <div className={classes.text}>
             <h3>{post.title}</h3>
-            <p>{post.description}</p>
           </div>
         </a>
       )}

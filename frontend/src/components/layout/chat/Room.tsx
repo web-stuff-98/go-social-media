@@ -8,6 +8,7 @@ import { IRoomCard } from "./Rooms";
 import RoomMessage from "./RoomMessage";
 import useSocket from "../../../context/SocketContext";
 import { MdFileCopy, MdSend } from "react-icons/md";
+import { RiWebcamLine } from "react-icons/ri";
 import IconBtn from "../../IconBtn";
 import {
   instanceOfAttachmentCompleteData,
@@ -21,6 +22,7 @@ import ErrorTip from "../../ErrorTip";
 import useAttachment from "../../../context/AttachmentContext";
 import { useModal } from "../../../context/ModalContext";
 import { IAttachmentData, IMsgAttachmentProgress } from "../../Attachment";
+import VideoChat from "./VideoChat";
 
 export interface IRoomMessage {
   ID: string;
@@ -119,7 +121,7 @@ export default function Room() {
             failed: data.DATA.failed,
             ratio: data.DATA.ratio,
           };
-          return {...newRoom}
+          return { ...newRoom };
         } else {
           return o;
         }
@@ -177,9 +179,10 @@ export default function Room() {
   return (
     <div className={classes.container}>
       {room ? (
-        <div className={classes.messages}>
+        <div className={classes.messagesAndVideoChat}>
+          <VideoChat />
           {room.messages.length > 0 ? (
-            <>
+            <div className={classes.messages}>
               {room.messages.map((msg) => (
                 <RoomMessage
                   key={msg.ID}
@@ -187,7 +190,7 @@ export default function Room() {
                   msg={msg}
                 />
               ))}
-            </>
+            </div>
           ) : (
             <p>This room has recieved no messages.</p>
           )}
@@ -197,6 +200,12 @@ export default function Room() {
       )}
       <form onSubmit={handleSubmit} className={classes.messageForm}>
         <input ref={fileInputRef} type="file" onChange={handleFile} />
+        <IconBtn
+          name="Video chat"
+          ariaLabel="Open video chat"
+          type="button"
+          Icon={RiWebcamLine}
+        />
         <IconBtn
           name="Send"
           ariaLabel="Send message"
