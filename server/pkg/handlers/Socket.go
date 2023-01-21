@@ -53,13 +53,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 				// Authorization check for private subscriptions is done inside socketserver
 				var inMsg socketmodels.OpenCloseSubscription
 				if err := json.Unmarshal(p, &inMsg); err != nil {
-					err := conn.WriteJSON(map[string]string{
-						"TYPE": "RESPONSE_MESSAGE",
-						"DATA": `{"msg":"Bad request","err":true}`,
-					})
-					if err != nil {
-						log.Println(err)
-					}
+					sendErrorMessageThroughSocket(conn)
 				} else {
 					if eventType == "OPEN_SUBSCRIPTION" {
 						socketServer.RegisterSubscriptionConn <- socketserver.SubscriptionConnectionInfo{
@@ -80,13 +74,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 			if eventType == "OPEN_SUBSCRIPTIONS" {
 				var inMsg socketmodels.OpenCloseSubscriptions
 				if err := json.Unmarshal(p, &inMsg); err != nil {
-					err := conn.WriteJSON(map[string]string{
-						"TYPE": "RESPONSE_MESSAGE",
-						"DATA": `{"msg":"Bad request","err":true}`,
-					})
-					if err != nil {
-						log.Println(err)
-					}
+					sendErrorMessageThroughSocket(conn)
 				} else {
 					for _, name := range inMsg.Names {
 						socketServer.RegisterSubscriptionConn <- socketserver.SubscriptionConnectionInfo{
@@ -299,15 +287,59 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 					}
 				}
 			}
-		} else {
-			err := conn.WriteJSON(map[string]string{
-				"TYPE": "RESPONSE_MESSAGE",
-				"DATA": `{"msg":"Invalid socket event","err":true}`,
-			})
-			if err != nil {
-				log.Println(err)
+			if eventType == "VID_SENDING_SIGNAL_IN" {
+				var inMsg socketmodels.InVidChatSendingSignal
+				if err := json.Unmarshal(p, &inMsg); err != nil {
+					sendErrorMessageThroughSocket(conn)
+				} else {
+					userToSignalID, err := primitive.ObjectIDFromHex(inMsg.UserToSignal)
+					if err != nil {
+						sendErrorMessageThroughSocket(conn)
+					} else {
+						socketServer.SendDataToUser <- socketserver.UserDataMessage{
+							Type: "VID_USER_JOINED",
+							Uid:  userToSignalID,
+							Data: socketmodels.OutVidChatUserJoined{
+								CallerUID:  uid.Hex(),
+								SignalJSON: inMsg.SignalJSON,
+							},
+						}
+					}
+				}
 			}
+			if eventType == "VID_RETURNING_SIGNAL_IN" {
+				var inMsg socketmodels.InVidChatReturningSignal
+				if err := json.Unmarshal(p, &inMsg); err != nil {
+					sendErrorMessageThroughSocket(conn)
+				} else {
+					callerUID, err := primitive.ObjectIDFromHex(inMsg.CallerUID)
+					if err != nil {
+						sendErrorMessageThroughSocket(conn)
+					} else {
+						socketServer.SendDataToUser <- socketserver.UserDataMessage{
+							Type: "VID_RECEIVING_RETURNED_SIGNAL",
+							Uid:  callerUID,
+							Data: socketmodels.OutVidChatReceivingReturnedSignal{
+								SignalJSON: inMsg.SignalJSON,
+								UID:        uid.Hex(),
+							},
+						}
+					}
+				}
+			}
+		} else {
+			sendErrorMessageThroughSocket(conn)
 		}
+	}
+}
+
+func sendErrorMessageThroughSocket(conn *websocket.Conn) {
+	err := conn.WriteJSON(map[string]string{
+		"TYPE": "RESPONSE_MESSAGE",
+		"DATA": `{"msg":"Bad request","err":true}`,
+	})
+	if err != nil {
+		log.Println(err)
 	}
 }
 

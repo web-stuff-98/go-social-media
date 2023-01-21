@@ -247,13 +247,9 @@ func watchPostImageUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
 			Entity: "POST",
 			Data:   `{"ID":"` + postId.Hex() + `"}`,
 		})
-		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-			Name: "post_card=" + postId.Hex(),
-			Data: outBytes,
-		}
-		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-			Name: "post_page=" + postId.Hex(),
-			Data: outBytes,
+		ss.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+			Names: []string{"post_card=" + postId.Hex(), "post_page=" + postId.Hex()},
+			Data:  outBytes,
 		}
 	}
 }

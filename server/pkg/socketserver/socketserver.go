@@ -1,6 +1,7 @@
 package socketserver
 
 import (
+	"encoding/json"
 	"log"
 	"strings"
 	"time"
@@ -45,6 +46,12 @@ type ExclusiveSubscriptionDataMessageMulti struct {
 	Data    []byte
 	Exclude map[primitive.ObjectID]bool
 }
+type UserDataMessage struct {
+	Uid  primitive.ObjectID
+	Data interface{}
+	Type string
+}
+
 type SocketServer struct {
 	Connections   map[*websocket.Conn]primitive.ObjectID
 	Subscriptions map[string]map[*websocket.Conn]primitive.ObjectID
@@ -59,6 +66,8 @@ type SocketServer struct {
 	SendDataToSubscriptionExclusive  chan ExclusiveSubscriptionDataMessage
 	SendDataToSubscriptions          chan SubscriptionDataMessageMulti
 	SendDataToSubscriptionsExclusive chan ExclusiveSubscriptionDataMessageMulti
+
+	SendDataToUser chan UserDataMessage
 
 	DestroySubscription chan string
 }
@@ -78,6 +87,8 @@ func Init() (*SocketServer, error) {
 		SendDataToSubscriptionExclusive:  make(chan ExclusiveSubscriptionDataMessage),
 		SendDataToSubscriptions:          make(chan SubscriptionDataMessageMulti),
 		SendDataToSubscriptionsExclusive: make(chan ExclusiveSubscriptionDataMessageMulti),
+
+		SendDataToUser: make(chan UserDataMessage),
 
 		DestroySubscription: make(chan string),
 	}
@@ -233,7 +244,7 @@ func RunServer(socketServer *SocketServer) {
 			for _, v := range subsData.Names {
 				for k, s := range socketServer.Subscriptions {
 					if k == v {
-						for conn, _ := range s {
+						for conn := range s {
 							conn.WriteMessage(websocket.TextMessage, subsData.Data)
 						}
 						break
@@ -266,6 +277,30 @@ func RunServer(socketServer *SocketServer) {
 			}
 		}
 	}()
+	/* ----- Send data to a specific user ----- */
+	go func() {
+		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in send data to user channel : ", r)
+				}
+			}()
+			data := <-socketServer.SendDataToUser
+			for conn, uid := range socketServer.Connections {
+				if data.Uid == uid {
+					outBytes, err := json.Marshal(data.Data)
+					if err == nil {
+						conn.WriteMessage(websocket.TextMessage, outBytes)
+					} else {
+						log.Println("Error marshaling data to be sent to user :", err)
+					}
+					break
+				}
+			}
+		}
+	}()
+
 	/* ----- Destroy subscription ----- */
 	go func() {
 		for {
