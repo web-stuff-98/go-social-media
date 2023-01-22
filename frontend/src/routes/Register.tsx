@@ -57,6 +57,9 @@ export default function Register() {
         />
       </div>
       <button type="submit">Create account</button>
+      <a href="/policy">
+        If you register you agree to the privacy / cookies policy.
+      </a>
       <ResMsg resMsg={resMsg} />
     </form>
   );

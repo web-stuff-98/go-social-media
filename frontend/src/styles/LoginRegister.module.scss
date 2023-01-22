@@ -9,6 +9,10 @@
   padding: var(--padding);
   width: calc(100% - var(--padding) * 2);
 
+  p {
+    margin: 0;
+  }
+
   input {
     box-sizing: border-box;
     width: 100%;

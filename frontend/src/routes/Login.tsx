@@ -57,6 +57,9 @@ export default function Login() {
         />
         <button type="submit">Login</button>
       </div>
+      <a href="/policy">
+        If you login you agree to the privacy / cookies policy.
+      </a>
       <ResMsg resMsg={resMsg} />
     </form>
   );

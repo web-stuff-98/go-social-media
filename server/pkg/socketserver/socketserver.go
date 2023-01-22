@@ -20,8 +20,9 @@ import (
 */
 
 type ConnectionInfo struct {
-	Conn *websocket.Conn
-	Uid  primitive.ObjectID
+	Conn        *websocket.Conn
+	Uid         primitive.ObjectID
+	VidChatOpen bool
 }
 type SubscriptionConnectionInfo struct {
 	Name string
@@ -51,6 +52,13 @@ type UserDataMessage struct {
 	Data interface{}
 	Type string
 }
+type VidChatStatus struct {
+	Id primitive.ObjectID // I can be either another user or a room
+}
+type VidChatOpenData struct {
+	Conn *websocket.Conn
+	Id   primitive.ObjectID
+}
 
 type SocketServer struct {
 	Connections   map[*websocket.Conn]primitive.ObjectID
@@ -66,6 +74,10 @@ type SocketServer struct {
 	SendDataToSubscriptionExclusive  chan ExclusiveSubscriptionDataMessage
 	SendDataToSubscriptions          chan SubscriptionDataMessageMulti
 	SendDataToSubscriptionsExclusive chan ExclusiveSubscriptionDataMessageMulti
+
+	VidChatOpenChan  chan VidChatOpenData
+	VidChatCloseChan chan *websocket.Conn
+	VidChatStatus    map[*websocket.Conn]VidChatOpenData
 
 	SendDataToUser chan UserDataMessage
 
@@ -87,6 +99,10 @@ func Init() (*SocketServer, error) {
 		SendDataToSubscriptionExclusive:  make(chan ExclusiveSubscriptionDataMessage),
 		SendDataToSubscriptions:          make(chan SubscriptionDataMessageMulti),
 		SendDataToSubscriptionsExclusive: make(chan ExclusiveSubscriptionDataMessageMulti),
+
+		VidChatOpenChan:  make(chan VidChatOpenData),
+		VidChatCloseChan: make(chan *websocket.Conn),
+		VidChatStatus:    make(map[*websocket.Conn]VidChatOpenData),
 
 		SendDataToUser: make(chan UserDataMessage),
 
@@ -187,6 +203,7 @@ func RunServer(socketServer *SocketServer) {
 			}()
 			connData := <-socketServer.UnregisterSubscriptionConn
 			delete(socketServer.Subscriptions[connData.Name], connData.Conn)
+			delete(socketServer.VidChatStatus, connData.Conn)
 		}
 	}()
 	/* ----- Send data to subscription ----- */
@@ -304,12 +321,25 @@ func RunServer(socketServer *SocketServer) {
 			}
 		}
 	}()
-
 	/* ----- Destroy subscription ----- */
 	go func() {
 		for {
 			subsName := <-socketServer.DestroySubscription
 			delete(socketServer.Subscriptions, subsName)
+		}
+	}()
+	/* ----- Vid chat opened chan ----- */
+	go func() {
+		for {
+			data := <-socketServer.VidChatOpenChan
+			socketServer.VidChatStatus[data.Conn] = data
+		}
+	}()
+	/* ----- Vid chat closed chan ----- */
+	go func() {
+		for {
+			data := <-socketServer.VidChatCloseChan
+			delete(socketServer.VidChatStatus, data)
 		}
 	}()
 

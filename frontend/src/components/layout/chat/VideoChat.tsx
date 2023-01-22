@@ -11,13 +11,13 @@ export default function VideoChat({
   isRoom,
   id,
 }: {
-  isRoom: boolean;
+  isRoom?: boolean;
   // ID can be either another user or a room ID
   id: string;
 }) {
   const { user } = useAuth();
   const { socket } = useSocket();
-  const { userStream, isStreaming, peers, initVideo, left } = useChat();
+  const { userStream, isStreaming, peers, initVideo, leftVidChat } = useChat();
 
   useEffect(() => {
     initVideo(() => {
@@ -25,12 +25,12 @@ export default function VideoChat({
         JSON.stringify({
           event_type: "VID_JOIN",
           join_id: id,
-          is_room: isRoom,
+          is_room: Boolean(isRoom),
         })
       );
     });
     return () => {
-      left(isRoom, id);
+      leftVidChat(Boolean(isRoom), id);
     };
   }, []);
 

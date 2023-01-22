@@ -6,6 +6,7 @@
   gap: var(--padding);
   padding: var(--padding);
   text-align: center;
+  padding: var(--padding);
 
   h1,
   h2,
@@ -51,23 +52,27 @@
     gap: var(--padding);
   }
 
-  .listContainer {
+  .lists {
     display: flex;
-    flex-direction: column;
-    ul {
-      margin: 0;
-      padding: 0;
-      list-style-type: none;
-      li {
-        font-size: var(--font-xs);
-        line-height: 1.25;
+    gap: var(--padding);
+    .listContainer {
+      display: flex;
+      flex-direction: column;
+      ul {
+        margin: 0;
+        padding: 0;
+        list-style-type: none;
+        li {
+          font-size: var(--font-xs);
+          line-height: 1.25;
+        }
       }
-    }
-    label {
-      margin: 0;
-      padding: 0;
-      font-weight: 600;
-      font-size: 1.25rem;
+      label {
+        margin: 0;
+        padding: 0;
+        font-weight: 600;
+        font-size: 1.25rem;
+      }
     }
   }
 }

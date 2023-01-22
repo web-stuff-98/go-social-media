@@ -25,6 +25,7 @@
 .right {
   width: 12rem;
   min-height: 15rem;
+  max-height: 15rem;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -32,20 +33,28 @@
   flex-grow: 1;
   max-width: min(66.66vw, 66.66%);
 
-  .messages {
-    width: 100%;
-    border-radius: var(--border-radius-medium);
-    border: 1px solid var(--base-medium);
-    flex-grow: 1;
-    height: 10rem;
-    box-sizing: border-box;
+  .messagesAndVideoChat {
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    height: 100%;
+    flex-grow: 1;
+    border-radius: var(--border-radius-medium);
+    border: 1px solid var(--base-medium);
+    max-height: 13.125rem;
+
+    .messages {
+      width: 100%;
+      flex-grow: 1;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
   }
   .messageForm {
     display: flex;
     align-items: center;
+    width: 100%;
     input {
       flex-grow: 1;
     }

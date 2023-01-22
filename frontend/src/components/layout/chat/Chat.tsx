@@ -51,7 +51,7 @@ const ChatContext = createContext<{
   userStream?: MediaStream;
   isStreaming: boolean;
   peers: PeerWithID[];
-  left: (isRoom: boolean, id: string) => void;
+  leftVidChat: (isRoom: boolean, id: string) => void;
 }>({
   section: ChatSection.MENU,
   setSection: () => {},
@@ -66,7 +66,7 @@ const ChatContext = createContext<{
   userStream: undefined,
   isStreaming: false,
   peers: [],
-  left: () => {},
+  leftVidChat: () => {},
 });
 
 export type PeerWithID = {
@@ -230,7 +230,7 @@ export default function Chat() {
     }
   };
 
-  const left = (isRoom: boolean, id: string) => {
+  const leftVidChat = (isRoom: boolean, id: string) => {
     socket?.send(
       JSON.stringify({
         event_type: "VID_LEAVE",
@@ -282,7 +282,7 @@ export default function Chat() {
           initVideo,
           isStreaming,
           peers,
-          left,
+          leftVidChat,
           userStream: userStream.current,
         }}
       >

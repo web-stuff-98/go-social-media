@@ -14,7 +14,6 @@ import (
 	"github.com/web-stuff-98/go-social-media/pkg/handlers"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers/middleware"
 	rdb "github.com/web-stuff-98/go-social-media/pkg/redis"
-	"github.com/web-stuff-98/go-social-media/pkg/seed"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -317,9 +316,9 @@ func main() {
 	log.Println("Creating changestreams")
 	changestreams.WatchCollections(DB, SocketServer, AttachmentServer)
 
-	DB.Drop(context.TODO())
-	//protectedUids := []primitive.ObjectID{}
-	protectedUids, _, _, _ := seed.SeedDB(Collections, 2, 5, 2)
+	//DB.Drop(context.TODO())
+	protectedUids := []primitive.ObjectID{}
+	//protectedUids, _, _, _ := seed.SeedDB(Collections, 2, 5, 2)
 
 	deleteAccountTicker := time.NewTicker(20 * time.Minute)
 	go func() {

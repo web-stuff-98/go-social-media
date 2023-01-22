@@ -54,6 +54,7 @@ export default function Room() {
   const fileRef = useRef<File>();
   const [file, setFile] = useState<File>();
   const [room, setRoom] = useState<IRoom>();
+  const [vidChatOpen, setVidChatOpen] = useState(false)
   const [resMsg, setResMsg] = useState<IResMsg>({
     msg: "",
     err: false,
@@ -185,7 +186,7 @@ export default function Room() {
     <div className={classes.container}>
       {room ? (
         <div className={classes.messagesAndVideoChat}>
-          <VideoChat isRoom id={room.ID} />
+          {vidChatOpen && <VideoChat isRoom id={room.ID} />}
           {room.messages.length > 0 ? (
             <div className={classes.messages}>
               {room.messages.map((msg) => (
@@ -209,6 +210,7 @@ export default function Room() {
           name="Video chat"
           ariaLabel="Open video chat"
           type="button"
+          onClick={() => setVidChatOpen(!vidChatOpen)}
           Icon={RiWebcamLine}
         />
         <IconBtn

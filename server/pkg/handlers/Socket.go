@@ -340,12 +340,22 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 							if err := colls.RoomCollection.FindOne(context.Background(), bson.M{"_id": joinID}).Decode(&room); err != nil {
 								sendErrorMessageThroughSocket(conn)
 							} else {
-								// Find all the users connected to the room
+								// Find all the users connected to the room, check if they have video chat
+								// open in the room, if they do add to allUsers
 								for k, v := range socketServer.Subscriptions {
 									if strings.ReplaceAll(k, "room=", "") == inMsg.JoinID {
 										for _, oi := range v {
 											if oi != *uid {
-												allUsers = append(allUsers, oi.Hex())
+												for c, oi2 := range socketServer.Connections {
+													if oi2 == oi {
+														if status, ok := socketServer.VidChatStatus[c]; ok {
+															if status.Id == joinID {
+																allUsers = append(allUsers, oi.Hex())
+															}
+														}
+														break
+													}
+												}
 											}
 										}
 										break
@@ -353,8 +363,27 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 								}
 							}
 						} else {
-							// The only other user is the user receiving the direct video
-							allUsers = []string{inMsg.JoinID}
+							// The only other user is the user receiving the direct video.
+							// First check if the other user has video chat open in the conversation before
+							// forming the WebRTC connection.
+							hasOpen := false
+							for c, oi := range socketServer.Connections {
+								if oi == joinID {
+									if status, ok := socketServer.VidChatStatus[c]; ok {
+										if status.Id == *uid {
+											hasOpen = true
+										}
+									}
+									break
+								}
+							}
+							if hasOpen {
+								allUsers = []string{inMsg.JoinID}
+							}
+						}
+						socketServer.VidChatOpenChan <- socketserver.VidChatOpenData{
+							Id:   joinID,
+							Conn: conn,
 						}
 						// Send all uids back to conn
 						socketServer.SendDataToUser <- socketserver.UserDataMessage{
@@ -398,6 +427,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 								}
 							}
 						} else {
+							socketServer.VidChatCloseChan <- conn
 							// Tell the other user the user has left
 							socketServer.SendDataToUser <- socketserver.UserDataMessage{
 								Type: "VID_USER_LEFT",
@@ -458,14 +488,16 @@ func (h handler) WebSocketEndpoint(w http.ResponseWriter, r *http.Request) {
 		uid = user.ID
 	}
 	h.SocketServer.RegisterConn <- socketserver.ConnectionInfo{
-		Conn: ws,
-		Uid:  uid,
+		Conn:        ws,
+		Uid:         uid,
+		VidChatOpen: false,
 	}
 	log.Println("Client connected")
 	defer func() {
 		h.SocketServer.UnregisterConn <- socketserver.ConnectionInfo{
-			Conn: ws,
-			Uid:  uid,
+			Conn:        ws,
+			Uid:         uid,
+			VidChatOpen: false,
 		}
 		log.Println("Client Disconnected")
 	}()

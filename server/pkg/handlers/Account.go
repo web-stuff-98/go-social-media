@@ -252,7 +252,7 @@ func (h handler) UploadPfp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.ParseMultipartForm(32 << 20) // what is << ? something to do with binary shift whatever that is. Is used here to define maximum memory in bytes.
+	r.ParseMultipartForm(32 << 20) // what is <<, binary shift whatever that is. Is used here to define max size in bytes (20mb)
 
 	file, handler, err := r.FormFile("file")
 	if err != nil {

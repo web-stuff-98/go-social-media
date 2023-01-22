@@ -18,6 +18,8 @@ import { getConversations, getConversation } from "../../../services/chat";
 import ErrorTip from "../../ErrorTip";
 import useAttachment from "../../../context/AttachmentContext";
 import { IAttachmentData, IMsgAttachmentProgress } from "../../Attachment";
+import VideoChat from "./VideoChat";
+import { RiWebcamLine } from "react-icons/ri";
 
 export interface IPrivateMessage {
   ID: string;
@@ -42,6 +44,7 @@ export default function Conversations() {
   const { user: currentUser } = useAuth();
   const { openModal } = useModal();
 
+  const [vidChatOpen, setVidChatOpen] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState("");
   const selectedConversationRef = useRef("");
@@ -97,7 +100,7 @@ export default function Conversations() {
 
   const handleMessage = useCallback(async (e: MessageEvent) => {
     const data = JSON.parse(e.data);
-    if(!data["DATA"]) return
+    if (!data["DATA"]) return;
     data["DATA"] = JSON.parse(data["DATA"]);
     if (instanceOfPrivateMessageData(data)) {
       if (data.DATA.uid !== currentUser?.ID) {
@@ -288,18 +291,30 @@ export default function Conversations() {
         {conversations.map((c) => renderConversee(getUserData(c.uid)))}
       </div>
       <div className={classes.right}>
-        <div className={classes.messages}>
-          {selectedConversation &&
-            conversations[selectedConversationIndex].messages.map((msg) => (
-              <PrivateMessage
-                key={msg.ID}
-                reverse={msg.uid !== currentUser?.ID}
-                msg={msg}
-              />
-            ))}
+        <div className={classes.messagesAndVideoChat}>
+          {selectedConversation && vidChatOpen && (
+            <VideoChat id={selectedConversation} />
+          )}
+          <div className={classes.messages}>
+            {selectedConversation &&
+              conversations[selectedConversationIndex].messages.map((msg) => (
+                <PrivateMessage
+                  key={msg.ID}
+                  reverse={msg.uid !== currentUser?.ID}
+                  msg={msg}
+                />
+              ))}
+          </div>
         </div>
         <form onSubmit={handleSubmit} className={classes.messageForm}>
           <input ref={fileInputRef} type="file" onChange={handleFile} />
+          <IconBtn
+            name="Video chat"
+            ariaLabel="Open video chat"
+            type="button"
+            onClick={() => setVidChatOpen(!vidChatOpen)}
+            Icon={RiWebcamLine}
+          />
           <IconBtn
             name="Select attachment"
             ariaLabel="Select an attachment"
