@@ -95,7 +95,7 @@ export default function Room() {
 
   const handleMessage = useCallback(async (e: MessageEvent) => {
     const data = JSON.parse(e.data);
-    if(!data["DATA"]) return
+    if (!data["DATA"]) return;
     data["DATA"] = JSON.parse(data["DATA"]);
     if (instanceOfRoomMessageData(data)) {
       if (data.DATA.uid !== user?.ID) cacheUserData(data.DATA.uid);
@@ -197,7 +197,7 @@ export default function Room() {
               ))}
             </div>
           ) : (
-            <p>This room has recieved no messages.</p>
+            <p style={{textAlign:"center"}}>This room has recieved no messages.</p>
           )}
         </div>
       ) : (

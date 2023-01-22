@@ -8,6 +8,7 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"sort"
@@ -348,6 +349,8 @@ func (h handler) GetConversations(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) GetConversation(w http.ResponseWriter, r *http.Request) {
+	log.Println("Get conversation")
+
 	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
@@ -402,6 +405,7 @@ func (h handler) GetConversation(w http.ResponseWriter, r *http.Request) {
 		if msg.HasAttachment {
 			var metadata models.AttachmentMetadata
 			if err := h.Collections.AttachmentMetadataCollection.FindOne(r.Context(), bson.M{"_id": msg.ID}).Decode(&metadata); err != nil {
+				log.Println("err:", err)
 				responseMessage(w, http.StatusInternalServerError, "Internal error")
 				return
 			} else {

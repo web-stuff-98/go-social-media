@@ -116,7 +116,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						msg := &models.PrivateMessage{
 							ID:            primitive.NewObjectIDFromTimestamp(time.Now()),
 							Content:       inMsg.Content,
-							HasAttachment: true,
+							HasAttachment: false,
 							Uid:           *uid,
 							CreatedAt:     primitive.NewDateTimeFromTime(time.Now()),
 							UpdatedAt:     primitive.NewDateTimeFromTime(time.Now()),
