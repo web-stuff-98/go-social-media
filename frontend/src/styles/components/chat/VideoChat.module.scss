@@ -20,10 +20,14 @@
       border-radius: var(--border-radius-medium);
       overflow: hidden;
       position: relative;
+      display: flex;
+      padding-top: 1.5rem;
+      box-sizing: border-box;
 
       .topTray {
         display: flex;
         width: 100%;
+        top:0;
         align-items: center;
         box-sizing: border-box;
         padding: var(--padding-medium);
@@ -46,7 +50,27 @@
         height: 100%;
         object-fit: cover;
         object-position: center;
+        transition: filter 333ms ease;
+        position: absolute;
+        z-index: 97;
+        filter: opacity(0);
+      }
+      .spinner {
+        color:white;
+        fill:white;
+        margin: auto;
+        animation: spin 700ms linear infinite;
+        width: 2rem;
+        height: 2rem;
       }
     }
+  }
+}
+@keyframes spin {
+  from {
+    transform: rotateZ(0deg);
+  }
+  to {
+    transform: rotateZ(360deg);
   }
 }

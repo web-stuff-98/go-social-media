@@ -1,6 +1,6 @@
 import classes from "../../../styles/components/chat/VideoChat.module.scss";
 import IconBtn from "../../IconBtn";
-import { ImVolumeMute, ImVolumeMute2 } from "react-icons/im";
+import { ImSpinner8, ImVolumeMute, ImVolumeMute2 } from "react-icons/im";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { PeerWithID, useChat } from "./Chat";
@@ -108,7 +108,14 @@ function VideoWindow({
             )}
           </div>
         </div>
-        <video muted={ownVideo || muted} autoPlay playsInline ref={videoRef} />
+        <video
+          style={stream ? { filter: "opacity(1)" } : {}}
+          muted={ownVideo || muted}
+          autoPlay
+          playsInline
+          ref={videoRef}
+        />
+        <ImSpinner8 className={classes.spinner} />
       </div>
     </div>
   );
