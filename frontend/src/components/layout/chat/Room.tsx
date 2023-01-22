@@ -95,6 +95,7 @@ export default function Room() {
 
   const handleMessage = useCallback(async (e: MessageEvent) => {
     const data = JSON.parse(e.data);
+    if(!data["DATA"]) return
     data["DATA"] = JSON.parse(data["DATA"]);
     if (instanceOfRoomMessageData(data)) {
       if (data.DATA.uid !== user?.ID) cacheUserData(data.DATA.uid);

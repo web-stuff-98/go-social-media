@@ -293,7 +293,6 @@ func RunServer(socketServer *SocketServer) {
 					outBytesNoTypeKey, err := json.Marshal(data.Data)
 					json.Unmarshal(outBytesNoTypeKey, &m)
 					m["TYPE"] = data.Type
-					log.Println(m)
 					outBytes, err := json.Marshal(m)
 					if err == nil {
 						conn.WriteMessage(websocket.TextMessage, outBytes)

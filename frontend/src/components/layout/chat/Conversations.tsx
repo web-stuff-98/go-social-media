@@ -97,6 +97,7 @@ export default function Conversations() {
 
   const handleMessage = useCallback(async (e: MessageEvent) => {
     const data = JSON.parse(e.data);
+    if(!data["DATA"]) return
     data["DATA"] = JSON.parse(data["DATA"]);
     if (instanceOfPrivateMessageData(data)) {
       if (data.DATA.uid !== currentUser?.ID) {

@@ -17,24 +17,20 @@ export default function VideoChat({
 }) {
   const { user } = useAuth();
   const { socket } = useSocket();
-  const { userStream, isStreaming, peers, initVideo } = useChat();
+  const { userStream, isStreaming, peers, initVideo, left } = useChat();
 
   useEffect(() => {
-    initVideo();
-    socket?.send(
-      JSON.stringify({
-        event_type: "VID_JOIN",
-        join_id: id,
-        is_room: isRoom,
-      })
-    );
-    return () => {
+    initVideo(() => {
       socket?.send(
         JSON.stringify({
-          event_type: "VID_LEAVE",
-          is_room: isRoom
+          event_type: "VID_JOIN",
+          join_id: id,
+          is_room: isRoom,
         })
       );
+    });
+    return () => {
+      left(isRoom, id);
     };
   }, []);
 
@@ -44,7 +40,7 @@ export default function VideoChat({
         <VideoWindow uid={user?.ID as string} stream={userStream} ownVideo />
       )}
       {peers.map((p) => (
-        <PeerVideoWindow peerWithID={p} />
+        <PeerVideoWindow key={p.UID} peerWithID={p} />
       ))}
     </div>
   );

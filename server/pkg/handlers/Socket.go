@@ -50,9 +50,11 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 
 		eventType, eventTypeOk := data["event_type"]
 
+		log.Println(eventType)
+
 		if eventTypeOk {
 			if eventType == "OPEN_SUBSCRIPTION" || eventType == "CLOSE_SUBSCRIPTION" {
-				// Authorization check for private subscriptions is done inside socketserver
+				// Authorization check for private subscriptions is done inside socketServer
 				var inMsg socketmodels.OpenCloseSubscription
 				if err := json.Unmarshal(p, &inMsg); err != nil {
 					sendErrorMessageThroughSocket(conn)
@@ -286,7 +288,6 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 					}
 				}
 			} else if eventType == "VID_SENDING_SIGNAL_IN" {
-				log.Println("Sending peer signal")
 				var inMsg socketmodels.InVidChatSendingSignal
 				if err := json.Unmarshal(p, &inMsg); err != nil {
 					sendErrorMessageThroughSocket(conn)
@@ -306,7 +307,6 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 					}
 				}
 			} else if eventType == "VID_RETURNING_SIGNAL_IN" {
-				log.Println("Returning peer signal")
 				var inMsg socketmodels.InVidChatReturningSignal
 				if err := json.Unmarshal(p, &inMsg); err != nil {
 					sendErrorMessageThroughSocket(conn)
@@ -326,7 +326,6 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 					}
 				}
 			} else if eventType == "VID_JOIN" {
-				log.Println("Received video chat join request")
 				var inMsg socketmodels.InVidChatJoin
 				if err := json.Unmarshal(p, &inMsg); err != nil {
 					sendErrorMessageThroughSocket(conn)
@@ -355,7 +354,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 							}
 						} else {
 							// The only other user is the user receiving the direct video
-							allUsers = append(allUsers, inMsg.JoinID)
+							allUsers = []string{inMsg.JoinID}
 						}
 						// Send all uids back to conn
 						socketServer.SendDataToUser <- socketserver.UserDataMessage{
@@ -387,7 +386,8 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 										for _, oi := range v {
 											// Tell all the other users the user has left
 											socketServer.SendDataToUser <- socketserver.UserDataMessage{
-												Uid: oi,
+												Type: "VID_USER_LEFT",
+												Uid:  oi,
 												Data: socketmodels.OutVidChatUserLeft{
 													UID: uid.Hex(),
 												},
@@ -400,7 +400,8 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						} else {
 							// Tell the other user the user has left
 							socketServer.SendDataToUser <- socketserver.UserDataMessage{
-								Uid: id,
+								Type: "VID_USER_LEFT",
+								Uid:  id,
 								Data: socketmodels.OutVidChatUserLeft{
 									UID: uid.Hex(),
 								},
@@ -429,7 +430,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 				}
 			}
 		} else {
-			// eventType was not sent. Send error.
+			// eventType was not received. Send error.
 			sendErrorMessageThroughSocket(conn)
 		}
 	}

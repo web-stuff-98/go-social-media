@@ -47,10 +47,11 @@ const ChatContext = createContext<{
   roomId: string;
   editRoomId: string;
 
-  initVideo: () => void;
+  initVideo: (cb: Function) => void;
   userStream?: MediaStream;
   isStreaming: boolean;
   peers: PeerWithID[];
+  left: (isRoom: boolean, id: string) => void;
 }>({
   section: ChatSection.MENU,
   setSection: () => {},
@@ -61,10 +62,11 @@ const ChatContext = createContext<{
   roomId: "",
   editRoomId: "",
 
-  initVideo: () => {},
+  initVideo: async () => {},
   userStream: undefined,
   isStreaming: false,
   peers: [],
+  left: () => {},
 });
 
 export type PeerWithID = {
@@ -93,11 +95,10 @@ export default function Chat() {
     setSection(ChatSection.EDITOR);
   };
 
-
   //////////////// VIDEO CHAT STUFF \\\\\\\\\\\\\\\\
   const userStream = useRef<MediaStream | undefined>(undefined);
   const [isStreaming, setIsStreaming] = useState(false);
-  const initVideo = async () => {
+  const initVideo = async (cb: Function) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
@@ -105,6 +106,7 @@ export default function Chat() {
       });
       userStream.current = stream;
       setIsStreaming(true);
+      cb();
     } catch (e) {
       openModal("Message", {
         msg: `${e}`,
@@ -117,47 +119,52 @@ export default function Chat() {
   const peersRef = useRef<PeerWithID[]>([]);
   const [peers, setPeers] = useState<PeerWithID[]>([]);
 
-  const handleVidChatAllUsers = useCallback((uids: string[]) => {
+  const handleVidChatAllUsers = (uids: string[]) => {
     const peers: PeerWithID[] = [];
-    uids.forEach((id) => {
-      const peer = createPeer(id);
-      peersRef.current.push({
-        UID: id,
-        peer,
+    console.log("All users");
+    if (uids)
+      uids.forEach((id) => {
+        const peer = createPeer(id);
+        peersRef.current.push({
+          UID: id,
+          peer,
+        });
+        peers.push({ peer, UID: id });
       });
-      peers.push({ peer, UID: id });
-    });
     setPeers(peers);
-  }, []);
+  };
 
-  const handleVidChatUserJoined = useCallback(
-    (signal: Peer.SignalData, callerUID: string) => {
-      const peer = addPeer(signal, callerUID);
-      setPeers((peers) => [...peers, { peer, UID: callerUID }]);
-      peersRef.current.push({
-        peer,
-        UID: callerUID,
-      });
-    },
-    []
-  );
+  const handleVidChatUserJoined = (
+    signal: Peer.SignalData,
+    callerUID: string
+  ) => {
+    console.log("User joined");
+    const peer = addPeer(signal, callerUID);
+    setPeers((peers) => [...peers, { peer, UID: callerUID }]);
+    peersRef.current.push({
+      peer,
+      UID: callerUID,
+    });
+  };
 
-  const handleVidChatReceivingReturningSignal = useCallback(
-    (signal: Peer.SignalData, id: string) => {
-      const item = peersRef.current.find((p) => p.UID === id);
-      setTimeout(() => {
-        item?.peer.signal(signal);
-      });
-    },
-    []
-  );
+  const handleVidChatReceivingReturningSignal = (
+    signal: Peer.SignalData,
+    id: string
+  ) => {
+    console.log("Receiving returned signal");
+    const item = peersRef.current.find((p) => p.UID === id);
+    setTimeout(() => {
+      item?.peer.signal(signal);
+    });
+  };
 
-  const handleVidChatUserLeft = useCallback((id: string) => {
+  const handleVidChatUserLeft = (id: string) => {
+    console.log("User left");
     const peerRef = peersRef.current.find((p) => p.UID === id);
     peerRef?.peer.destroy();
     setPeers((peers) => peers.filter((p) => p.UID !== id));
     peersRef.current = peersRef.current.filter((p) => p.UID !== id);
-  }, []);
+  };
 
   const createPeer = (id: string) => {
     const peer = new Peer({
@@ -166,48 +173,46 @@ export default function Chat() {
       stream: userStream.current,
       config: ICE_Config,
     });
-    peer.on("signal", (signal) => {
+    peer.on("signal", (signal) =>
       socket?.send(
         JSON.stringify({
           event_type: "VID_SENDING_SIGNAL_IN",
           signal_json: JSON.stringify(signal),
           user_to_signal: id,
         })
-      );
+      )
+    );
+    return peer;
+  };
+
+  const addPeer = (incomingSignal: Peer.SignalData, callerUID: string) => {
+    const peer = new Peer({
+      initiator: false,
+      trickle: false,
+      stream: userStream.current,
+      config: ICE_Config,
+    });
+    console.log("Adding peer");
+    peer.on("signal", (signal) =>
+      socket?.send(
+        JSON.stringify({
+          event_type: "VID_RETURNING_SIGNAL_IN",
+          signal_json: JSON.stringify(signal),
+          caller_uid: callerUID,
+        })
+      )
+    );
+    setTimeout(() => {
+      peer.signal(incomingSignal);
     });
     return peer;
   };
 
-  const addPeer = useCallback(
-    (incomingSignal: Peer.SignalData, callerUID: string) => {
-      const peer = new Peer({
-        initiator: false,
-        trickle: false,
-        stream: userStream.current,
-        config: ICE_Config,
-      });
-      peer.on("signal", (signal) => {
-        socket?.send(
-          JSON.stringify({
-            event_type: "VID_RETURNING_SIGNAL_IN",
-            signal_json: JSON.stringify(signal),
-            caller_uid: callerUID,
-          })
-        );
-      });
-      setTimeout(() => {
-        peer.signal(incomingSignal);
-      });
-      return peer;
-    },
-    []
-  );
-
-  const handleMessage = useCallback((e: MessageEvent) => {
+  const handleMessage = (e: MessageEvent) => {
     const data = JSON.parse(e.data);
     if (instanceOfReceivingReturnedSignal(data)) {
       handleVidChatReceivingReturningSignal(
-        JSON.parse(data.signal_json),
+        JSON.parse(data.signal_json) as Peer.SignalData,
         data.uid
       );
     }
@@ -223,7 +228,20 @@ export default function Chat() {
     if (instanceOfVidUserLeft(data)) {
       handleVidChatUserLeft(data.uid);
     }
-  }, []);
+  };
+
+  const left = (isRoom: boolean, id: string) => {
+    socket?.send(
+      JSON.stringify({
+        event_type: "VID_LEAVE",
+        is_room: isRoom,
+        id,
+      })
+    );
+    peersRef.current.forEach((p) => p.peer.destroy());
+    setPeers([]);
+    peersRef.current = [];
+  };
 
   useEffect(() => {
     socket?.addEventListener("message", handleMessage);
@@ -264,6 +282,7 @@ export default function Chat() {
           initVideo,
           isStreaming,
           peers,
+          left,
           userStream: userStream.current,
         }}
       >

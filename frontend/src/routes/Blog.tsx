@@ -132,14 +132,14 @@ export default function Blog() {
             <h3 className={classes.recentPostsHeading}>New posts</h3>
             <div className={classes.posts}>
               {newPosts.map((p) => (
-                <AsidePostCard post={p} />
+                <AsidePostCard key={p.ID} post={p} />
               ))}
             </div>
           </>
         </div>
       </aside>
       <div className={classes.paginationControls}>
-        <button onClick={() => prevPage()}>
+        <button aria-label="Previous page" onClick={() => prevPage()}>
           <BsChevronLeft />
         </button>
         <div className={classes.text}>
@@ -150,7 +150,7 @@ export default function Blog() {
             {posts?.length}/{postsCount}
           </span>
         </div>
-        <button onClick={() => nextPage()}>
+        <button aria-label="Next page" onClick={() => nextPage()}>
           <BsChevronRight />
         </button>
       </div>

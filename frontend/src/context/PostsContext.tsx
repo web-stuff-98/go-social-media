@@ -268,6 +268,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
 
   const handleMessage = useCallback((e: MessageEvent) => {
     const data = JSON.parse(e.data);
+    if(!data["DATA"]) return
     data["DATA"] = JSON.parse(data["DATA"]);
     if (instanceOfChangeData(data)) {
       if (data.ENTITY === "POST") {
