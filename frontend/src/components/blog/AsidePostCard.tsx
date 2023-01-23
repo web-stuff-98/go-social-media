@@ -1,6 +1,5 @@
-import { useAuth } from "../context/AuthContext";
-import { IPostCard } from "../routes/Blog";
-import classes from "../styles/components/AsidePostCard.module.scss";
+import { IPostCard } from "../../routes/Blog";
+import classes from "../../styles/components/blog/AsidePostCard.module.scss";
 
 export default function AsidePostCard({ post }: { post?: IPostCard }) {
   return (

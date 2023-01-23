@@ -3,7 +3,7 @@ import { IPostCard } from "./Blog";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { getPost, submitComment, voteOnPost } from "../services/posts";
 import { useNavigate, useParams } from "react-router-dom";
-import ResMsg, { IResMsg } from "../components/ResMsg";
+import ResMsg, { IResMsg } from "../components/shared/ResMsg";
 import useSocket from "../context/SocketContext";
 import {
   instanceOfChangeData,
@@ -15,10 +15,9 @@ import { CommentForm } from "../components/comments/CommentForm";
 import { IComment } from "../components/comments/Comment";
 import Comments from "../components/comments/Comments";
 import { useUsers } from "../context/UsersContext";
-import User from "../components/User";
-
+import User from "../components/shared/User";
 import { TiArrowSortedUp, TiArrowSortedDown } from "react-icons/ti";
-import IconBtn from "../components/IconBtn";
+import IconBtn from "../components/shared/IconBtn";
 import { useModal } from "../context/ModalContext";
 import { useAuth } from "../context/AuthContext";
 

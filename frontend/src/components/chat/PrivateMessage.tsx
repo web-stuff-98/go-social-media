@@ -1,5 +1,5 @@
-import classes from "../../../styles/components/chat/PrivateMessage.module.scss";
-import Attachment from "../../Attachment";
+import classes from "../../styles/components/chat/PrivateMessage.module.scss";
+import Attachment from "./Attachment";
 import { IPrivateMessage } from "./Conversations";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {

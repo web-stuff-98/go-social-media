@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import type { ReactNode } from "react";
-import classes from "../styles/components/Dropdown.module.scss";
+import classes from "../../styles/components/shared/Dropdown.module.scss";
 
 export type DropdownItem = {
   name: string;

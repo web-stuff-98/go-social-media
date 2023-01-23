@@ -31,7 +31,9 @@ input:focus,
 textarea:focus {
   outline: 1px solid rgba(0, 128, 255, 0.5);
 }
-input::placeholder,:-ms-input-placeholder, ::-ms-input-placeholder {
+input::placeholder,
+:-ms-input-placeholder,
+::-ms-input-placeholder {
   font-size: var(--font-xs);
 }
 input {
@@ -67,13 +69,14 @@ hr {
   );
 }
 
-button, .lightButton {
+button,
+.lightButton {
   background: var(--button);
   cursor: pointer;
-  color:white;
+  color: white;
 }
 .lightButton {
-  color:var(--text-color);
+  color: var(--text-color);
   background: var(--foreground);
 }
 
@@ -90,7 +93,11 @@ button, .lightButton {
   --background: #f0f1f3;
   --button: rgb(24, 24, 24);
   --nav: rgb(14, 14, 14);
-  --header: linear-gradient(to bottom, rgb(12, 12, 74) 0%, rgb(13, 26, 52) 100%);
+  --header: linear-gradient(
+    to bottom,
+    rgb(12, 12, 74) 0%,
+    rgb(13, 26, 52) 100%
+  );
   --tag-selected: rgb(55, 62, 95);
 
   /* Component & Text Colours */
@@ -148,4 +155,13 @@ button, .lightButton {
   --base-medium-contrast: rgba(0, 0, 0, 0.33);
   --base-light-contrast: rgba(0, 0, 0, 0.166);
   --base-pale-contrast: rgba(0, 0, 0, 0.066);
+}
+
+@keyframes spin {
+  from {
+    transform: rotateZ(0deg);
+  }
+  to {
+    transform: rotateZ(360deg);
+  }
 }

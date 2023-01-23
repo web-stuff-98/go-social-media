@@ -1,12 +1,11 @@
-import classes from "./Layout.module.scss";
+import classes from "../../styles/components/Layout.module.scss";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useState } from "react";
 import { useInterface } from "../../context/InterfaceContext";
 import { MdMenu } from "react-icons/md";
-import Dropdown from "../Dropdown";
 import usePosts from "../../context/PostsContext";
-import User from "../User";
+import User from "../shared/User";
 
 export default function Nav() {
   const { user, logout } = useAuth();

@@ -1,6 +1,6 @@
 import type { ReactNode, CSSProperties } from "react";
 import { IconType } from "react-icons/lib";
-import classes from "../styles/components/IconBtn.module.scss";
+import classes from "../../styles/components/shared/IconBtn.module.scss";
 
 const IconBtn = ({
   Icon,

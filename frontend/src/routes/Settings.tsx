@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
 import type { ChangeEvent } from "react";
-import User from "../components/User";
+import User from "../components/shared/User";
 import classes from "../styles/pages/Settings.module.scss";
 import { useAuth } from "../context/AuthContext";
-import ResMsg, { IResMsg } from "../components/ResMsg";
+import ResMsg from "../components/shared/ResMsg";
+import type { IResMsg } from "../components/shared/ResMsg";
 import { makeRequest } from "../services/makeRequest";
 import ProtectedRoute from "./ProtectedRoute";
 import { BsGearWide } from "react-icons/bs";

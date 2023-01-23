@@ -1,5 +1,5 @@
-import classes from "../../../styles/components/chat/Chat.module.scss";
-import IconBtn from "../../IconBtn";
+import classes from "../../styles/components/chat/Chat.module.scss";
+import IconBtn from "../shared/IconBtn";
 import { IoMdClose } from "react-icons/io";
 import Conversations from "./Conversations";
 import { MdMenu } from "react-icons/md";
@@ -16,15 +16,15 @@ import RoomEditor from "./RoomEditor";
 import Rooms from "./Rooms";
 import { useLocation } from "react-router-dom";
 import Room from "./Room";
-import { useModal } from "../../../context/ModalContext";
+import { useModal } from "../../context/ModalContext";
 import Peer from "simple-peer";
 import {
   instanceOfReceivingReturnedSignal,
   instanceOfVidAllUsers,
   instanceOfVidUserJoined,
   instanceOfVidUserLeft,
-} from "../../../utils/DetermineSocketEvent";
-import useSocket from "../../../context/SocketContext";
+} from "../../utils/DetermineSocketEvent";
+import useSocket from "../../context/SocketContext";
 
 import * as process from "process";
 (window as any).process = process;

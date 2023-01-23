@@ -9,11 +9,9 @@ import {
 import type { ReactNode, ChangeEvent, FormEvent } from "react";
 import { MdError, MdSend } from "react-icons/md";
 import { BsFillChatRightFill } from "react-icons/bs";
-import { CgProfile } from "react-icons/cg";
 import useScrollbarSize from "react-scrollbar-size";
-import { useNavigate } from "react-router-dom";
 import useSocket from "./SocketContext";
-import classes from "../styles/components/Userdropdown.module.scss";
+import classes from "../styles/components/shared/Userdropdown.module.scss";
 
 const UserdropdownContext = createContext<{
   clickPos: { left: string; top: string };

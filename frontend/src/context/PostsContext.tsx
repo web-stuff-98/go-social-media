@@ -8,7 +8,7 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import { IPostCard } from "../routes/Blog";
-import { IResMsg } from "../components/ResMsg";
+import { IResMsg } from "../components/shared/ResMsg";
 import {
   getNewestPosts,
   getPage,

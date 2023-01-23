@@ -1,9 +1,9 @@
-import classes from "../styles/components/Attachment.module.scss";
-import ProgressBar from "./ProgressBar";
+import classes from "../../styles/components/chat/Attachment.module.scss";
+import ProgressBar from "../shared/ProgressBar";
 import { useMemo, useRef } from "react";
 import { BiError } from "react-icons/bi";
 import { AiOutlineDownload } from "react-icons/ai";
-import { baseURL } from "../services/makeRequest";
+import { baseURL } from "../../services/makeRequest";
 
 export interface IMsgAttachmentProgress {
   ratio: number;

@@ -2,12 +2,12 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import type { ChangeEvent } from "react";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import { FaSearch } from "react-icons/fa";
-import useSocket from "../../../context/SocketContext";
-import { getRoomPage } from "../../../services/rooms";
-import classes from "../../../styles/components/chat/Rooms.module.scss";
-import { instanceOfChangeData } from "../../../utils/DetermineSocketEvent";
-import IconBtn from "../../IconBtn";
-import ResMsg, { IResMsg } from "../../ResMsg";
+import useSocket from "../../context/SocketContext";
+import { getRoomPage } from "../../services/rooms";
+import classes from "../../styles/components/chat/Rooms.module.scss";
+import { instanceOfChangeData } from "../../utils/DetermineSocketEvent";
+import IconBtn from "../shared/IconBtn";
+import ResMsg, { IResMsg } from "../shared/ResMsg";
 import RoomCard from "./RoomCard";
 import { debounce } from "lodash";
 

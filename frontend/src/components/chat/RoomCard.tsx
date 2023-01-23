@@ -1,13 +1,13 @@
-import classes from "../../../styles/components/chat/Rooms.module.scss";
-import IconBtn from "../../IconBtn";
+import classes from "../../styles/components/chat/Rooms.module.scss";
+import IconBtn from "../shared/IconBtn";
 import { BiDoorOpen } from "react-icons/bi";
 import { AiFillEdit } from "react-icons/ai";
 import { useState, useEffect } from "react";
-import { getRoomImage } from "../../../services/rooms";
-import useSocket from "../../../context/SocketContext";
+import { getRoomImage } from "../../services/rooms";
+import useSocket from "../../context/SocketContext";
 import { useChat } from "./Chat";
 import { IRoomCard } from "./Rooms";
-import { useAuth } from "../../../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 export default function RoomCard({ r }: { r: IRoomCard }) {
   const { user } = useAuth();

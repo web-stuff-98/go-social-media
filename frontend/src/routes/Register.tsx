@@ -3,7 +3,7 @@ import formClasses from "../styles/FormClasses.module.scss";
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useAuth } from "../context/AuthContext";
-import ResMsg, { IResMsg } from "../components/ResMsg";
+import ResMsg, { IResMsg } from "../components/shared/ResMsg";
 
 export default function Register() {
   const { register } = useAuth();

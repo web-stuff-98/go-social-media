@@ -1,6 +1,5 @@
-import { useAuth } from "../../context/AuthContext";
 import { useInterface } from "../../context/InterfaceContext";
-import classes from "./Layout.module.scss";
+import classes from "../../styles/components/Layout.module.scss";
 
 export default function Header() {
   const { state: iState, dispatch: iDispatch } = useInterface();

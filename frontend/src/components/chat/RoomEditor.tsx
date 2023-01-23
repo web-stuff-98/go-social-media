@@ -1,7 +1,7 @@
 import { useFormik } from "formik";
-import classes from "../../../styles/components/chat/RoomEditor.module.scss";
-import formClasses from "../../../styles/FormClasses.module.scss";
-import ResMsg, { IResMsg } from "../../ResMsg";
+import classes from "../../styles/components/chat/RoomEditor.module.scss";
+import formClasses from "../../styles/FormClasses.module.scss"
+import ResMsg, { IResMsg } from "../shared/ResMsg";
 import { useState, useRef, useEffect } from "react";
 import type { ChangeEvent } from "react";
 import {
@@ -10,11 +10,11 @@ import {
   getRoomImageAsBlob,
   updateRoom,
   uploadRoomImage,
-} from "../../../services/rooms";
+} from "../../services/rooms";
 import axios from "axios";
 import { IRoomCard } from "./Rooms";
 import { z } from "zod";
-import FieldErrorTip from "../../FieldErrorTip";
+import FieldErrorTip from "../shared/FieldErrorTip";
 import { useChat } from "./Chat";
 
 export default function RoomEditor() {
@@ -134,7 +134,7 @@ export default function RoomEditor() {
               id="name"
               type="text"
             />
-            <FieldErrorTip fieldName="name" validationErrs={validationErrs} />
+            {formik.touched.name && <FieldErrorTip fieldName="name" validationErrs={validationErrs} />}
           </div>
           <div className={formClasses.inputLabelWrapper}>
             <input

@@ -1,4 +1,4 @@
-import classes from "../../../styles/components/chat/Menu.module.scss";
+import classes from "../../styles/components/chat/Menu.module.scss";
 import { ChatSection, useChat } from "./Chat";
 
 export default function Menu() {

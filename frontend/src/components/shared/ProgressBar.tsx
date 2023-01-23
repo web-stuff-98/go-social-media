@@ -1,4 +1,4 @@
-import classes from "../styles/components/ProgressBar.module.scss";
+import classes from "../../styles/components/shared/ProgressBar.module.scss";
 
 /**
  * Ratio = 0 - 1

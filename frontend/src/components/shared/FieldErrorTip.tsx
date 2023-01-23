@@ -1,8 +1,6 @@
 import ErrorTip from "./ErrorTip";
 import { Fragment } from "react";
 
-import { z } from "zod";
-
 export default function FieldErrorTip({
   validationErrs,
   fieldName,

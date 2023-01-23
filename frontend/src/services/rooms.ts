@@ -1,4 +1,4 @@
-import { IRoomCard } from "../components/layout/chat/Rooms";
+import { IRoomCard } from "../components/chat/Rooms";
 import { makeRequest } from "./makeRequest";
 
 const createRoom = (data: Pick<IRoomCard, "name">) =>

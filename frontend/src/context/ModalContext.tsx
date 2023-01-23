@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { ImSpinner8 } from "react-icons/im";
 import { BiError } from "react-icons/bi";
 
-import classes from "../styles/components/Modal.module.scss";
+import classes from "../styles/components/shared/Modal.module.scss";
 
 /**
  *

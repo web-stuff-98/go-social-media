@@ -1,20 +1,20 @@
-import { useInterface } from "../context/InterfaceContext";
-import { IPostCard } from "../routes/Blog";
+import { useInterface } from "../../context/InterfaceContext";
+import { IPostCard } from "../../routes/Blog";
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
-import classes from "../styles/components/PostCard.module.scss";
-import { deletePost, getPostThumb, voteOnPost } from "../services/posts";
+import classes from "../../styles/components/blog/PostCard.module.scss";
+import { deletePost, getPostThumb, voteOnPost } from "../../services/posts";
 import type { CancelToken, CancelTokenSource } from "axios";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import usePosts from "../context/PostsContext";
+import usePosts from "../../context/PostsContext";
 import { AiFillEdit } from "react-icons/ai";
 import { RiDeleteBin2Fill } from "react-icons/ri";
-import IconBtn from "./IconBtn";
-import { useModal } from "../context/ModalContext";
-import User from "./User";
-import { useUsers } from "../context/UsersContext";
+import IconBtn from "../shared/IconBtn";
+import { useModal } from "../../context/ModalContext";
+import User from "../shared/User";
+import { useUsers } from "../../context/UsersContext";
 import { TiArrowSortedUp, TiArrowSortedDown } from "react-icons/ti";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 export default function PostCard({
   post,

@@ -1,4 +1,4 @@
-import formClasses from "../styles/FormClasses.module.scss";
+import formClasses from "../../styles/FormClasses.module.scss";
 
 import { ImSpinner8 } from "react-icons/im";
 

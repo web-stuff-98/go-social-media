@@ -1,10 +1,9 @@
 import { useRef, useLayoutEffect, ReactElement } from "react";
-import IconBtn from "./IconBtn";
-import { IUser, useAuth } from "../context/AuthContext";
+import { IUser, useAuth } from "../../context/AuthContext";
 import { AiOutlineUser } from "react-icons/ai";
-import { useUsers } from "../context/UsersContext";
-import classes from "../styles/components/User.module.scss";
-import { useUserdropdown } from "../context/UserdropdownContext";
+import { useUsers } from "../../context/UsersContext";
+import classes from "../../styles/components/shared/User.module.scss";
+import { useUserdropdown } from "../../context/UserdropdownContext";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: "short",
@@ -129,7 +128,7 @@ export default function User({
                 ...(small
                   ? {
                       fontSize: "0.833rem",
-                      lineHeight:"0.9"
+                      lineHeight: "0.9",
                     }
                   : {}),
               }}

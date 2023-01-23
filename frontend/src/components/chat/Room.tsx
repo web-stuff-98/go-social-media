@@ -1,27 +1,27 @@
-import classes from "../../../styles/components/chat/Room.module.scss";
+import classes from "../../styles/components/chat/Room.module.scss";
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { FormEvent, ChangeEvent } from "react";
-import { getRoom } from "../../../services/rooms";
+import { getRoom } from "../../services/rooms";
 import { ChatSection, useChat } from "./Chat";
-import ResMsg, { IResMsg } from "../../ResMsg";
+import ResMsg, { IResMsg } from "../shared/ResMsg";
 import { IRoomCard } from "./Rooms";
 import RoomMessage from "./RoomMessage";
-import useSocket from "../../../context/SocketContext";
+import useSocket from "../../context/SocketContext";
 import { MdFileCopy, MdSend } from "react-icons/md";
 import { RiWebcamLine } from "react-icons/ri";
-import IconBtn from "../../IconBtn";
+import IconBtn from "../shared/IconBtn";
 import {
   instanceOfAttachmentCompleteData,
   instanceOfAttachmentProgressData,
   instanceOfChangeData,
   instanceOfRoomMessageData,
-} from "../../../utils/DetermineSocketEvent";
-import { useAuth } from "../../../context/AuthContext";
-import { useUsers } from "../../../context/UsersContext";
-import ErrorTip from "../../ErrorTip";
-import useAttachment from "../../../context/AttachmentContext";
-import { useModal } from "../../../context/ModalContext";
-import { IAttachmentData, IMsgAttachmentProgress } from "../../Attachment";
+} from "../../utils/DetermineSocketEvent";
+import { useAuth } from "../../context/AuthContext";
+import { useUsers } from "../../context/UsersContext";
+import ErrorTip from "../shared/ErrorTip";
+import useAttachment from "../../context/AttachmentContext";
+import { useModal } from "../../context/ModalContext";
+import { IAttachmentData, IMsgAttachmentProgress } from "./Attachment";
 import VideoChat from "./VideoChat";
 
 import Peer from "simple-peer";

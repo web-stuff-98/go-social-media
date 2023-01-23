@@ -13,12 +13,12 @@ import {
 } from "../services/posts";
 import { useState, useRef, useEffect } from "react";
 import type { ChangeEvent } from "react";
-import ResMsg from "../components/ResMsg";
-import type { IResMsg } from "../components/ResMsg";
+import ResMsg from "../components/shared/ResMsg";
+import type { IResMsg } from "../components/shared/ResMsg";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { z } from "zod";
-import FieldErrorTip from "../components/FieldErrorTip";
+import FieldErrorTip from "../components/shared/FieldErrorTip";
 
 export default function Editor() {
   const { slug } = useParams();
@@ -140,7 +140,7 @@ export default function Editor() {
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
             />
-            <FieldErrorTip fieldName="title" validationErrs={validationErrs} />
+            {formik.touched.title && <FieldErrorTip fieldName="title" validationErrs={validationErrs} />}
           </div>
           <div className={formClasses.inputLabelWrapper}>
             <label htmlFor="description">Description</label>
@@ -152,10 +152,10 @@ export default function Editor() {
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
             />
-            <FieldErrorTip
+            {formik.touched.description && <FieldErrorTip
               fieldName="description"
               validationErrs={validationErrs}
-            />
+            />}
           </div>
           <div className={formClasses.inputLabelWrapper}>
             <label htmlFor="tags">Tags</label>
@@ -167,7 +167,7 @@ export default function Editor() {
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
             />
-            <FieldErrorTip fieldName="tags" validationErrs={validationErrs} />
+            {formik.touched.tags && <FieldErrorTip fieldName="tags" validationErrs={validationErrs} />}
           </div>
           <div className={classes.quillOuterContainer}>
             <label htmlFor="body">Body</label>
@@ -179,7 +179,7 @@ export default function Editor() {
                 onChange={(e) => formik.setFieldValue("body", e)}
               />
             </div>
-            <FieldErrorTip fieldName="body" validationErrs={validationErrs} />
+            {formik.touched.body && <FieldErrorTip fieldName="body" validationErrs={validationErrs} />}
           </div>
           <input
             name="file"

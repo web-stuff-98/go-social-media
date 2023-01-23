@@ -1,5 +1,5 @@
-import { IPrivateMessage } from "../components/layout/chat/Conversations";
-import { IRoomMessage } from "../components/layout/chat/Room";
+import { IPrivateMessage } from "../components/chat/Conversations";
+import { IRoomMessage } from "../components/chat/Room";
 
 export type ChangeData = {
   TYPE: "CHANGE";

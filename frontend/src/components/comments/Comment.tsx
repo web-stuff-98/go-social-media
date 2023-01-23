@@ -1,7 +1,7 @@
 import { useUsers } from "../../context/UsersContext";
-import classes from "../../styles/components/Comment.module.scss";
-import IconBtn from "../IconBtn";
-import User from "../User";
+import classes from "../../styles/components/blog/Comment.module.scss";
+import IconBtn from "../shared/IconBtn";
+import User from "../shared/User";
 import { AiFillEdit } from "react-icons/ai";
 import { MdDelete } from "react-icons/md";
 import {
@@ -12,7 +12,7 @@ import {
 } from "../../services/posts";
 import { useState } from "react";
 import { FaReply } from "react-icons/fa";
-import ErrorTip from "../ErrorTip";
+import ErrorTip from "../shared/ErrorTip";
 import { CommentForm } from "./CommentForm";
 import { useModal } from "../../context/ModalContext";
 import { useAuth } from "../../context/AuthContext";

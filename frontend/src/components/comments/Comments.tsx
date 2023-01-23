@@ -1,4 +1,4 @@
-import classes from "../../styles/components/Comments.module.scss";
+import classes from "../../styles/components/blog/Comments.module.scss";
 import Comment, { IComment } from "./Comment";
 
 export default function Comments({

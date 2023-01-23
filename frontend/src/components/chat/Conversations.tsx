@@ -1,23 +1,23 @@
-import classes from "../../../styles/components/chat/Conversations.module.scss";
-import IconBtn from "../../IconBtn";
+import classes from "../../styles/components/chat/Conversations.module.scss";
+import IconBtn from "../shared/IconBtn";
 import { MdFileCopy, MdSend } from "react-icons/md";
-import User from "../../User";
-import { useUsers } from "../../../context/UsersContext";
+import User from "../shared/User";
+import { useUsers } from "../../context/UsersContext";
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { IUser, useAuth } from "../../../context/AuthContext";
+import { IUser, useAuth } from "../../context/AuthContext";
 import PrivateMessage from "./PrivateMessage";
-import useSocket from "../../../context/SocketContext";
+import useSocket from "../../context/SocketContext";
 import {
   instanceOfAttachmentCompleteData,
   instanceOfAttachmentProgressData,
   instanceOfPrivateMessageData,
-} from "../../../utils/DetermineSocketEvent";
-import { useModal } from "../../../context/ModalContext";
-import { getConversations, getConversation } from "../../../services/chat";
-import ErrorTip from "../../ErrorTip";
-import useAttachment from "../../../context/AttachmentContext";
-import { IAttachmentData, IMsgAttachmentProgress } from "../../Attachment";
+} from "../../utils/DetermineSocketEvent";
+import { useModal } from "../../context/ModalContext";
+import { getConversations, getConversation } from "../../services/chat";
+import ErrorTip from "../shared/ErrorTip";
+import useAttachment from "../../context/AttachmentContext";
+import { IAttachmentData, IMsgAttachmentProgress } from "./Attachment";
 import VideoChat from "./VideoChat";
 import { RiWebcamLine } from "react-icons/ri";
 
@@ -225,33 +225,6 @@ export default function Conversations() {
   const handleMessageInput = (e: ChangeEvent<HTMLInputElement>) =>
     setMessageInput(e.target.value);
 
-  const renderConversee = (user: IUser) => (
-    <>
-      {user ? (
-        <button
-          key={user.ID}
-          onClick={() => {
-            openConversation(user.ID);
-          }}
-          name={`Open conversation with ${user.ID}`}
-          aria-label={`Open conversation with ${user.ID}`}
-          style={
-            selectedConversation === user.ID
-              ? {
-                  background: "rgba(32,64,96,0.1666)",
-                }
-              : {}
-          }
-          className={classes.user}
-        >
-          <User small uid={user.ID} user={user} />
-        </button>
-      ) : (
-        <></>
-      )}
-    </>
-  );
-
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!selectedConversation || messageInput.length > 200) return;
@@ -288,7 +261,26 @@ export default function Conversations() {
   return (
     <>
       <div className={classes.users}>
-        {conversations.map((c) => renderConversee(getUserData(c.uid)))}
+        {conversations.map((c) => (
+              <button
+              key={c.uid}
+              onClick={() => {
+                openConversation(c.uid as string);
+              }}
+              name={`Open conversation with ${c.uid}`}
+              aria-label={`Open conversation with ${c.uid}`}
+              style={
+                selectedConversation === c.uid
+                  ? {
+                      background: "rgba(32,64,96,0.1666)",
+                    }
+                  : {}
+              }
+              className={classes.user}
+            >
+              <User small uid={c.uid} user={getUserData(c.uid)} />
+            </button>
+        ))}
       </div>
       <div className={classes.right}>
         <div className={classes.messagesAndVideoChat}>
