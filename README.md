@@ -2,6 +2,8 @@ This is the second version of my Go project, it has much cleaner structure and a
 
 I have never learned how to unit test because I test everything manually now I have to learn how to make tests so this project is worthless......
 
+I am going to rewrite the entire frontend using Jest and React testing library, and maybe add Redux and React-Query just because they are used everywhere and I'm trying to get a job
+
 It uses net/http, gorilla mux and gorilla websocket, you can download and upload attachments and watch the progress bar. It uploads the files in chunks, its also really slow because it's using MongoDB for storage on the free tier.
 
 ### Stuff
