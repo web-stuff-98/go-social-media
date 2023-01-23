@@ -3,8 +3,8 @@ This is the second version of my Go project, it has much cleaner structure and a
 It uses net/http, gorilla mux and gorilla websocket, you can download and upload attachments and watch the progress bar. It uploads the files in chunks, its also really slow because it's using MongoDB for storage on the free tier.
 
 ### Stuff
-- Nested comments
 - Group & private video chat using simple-peer
+- Nested comments
 - Types & models for socket events
 - Context API & Reducers
 - Formik
@@ -14,3 +14,5 @@ It uses net/http, gorilla mux and gorilla websocket, you can download and upload
 - Updates & DB cleanup via changestreams
 - Recursion for deleting orphans & downloading files
 - Refresh tokens
+
+I made a small documentation file called DOC.md

@@ -141,6 +141,7 @@ func RunServer(socketServer *SocketServer) {
 			for conn := range socketServer.Connections {
 				if conn == connData.Conn {
 					delete(socketServer.Connections, conn)
+					delete(socketServer.VidChatStatus, conn)
 					for _, r := range socketServer.Subscriptions {
 						for c := range r {
 							if c == connData.Conn {
@@ -350,6 +351,7 @@ func RunServer(socketServer *SocketServer) {
 		for {
 			select {
 			case <-cleanupTicker.C:
+				// Destroy empty subscriptions
 				for k, v := range socketServer.Subscriptions {
 					if len(v) == 0 {
 						socketServer.DestroySubscription <- k
