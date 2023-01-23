@@ -2,12 +2,12 @@ This is the second version of my Go project, it has much cleaner structure and a
 
 It uses net/http, gorilla mux and gorilla websocket, you can download and upload attachments and watch the progress bar. It uploads the files in chunks, its also really slow because it's using MongoDB for storage on the free tier.
 
-I wasted about 1 week trying to do uploads over websockets and getting video attachment streaming to work. The code for the video playback API route is still there but commented out. You can download videos instead of watching them in the browser, uploads are handled with a HTTP endpoint that takes in chunks of binary data.
-
-### Main features
+### Stuff
 - Nested comments
+- Group & private video chat using simple-peer
 - Types & models for socket events
-- Live updates for everything
+- Context API & Reducers
+- Formik
 - File attachments
 - Rate limiting
 - Pagination/Filtering/Sorting
