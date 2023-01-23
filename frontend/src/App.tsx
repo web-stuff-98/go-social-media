@@ -15,17 +15,17 @@ function App() {
       <MouseProvider>
         <SocketProvider>
           <UserdropdownProvider>
-            <AuthProvider>
-              <AttachmentProvider>
-                <ModalProvider>
+            <ModalProvider>
+              <AuthProvider>
+                <AttachmentProvider>
                   <PostsProvider>
                     <UsersProvider>
                       <Layout />
                     </UsersProvider>
                   </PostsProvider>
-                </ModalProvider>
-              </AttachmentProvider>
-            </AuthProvider>
+                </AttachmentProvider>
+              </AuthProvider>
+            </ModalProvider>
           </UserdropdownProvider>
         </SocketProvider>
       </MouseProvider>
