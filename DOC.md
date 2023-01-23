@@ -12,7 +12,10 @@ SocketServer handles storing data related to users & their socket connections, s
 AttachmentServer works with the attachment API handler to keep track of uploads and send status updates using the SocketServer.
 
 ### Changestreams
+MongoDB changestreams are used to watch for updates, inserts and deletes in collections. When a user is deleted for instance all of their messages, attachments, posts and rooms will be deleted, and an update will be sent to other users. This is all handled in changeStreams.go.
 
+### Cleanup
+A cleanup function runs inside of the db.go file, which also creates the database connection. The cleanup function deletes orphaned comments and votes using recursion.
 
 ### Handler dependency injection
 
