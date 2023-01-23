@@ -18,7 +18,7 @@ import {
 } from "../../utils/DetermineSocketEvent";
 import { useAuth } from "../../context/AuthContext";
 import { useUsers } from "../../context/UsersContext";
-import ErrorTip from "../shared/ErrorTip";
+import ErrorTip from "../shared/forms/ErrorTip";
 import useAttachment from "../../context/AttachmentContext";
 import { useModal } from "../../context/ModalContext";
 import { IAttachmentData, IMsgAttachmentProgress } from "./Attachment";

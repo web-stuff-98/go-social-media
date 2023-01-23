@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { MdSend } from "react-icons/md";
 import { ImSpinner8 } from "react-icons/im";
-import ErrorTip from "../shared/ErrorTip";
+import ErrorTip from "../shared/forms/ErrorTip";
 import classes from "../../styles/components/blog/CommentForm.module.scss";
 
 export function CommentForm({

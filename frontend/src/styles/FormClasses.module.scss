@@ -4,7 +4,9 @@
   gap: var(--padding-small);
   width: 100%;
   position: relative;
-
+  button {
+    margin: 0;
+  }
   label {
     padding: 0;
     margin: 0;
@@ -35,3 +37,15 @@
   animation-timing-function: linear;
 }
 
+.errorTip {
+  position: absolute;
+  left: var(--padding);
+  bottom: -1rem;
+  background: red;
+  text-align: left;
+  padding: 0 var(--padding-medium);
+  color: white;
+  z-index: 99;
+  filter: opacity(0.8);
+  border-radius: var(--border-radius-medium);
+}

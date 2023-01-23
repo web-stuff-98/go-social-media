@@ -25,6 +25,8 @@ function lerp(value1: number, value2: number, amount: number) {
   amount = amount > 1 ? 1 : amount;
   return value1 + (value2 - value1) * amount;
 }
+const normalize = (val: number, max: number, min: number) =>
+  (val - min) / (max - min);
 
 type State = {
   darkMode: boolean;
@@ -53,7 +55,8 @@ export const InterfaceProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const handleResize = () => {
-      const lo = 950;
+      //Fine control over horizontal whitespace...
+      const lo = 820;
       const hi = 1280;
       const a =
         (Math.min(hi, Math.max(window.innerWidth, lo)) - lo) / (hi - lo);
@@ -62,9 +65,16 @@ export const InterfaceProvider = ({ children }: { children: ReactNode }) => {
         window.innerWidth / 2 / 2,
         Math.pow(a, 0.8)
       );
+      let squareness =
+        window.innerWidth > window.innerHeight
+          ? window.innerHeight / window.innerWidth
+          : window.innerWidth / window.innerHeight;
+      squareness = Math.min(Math.max(0, squareness), 1);
+      squareness = normalize(squareness, 1, 0.2);
+      squareness *= squareness *= squareness;
       document.documentElement.style.setProperty(
         "--horizontal-whitespace",
-        `${window.innerWidth < lo ? 0 : v}px`
+        `${lerp(window.innerWidth < lo ? 0 : v, 0, squareness)}px`
       );
       dispatch({
         dimensions: { width: window.innerWidth, height: window.innerHeight },

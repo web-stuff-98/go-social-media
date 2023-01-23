@@ -12,7 +12,7 @@ import {
 } from "../../services/posts";
 import { useState } from "react";
 import { FaReply } from "react-icons/fa";
-import ErrorTip from "../shared/ErrorTip";
+import ErrorTip from "../shared/forms/ErrorTip";
 import { CommentForm } from "./CommentForm";
 import { useModal } from "../../context/ModalContext";
 import { useAuth } from "../../context/AuthContext";

@@ -1,5 +1,4 @@
 import classes from "../styles/pages/Editor.module.scss";
-import formClasses from "../styles/FormClasses.module.scss";
 import { useFormik } from "formik";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -11,14 +10,17 @@ import {
   updatePost,
   uploadPostImage,
 } from "../services/posts";
-import { useState, useRef, useEffect } from "react";
-import type { ChangeEvent } from "react";
+import { useState, useEffect } from "react";
 import ResMsg from "../components/shared/ResMsg";
 import type { IResMsg } from "../components/shared/ResMsg";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { z } from "zod";
-import FieldErrorTip from "../components/shared/FieldErrorTip";
+import FieldErrorTip, {
+  ValidationErr,
+} from "../components/shared/forms/FieldErrorTip";
+import FormikInputAndLabel from "../components/shared/forms/FormikInputLabel";
+import FormikFileButtonInput from "../components/shared/forms/FormikFileButtonInput";
 
 export default function Editor() {
   const { slug } = useParams();
@@ -61,7 +63,7 @@ export default function Editor() {
     pen: false,
   });
 
-  const [validationErrs, setValidationErrs] = useState<any[]>([]);
+  const [validationErrs, setValidationErrs] = useState<ValidationErr[]>([]);
 
   const Schema = z.object({
     title: z.string().max(80).min(2),
@@ -80,10 +82,10 @@ export default function Editor() {
       tags: "",
       file: undefined,
     },
-    validate: (values) => {
+    validate: (vals) => {
       if (!Schema) return;
       try {
-        Schema.parse(values);
+        Schema.parse(vals);
         setValidationErrs([]);
       } catch (error: any) {
         setValidationErrs(error.issues);
@@ -117,58 +119,40 @@ export default function Editor() {
     setOriginalImageModified(true);
   };
 
-  const handleFileInput = (e: ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    if (!e.target.files[0]) return;
-    const file = e.target.files[0];
-    formik.setFieldValue("file", file);
-    setOriginalImageModified(true);
-  };
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
   return (
     <form onSubmit={formik.handleSubmit} className={classes.container}>
       {!resMsg.pen && (
         <>
-          <div className={formClasses.inputLabelWrapper}>
-            <label htmlFor="title">Title</label>
-            <input
-              name="title"
-              id="title"
-              aria-label="title"
-              value={formik.values.title}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-            />
-            {formik.touched.title && <FieldErrorTip fieldName="title" validationErrs={validationErrs} />}
-          </div>
-          <div className={formClasses.inputLabelWrapper}>
-            <label htmlFor="description">Description</label>
-            <input
-              name="description"
-              id="description"
-              aria-label="description"
-              value={formik.values.description}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-            />
-            {formik.touched.description && <FieldErrorTip
-              fieldName="description"
-              validationErrs={validationErrs}
-            />}
-          </div>
-          <div className={formClasses.inputLabelWrapper}>
-            <label htmlFor="tags">Tags</label>
-            <input
-              name="tags"
-              id="tags"
-              aria-label="tags"
-              value={formik.values.tags}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-            />
-            {formik.touched.tags && <FieldErrorTip fieldName="tags" validationErrs={validationErrs} />}
-          </div>
+          <FormikInputAndLabel
+            name="title"
+            id="title"
+            ariaLabel="title"
+            touched={formik.touched.title}
+            validationErrs={validationErrs}
+            value={formik.values.title}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+          />
+          <FormikInputAndLabel
+            name="description"
+            id="description"
+            ariaLabel="description"
+            touched={formik.touched.description}
+            validationErrs={validationErrs}
+            value={formik.values.description}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+          />
+          <FormikInputAndLabel
+            name="tags"
+            id="tags"
+            ariaLabel="tags"
+            touched={formik.touched.tags}
+            validationErrs={validationErrs}
+            value={formik.values.tags}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+          />
           <div className={classes.quillOuterContainer}>
             <label htmlFor="body">Body</label>
             <div className={classes.quillContainer}>
@@ -179,32 +163,32 @@ export default function Editor() {
                 onChange={(e) => formik.setFieldValue("body", e)}
               />
             </div>
-            {formik.touched.body && <FieldErrorTip fieldName="body" validationErrs={validationErrs} />}
+            {formik.touched.body && (
+              <FieldErrorTip fieldName="body" validationErrs={validationErrs} />
+            )}
           </div>
-          <input
-            name="file"
-            id="file"
-            onChange={handleFileInput}
-            ref={fileInputRef}
-            type="file"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            aria-label="Select image file"
-            type="button"
-          >
-            Select image
-          </button>
-          <button
-            onClick={() => randomImage()}
-            aria-label="Select random image file"
-            type="button"
-          >
-            Random image
-          </button>
-          <button name="submit" id="submit" type="submit">
-            {slug ? "Update" : "Submit"}
-          </button>
+          <div className={classes.buttons}>
+            <FormikFileButtonInput
+              name="Image file"
+              id="file"
+              ariaLabel="Select a cover image"
+              touched={formik.touched.file}
+              accept=".jpeg,.jpg,.png"
+              validationErrs={validationErrs}
+              setFieldValue={formik.setFieldValue}
+              setOriginalChanged={setOriginalImageModified}
+            />
+            <button
+              onClick={() => randomImage()}
+              aria-label="Select random image file"
+              type="button"
+            >
+              Random image
+            </button>
+            <button name="submit" id="submit" type="submit">
+              {slug ? "Update" : "Submit"}
+            </button>
+          </div>
           {formik.values.file && (
             <img
               alt="Preview"

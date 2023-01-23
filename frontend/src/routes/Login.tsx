@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useAuth } from "../context/AuthContext";
 import ResMsg, { IResMsg } from "../components/shared/ResMsg";
+import { z } from "zod";
 
 export default function Login() {
   const { login } = useAuth();
@@ -15,6 +16,11 @@ export default function Login() {
     msg: "",
     err: false,
     pen: false,
+  });
+
+  const Schema = z.object({
+    username: z.string().max(16).min(2),
+    password: z.string().min(2).max(100),
   });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {

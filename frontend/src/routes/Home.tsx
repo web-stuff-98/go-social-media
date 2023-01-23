@@ -1,4 +1,4 @@
-import classes from "../styles/pages/Home.module.scss";
+import classes from "../styles/pages/SimplePage.module.scss";
 
 export default function Home() {
   return (

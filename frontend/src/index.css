@@ -156,12 +156,3 @@ button,
   --base-light-contrast: rgba(0, 0, 0, 0.166);
   --base-pale-contrast: rgba(0, 0, 0, 0.066);
 }
-
-@keyframes spin {
-  from {
-    transform: rotateZ(0deg);
-  }
-  to {
-    transform: rotateZ(360deg);
-  }
-}

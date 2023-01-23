@@ -88,7 +88,7 @@ export default function Page() {
 
   const handleMessage = useCallback((e: MessageEvent) => {
     const data = JSON.parse(e.data);
-    if(!data["DATA"]) return
+    if (!data["DATA"]) return;
     data["DATA"] = JSON.parse(data["DATA"]);
     console.log(data);
     if (instanceOfChangeData(data)) {
@@ -103,9 +103,7 @@ export default function Page() {
           return;
         }
         if (data.METHOD === "UPDATE_IMAGE") {
-          setImgURL(
-            `${baseURL}/api/posts/${post.ID}/image?v=` + `${Math.random()}`
-          );
+          setImgURL(`${baseURL}/api/posts/${post.ID}/image?v=${Math.random()}`);
           return;
         }
       }

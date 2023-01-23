@@ -23,13 +23,15 @@
     height: 20rem;
   }
 
-  button {
+  .buttons {
+    display: flex;
+    flex-direction: column;
+    margin: var(--padding) 0;
+    gap: var(--padding);
     width: 100%;
-    margin-top: var(--padding);
-  }
-
-  button:last-of-type {
-    margin-bottom: var(--padding);
+    button {
+      width: 100%;
+    }
   }
 
   .quillOuterContainer {
@@ -48,7 +50,7 @@
     }
   }
 
-  input[type=file] {
+  input[type="file"] {
     display: none;
   }
 

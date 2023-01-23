@@ -1,9 +1,7 @@
 import { useFormik } from "formik";
 import classes from "../../styles/components/chat/RoomEditor.module.scss";
-import formClasses from "../../styles/FormClasses.module.scss"
 import ResMsg, { IResMsg } from "../shared/ResMsg";
 import { useState, useRef, useEffect } from "react";
-import type { ChangeEvent } from "react";
 import {
   createRoom,
   getRoom,
@@ -14,8 +12,9 @@ import {
 import axios from "axios";
 import { IRoomCard } from "./Rooms";
 import { z } from "zod";
-import FieldErrorTip from "../shared/FieldErrorTip";
 import { useChat } from "./Chat";
+import FormikInputAndLabel from "../shared/forms/FormikInputLabel";
+import FormikFileButtonInput from "../shared/forms/FormikFileButtonInput";
 
 export default function RoomEditor() {
   const { editRoomId } = useChat();
@@ -110,50 +109,31 @@ export default function RoomEditor() {
     setOriginalImageChanged(true);
   };
 
-  const handleImageInput = (e: ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    if (!e.target.files[0]) return;
-    const file = e.target.files[0];
-    formik.setFieldValue("image", file);
-    setImgURL(URL.createObjectURL(file));
-    setOriginalImageChanged(true);
-  };
-
-  const imageInputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   return (
     <form onSubmit={formik.handleSubmit} className={classes.container}>
       {!resMsg.pen && (
         <>
-          <div className={formClasses.inputLabelWrapper}>
-            <label htmlFor="name">Room name</label>
-            <input
-              onChange={formik.handleChange}
-              value={formik.values.name}
-              name="name"
-              id="name"
-              type="text"
-            />
-            {formik.touched.name && <FieldErrorTip fieldName="name" validationErrs={validationErrs} />}
-          </div>
-          <div className={formClasses.inputLabelWrapper}>
-            <input
-              onChange={handleImageInput}
-              ref={imageInputRef}
-              name="image"
-              id="image"
-              type="file"
-              accept=".jpeg,.jpg,.png"
-            />
-            <button
-              onClick={() => imageInputRef.current?.click()}
-              name="Select image"
-              aria-label="Select image"
-              type="button"
-            >
-              Select image
-            </button>
-          </div>
+          <FormikInputAndLabel
+            name="name"
+            id="name"
+            ariaLabel="Room name"
+            validationErrs={validationErrs}
+            value={formik.values.name}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+          />
+          <FormikFileButtonInput
+            name="image"
+            id="image"
+            ariaLabel="Select room image"
+            accept=".jpeg,.jpeg,.png"
+            touched={formik.touched.image}
+            validationErrs={validationErrs}
+            setFieldValue={formik.setFieldValue}
+            setURL={setImgURL}
+            setOriginalChanged={setOriginalImageChanged}
+          />
           <button
             name="Random image"
             onClick={() =>
