@@ -4,8 +4,8 @@ import { useAuth } from "../context/AuthContext";
 import ResMsg, { IResMsg } from "../components/shared/ResMsg";
 import { z } from "zod";
 import { useFormik } from "formik";
-import { ValidationErr } from "../components/shared/forms/FieldErrorTip";
 import FormikInputAndLabel from "../components/shared/forms/FormikInputLabel";
+import useFormikValidate from "../hooks/useFormikValidate";
 
 export default function Register() {
   const { register } = useAuth();
@@ -16,27 +16,19 @@ export default function Register() {
     pen: false,
   });
 
-  const Schema = z.object({
-    username: z.string().max(16).min(2),
-    password: z.string().min(2).max(100),
-  });
-
-  const [validationErrs, setValidationErrs] = useState<ValidationErr[]>([]);
+  const { validate, validationErrs } = useFormikValidate(
+    z.object({
+      username: z.string().max(16).min(2),
+      password: z.string().min(2).max(100),
+    })
+  );
 
   const formik = useFormik({
     initialValues: {
       username: "",
       password: "",
     },
-    validate: (vals) => {
-      if (!Schema) return;
-      try {
-        Schema.parse(vals);
-        setValidationErrs([]);
-      } catch (error: any) {
-        setValidationErrs(error.issues);
-      }
-    },
+    validate,
     onSubmit: async (vals) => {
       if (validationErrs.length > 0) return;
       try {

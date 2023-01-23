@@ -1,4 +1,4 @@
-This is the second version of my Go project, it has much cleaner structure and actually works properly.
+This is the second version of my Go project, it has much cleaner structure and actually works 
 
 It uses net/http, gorilla mux and gorilla websocket, you can download and upload attachments and watch the progress bar. It uploads the files in chunks, its also really slow because it's using MongoDB for storage on the free tier.
 

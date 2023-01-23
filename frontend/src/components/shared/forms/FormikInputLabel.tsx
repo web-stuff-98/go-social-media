@@ -29,6 +29,7 @@ const FormikInputAndLabel = ({
   <div className={classes.inputLabelWrapper}>
     <label htmlFor={id}>{capitalize(name)}</label>
     <input
+      data-testid={id}
       name={name}
       id={id}
       aria-label={ariaLabel}
