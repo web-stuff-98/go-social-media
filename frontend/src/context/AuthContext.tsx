@@ -1,12 +1,8 @@
-import {
-  useState,
-  useContext,
-  createContext,
-  useEffect,
-} from "react";
+import { useState, useContext, createContext, useEffect } from "react";
 import type { ReactNode } from "react";
 import { makeRequest } from "../services/makeRequest";
 import useSocket from "./SocketContext";
+import { useModal } from "./ModalContext";
 
 export interface IUser {
   ID: string;
@@ -32,39 +28,62 @@ const AuthContext = createContext<{
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<IUser>();
-  const { socket, reconnectSocket, openSubscription } =
-    useSocket();
+  const { socket, reconnectSocket, openSubscription } = useSocket();
+  const { openModal } = useModal();
 
   const login = async (username: string, password: string) => {
-    const user = await makeRequest("/api/account/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json;charset=UTF-8" },
-      data: { username, password },
-      withCredentials: true,
-    });
-    reconnectSocket();
-    setUser(user);
+    try {
+      const user = await makeRequest("/api/account/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json;charset=UTF-8" },
+        data: { username, password },
+        withCredentials: true,
+      });
+      reconnectSocket();
+      setUser(user);
+    } catch (e) {
+      openModal("Message", {
+        msg: `${e}`,
+        err: true,
+        pen: false,
+      });
+    }
   };
 
   const register = async (username: string, password: string) => {
-    const user = await makeRequest("/api/account/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json;charset=UTF-8" },
-      data: { username, password },
-      withCredentials: true,
-    });
-    setUser(user);
-    reconnectSocket();
+    try {
+      const user = await makeRequest("/api/account/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json;charset=UTF-8" },
+        data: { username, password },
+        withCredentials: true,
+      });
+      setUser(user);
+      reconnectSocket();
+    } catch (e) {
+      openModal("Message", {
+        msg: `${e}`,
+        err: true,
+        pen: false,
+      });
+    }
   };
 
-  const logout = () => {
-    makeRequest("/api/account/logout", {
-      method: "POST",
-      withCredentials: true,
-    }).finally(() => {
+  const logout = async () => {
+    try {
+      await makeRequest("/api/account/logout", {
+        method: "POST",
+        withCredentials: true,
+      });
       setUser(undefined);
       reconnectSocket();
-    });
+    } catch (e) {
+      openModal("Message", {
+        msg: `${e}`,
+        err: true,
+        pen: false,
+      });
+    }
   };
 
   const deleteAccount = async () => {
@@ -82,14 +101,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     })
       .then((data) => {
         setUser(data.ID ? data : undefined);
-        reconnectSocket();
       })
       .catch((e) => {
         setUser(undefined);
-        console.warn(e);
+        reconnectSocket();
+        openModal("Message", {
+          msg: `Authentication failed: ${e}`,
+          err: true,
+          pen: false,
+        });
       });
   }, []);
-  
+
   useEffect(() => {
     const i = setInterval(async () => {
       try {
@@ -97,10 +120,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           withCredentials: true,
           method: "POST",
         });
-        if(!data.ID) setUser(undefined)
+        if (!data.ID) setUser(undefined);
       } catch (e) {
         setUser(undefined);
-        console.warn(e);
       }
       //Refresh token every 90 seconds. Token expires after 120 seconds.
     }, 90000);
