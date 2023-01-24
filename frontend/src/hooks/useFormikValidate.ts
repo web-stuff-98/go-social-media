@@ -1,12 +1,7 @@
 import { useState } from "react";
-import { z } from "zod";
 import { ValidationErr } from "../components/shared/forms/FieldErrorTip";
 
-export default function useFormikValidate({
-  schema,
-}: {
-  schema: z.ZodObject<any>;
-}) {
+export default function useFormikValidate(schema: any) {
   const [validationErrs, setValidationErrs] = useState<ValidationErr[]>([]);
 
   const validate = (vals: object) => {

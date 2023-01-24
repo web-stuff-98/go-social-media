@@ -105,11 +105,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .catch((e) => {
         setUser(undefined);
         reconnectSocket();
-        openModal("Message", {
-          msg: `Authentication failed: ${e}`,
-          err: true,
-          pen: false,
-        });
       });
   }, []);
 
