@@ -37,6 +37,15 @@
   animation-timing-function: linear;
 }
 
+@keyframes spin {
+  from {
+    transform: rotateZ(0deg);
+  }
+  to {
+    transform: rotateZ(360deg);
+  }
+}
+
 .errorTip {
   position: absolute;
   left: var(--padding);
