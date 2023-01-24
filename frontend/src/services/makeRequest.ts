@@ -9,12 +9,14 @@ const api = axios.create({
   baseURL,
 });
 
-export function makeRequest(url: string, options?: AxiosRequestConfig) {
+// I have to use type "any" instead of "AxiosRequestConfig" because
+// after updating axios it causes stupid errors
+export function makeRequest(url: string, options?: any) {
   return api(url, options)
-    .then((res) => res.data)
-    .catch((error) =>
+    .then((res:any) => res.data)
+    .catch((e:any) =>
       Promise.reject(
-        (error.response?.data.msg ?? "Error").replace("Error: ", "")
+        (e.response?.data.msg ?? "Error").replace("Error: ", "")
       )
     );
 }

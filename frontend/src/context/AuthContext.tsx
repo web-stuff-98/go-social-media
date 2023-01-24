@@ -99,10 +99,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       withCredentials: true,
       method: "POST",
     })
-      .then((data) => {
+      .then((data:any) => {
         setUser(data.ID ? data : undefined);
       })
-      .catch((e) => {
+      .catch((e:unknown) => {
         setUser(undefined);
         reconnectSocket();
       });

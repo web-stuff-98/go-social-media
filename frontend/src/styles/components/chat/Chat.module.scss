@@ -1,3 +1,5 @@
+
+
 .container {
   position: fixed;
   right: calc(var(--padding-medium) + var(--horizontal-whitespace));
@@ -9,6 +11,17 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0px 2px 3px rgba(0,0,0,0.166);
+
+  .chatIconButton {
+    color:var(--text-color);
+    background: none;
+    border: none;
+    padding: none;
+    svg {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
+  }
 
   .topTray {
     display: flex;

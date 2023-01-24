@@ -8,9 +8,11 @@ import { useInterface } from "../../context/InterfaceContext";
 import { useMouse } from "../../context/MouseContext";
 import Header from "./Header";
 import Chat from "../chat/Chat";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Layout() {
   const { state: iState } = useInterface();
+  const { user } = useAuth();
   const { pathname } = useLocation();
   const mousePos = useMouse();
 
@@ -88,7 +90,7 @@ export default function Layout() {
       </div>
       <Header />
       <Nav />
-      <Chat />
+      {user && <Chat />}
       <main style={getStyle()}>
         <Outlet />
       </main>

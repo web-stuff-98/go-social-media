@@ -3,14 +3,7 @@ import IconBtn from "../shared/IconBtn";
 import { IoMdClose } from "react-icons/io";
 import Conversations from "./Conversations";
 import { MdMenu } from "react-icons/md";
-import {
-  useState,
-  createContext,
-  useContext,
-  useRef,
-  useCallback,
-  useEffect,
-} from "react";
+import { useState, createContext, useContext, useRef, useEffect } from "react";
 import Menu from "./Menu";
 import RoomEditor from "./RoomEditor";
 import Rooms from "./Rooms";
@@ -25,6 +18,7 @@ import {
   instanceOfVidUserLeft,
 } from "../../utils/DetermineSocketEvent";
 import useSocket from "../../context/SocketContext";
+import { BsFillChatRightFill } from "react-icons/bs";
 
 import * as process from "process";
 (window as any).process = process;
@@ -84,6 +78,7 @@ export default function Chat() {
   const [section, setSection] = useState<ChatSection>(ChatSection.MENU);
   const [roomId, setRoomId] = useState("");
   const [editRoomId, setEditRoomId] = useState("");
+  const [chatOpen, setChatOpen] = useState(false);
 
   const openRoom = (id: string) => {
     setRoomId(id);
@@ -252,52 +247,74 @@ export default function Chat() {
 
   return (
     <div
-      style={
-        pathname.includes("/blog")
+      style={{
+        ...(pathname.includes("/blog")
           ? { bottom: "calc(var(--pagination-controls) + var(--padding))" }
-          : {}
-      }
+          : {}),
+        ...(chatOpen
+          ? {}
+          : { border: "none", background: "none", boxShadow: "none" }),
+      }}
       className={classes.container}
     >
-      <div className={classes.topTray}>
-        {section}
-        <div className={classes.icons}>
-          <IconBtn
-            onClick={() => setSection(ChatSection.MENU)}
-            name="Chat menu"
-            ariaLabel="Chat menu"
-            Icon={MdMenu}
-          />
-          <IconBtn name="Close chat" ariaLabel="Close chat" Icon={IoMdClose} />
-        </div>
-      </div>
-      <ChatContext.Provider
-        value={{
-          section,
-          setSection,
-          roomId,
-          editRoomId,
-          openRoom,
-          openRoomEditor,
-          initVideo,
-          isStreaming,
-          peers,
-          leftVidChat,
-          userStream: userStream.current,
-        }}
-      >
-        <div className={classes.inner}>
-          {
-            {
-              Conversations: <Conversations />,
-              Rooms: <Rooms />,
-              Room: <Room />,
-              Editor: <RoomEditor />,
-              Menu: <Menu />,
-            }[section]
-          }
-        </div>
-      </ChatContext.Provider>
+      {chatOpen ? (
+        <>
+          <div className={classes.topTray}>
+            {section}
+            <div className={classes.icons}>
+              {section !== ChatSection.MENU && (
+                <IconBtn
+                  onClick={() => setSection(ChatSection.MENU)}
+                  name="Chat menu"
+                  ariaLabel="Chat menu"
+                  Icon={MdMenu}
+                />
+              )}
+              <IconBtn
+                name="Close chat"
+                ariaLabel="Close chat"
+                onClick={() => setChatOpen(false)}
+                Icon={IoMdClose}
+              />
+            </div>
+          </div>
+          <ChatContext.Provider
+            value={{
+              section,
+              setSection,
+              roomId,
+              editRoomId,
+              openRoom,
+              openRoomEditor,
+              initVideo,
+              isStreaming,
+              peers,
+              leftVidChat,
+              userStream: userStream.current,
+            }}
+          >
+            <div className={classes.inner}>
+              {
+                {
+                  Conversations: <Conversations />,
+                  Rooms: <Rooms />,
+                  Room: <Room />,
+                  Editor: <RoomEditor />,
+                  Menu: <Menu />,
+                }[section]
+              }
+            </div>
+          </ChatContext.Provider>
+        </>
+      ) : (
+        <button
+          aria-label="Open chat"
+          onClick={() => setChatOpen(true)}
+          className={classes.chatIconButton}
+        >
+          <BsFillChatRightFill />
+        </button>
+      )}
     </div>
   );
 }

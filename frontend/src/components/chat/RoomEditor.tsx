@@ -15,6 +15,7 @@ import { z } from "zod";
 import { useChat } from "./Chat";
 import FormikInputAndLabel from "../shared/forms/FormikInputLabel";
 import FormikFileButtonInput from "../shared/forms/FormikFileButtonInput";
+import useFormikValidate from "../../hooks/useFormikValidate";
 
 export default function RoomEditor() {
   const { editRoomId } = useChat();
@@ -50,23 +51,13 @@ export default function RoomEditor() {
       });
   };
 
-  const Schema = z.object({
+  const { validate, validationErrs } = useFormikValidate(z.object({
     name: z.string().max(16).min(2),
-  });
-
-  const [validationErrs, setValidationErrs] = useState<any[]>([]);
+  }))
 
   const formik = useFormik({
     initialValues: { name: "", image: null },
-    validate: (values) => {
-      if (!Schema) return;
-      try {
-        Schema.parse(values);
-        setValidationErrs([]);
-      } catch (error: any) {
-        setValidationErrs(error.issues);
-      }
-    },
+    validate,
     onSubmit: async (vals) => {
       if (validationErrs.length > 0) return;
       try {

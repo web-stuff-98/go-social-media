@@ -21,6 +21,7 @@ import FieldErrorTip, {
 } from "../components/shared/forms/FieldErrorTip";
 import FormikInputAndLabel from "../components/shared/forms/FormikInputLabel";
 import FormikFileButtonInput from "../components/shared/forms/FormikFileButtonInput";
+import useFormikValidate from "../hooks/useFormikValidate";
 
 export default function Editor() {
   const { slug } = useParams();
@@ -35,7 +36,7 @@ export default function Editor() {
   const loadPostIntoEditor = (slug: string) => {
     setResMsg({ msg: "Loading post...", err: false, pen: true });
     getPost(slug)
-      .then((p) => {
+      .then((p:any) => {
         formik.setFieldValue("title", p.title);
         formik.setFieldValue("description", p.description);
         formik.setFieldValue("body", p.body);
@@ -63,16 +64,16 @@ export default function Editor() {
     pen: false,
   });
 
-  const [validationErrs, setValidationErrs] = useState<ValidationErr[]>([]);
-
-  const Schema = z.object({
-    title: z.string().max(80).min(2),
-    description: z.string().min(10).max(100),
-    body: z.string().min(10).max(8000),
-    tags: z.string().refine((v) => v.split("#").filter((t) => t).length < 8, {
-      message: "Max 8 tags",
-    }),
-  });
+  const { validate, validationErrs } = useFormikValidate(
+    z.object({
+      title: z.string().max(80).min(2),
+      description: z.string().min(10).max(100),
+      body: z.string().min(10).max(8000),
+      tags: z.string().refine((v) => v.split("#").filter((t) => t).length < 8, {
+        message: "Max 8 tags",
+      }),
+    })
+  );
 
   const formik = useFormik({
     initialValues: {
@@ -82,15 +83,7 @@ export default function Editor() {
       tags: "",
       file: undefined,
     },
-    validate: (vals) => {
-      if (!Schema) return;
-      try {
-        Schema.parse(vals);
-        setValidationErrs([]);
-      } catch (error: any) {
-        setValidationErrs(error.issues);
-      }
-    },
+    validate,
     onSubmit: async (vals) => {
       if (validationErrs.length > 0) return;
       try {

@@ -5,7 +5,7 @@ import User from "../shared/User";
 import { useUsers } from "../../context/UsersContext";
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { IUser, useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import PrivateMessage from "./PrivateMessage";
 import useSocket from "../../context/SocketContext";
 import {
