@@ -81,7 +81,7 @@ type OutAttachmentMetadata struct {
 	Length   float32 `json:"length"`
 }
 
-// Chunkdata bytes is 2mb max
+// Chunkdata bytes is 1mb max
 type AttachmentChunk struct {
 	ID        primitive.ObjectID `bson:"_id"`     // The first chunk should be the same as the message ID
 	NextChunk primitive.ObjectID `bson:"next_id"` // If its the last chunk NextChunk will be nil ObjectID (000000000000000000000000)
