@@ -1,8 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { screen, render } from "@testing-library/react";
 import { unmountComponentAtNode } from "react-dom";
 import { BrowserRouter } from "react-router-dom";
 import { UsersContext } from "../../context/UsersContext";
-import PageContent from "./PageContent";
+import PostCard from "./PostCard";
 
 let container = null;
 
@@ -17,19 +17,18 @@ const getUserData = jest.fn().mockImplementation(() => {
 
 const mockPost = {
   ID: "123",
-  title: "Test title",
-  description: "Test description",
+  title: "Test post title",
+  description: "Test post description",
+  slug: "/post/test-post",
   tags: ["TestTag1", "TestTag2"],
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
-  slug: "test-title",
-  img_blur: "",
   vote_pos_count: 3,
   vote_neg_count: 3,
+  img_blur: "placeholder",
+  img_url: "placeholder",
   my_vote: null,
-  img_url: "",
-  body: "Test body",
-  author_id: "1",
+  author_id: "1"
 };
 
 beforeEach(() => {
@@ -50,39 +49,45 @@ afterEach(() => {
   container = null;
 });
 
-describe("post page content", () => {
-  test("should render the blog post heading, subheading, HTML content, author & voting buttons", async () => {
+describe("blog post feed card", () => {
+  test("should render the post card inside an article container with the title, description, tags, author and voting buttons", () => {
     render(
       <BrowserRouter>
         <UsersContext.Provider
-          value={{ getUserData, users: [{ ID: "1", username: "Test User" }] }}
+          value={{ getUserData, users: [{ ID: 1, username: "Test user" }] }}
         >
-          <PageContent post={mockPost} setPost={jest.fn()} />
+          <PostCard post={mockPost} />
         </UsersContext.Provider>
       </BrowserRouter>,
       container
     );
 
-    const heading = screen.getByTestId("heading");
-    const subheading = screen.getByTestId("subheading");
-    const content = screen.getByTestId("content");
+    const articleContainer = screen.getByRole("article");
+    const title = screen.getByText(mockPost.title);
+    const description = screen.getByText(mockPost.description);
     const author = screen.getByTestId("author");
+    const expectTags = [];
+    mockPost.tags.forEach((t) => {
+      expectTags.push(screen.getByText(t));
+    });
 
     upvoteBtn = screen.getByRole("button", {
       name: "Vote up",
       hidden: true,
     });
+
     downvoteBtn = screen.getByRole("button", {
       name: "Vote down",
       hidden: true,
     });
 
-    expect(heading).toBeInTheDocument;
-    expect(subheading).toBeInTheDocument;
-    expect(content).toBeInTheDocument;
+    expect(articleContainer).toBeInTheDocument;
+    expect(title).toBeInTheDocument;
+    expect(description).toBeInTheDocument;
     expect(author).toBeInTheDocument;
     expect(upvoteBtn).toBeInTheDocument;
     expect(downvoteBtn).toBeInTheDocument;
+    expectTags.forEach((t) => expect(t).toBeInTheDocument);
   });
 
   test("clicking vote up should make a fetch request", () => {

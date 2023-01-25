@@ -93,9 +93,11 @@ export default function PostCard({
   const renderUser = (uid: string) => {
     return (
       <User
+        testid="author"
         AdditionalStuff={
           <div className={classes.votesContainer}>
             <IconBtn
+              testid="Vote up"
               ariaLabel="Vote up"
               name="Vote up"
               style={{
@@ -137,6 +139,7 @@ export default function PostCard({
               (post.vote_neg_count +
                 (post.my_vote ? (post.my_vote.is_upvote ? 0 : 1) : 0))}
             <IconBtn
+              testid="Vote down"
               ariaLabel="Vote down"
               name="Vote down"
               style={{
@@ -256,6 +259,7 @@ export default function PostCard({
               <div className={classes.tags}>
                 {post.tags.map((t) => (
                   <button
+                    data-testid={t}
                     onClick={() => addOrRemoveTagInParams(t)}
                     key={t}
                     aria-label={`Tag: ${t}`}
