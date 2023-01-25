@@ -7,6 +7,7 @@ import classes from "../../styles/components/shared/ProgressBar.module.scss";
 export default function ProgressBar({ ratio }: { ratio: number }) {
   return (
     <div
+    data-testid="Progress bar"
       aria-label={`${Math.floor(ratio * 100)}% completed`}
       className={classes.container}
     >

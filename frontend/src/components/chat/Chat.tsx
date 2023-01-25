@@ -91,6 +91,9 @@ export default function Chat() {
   };
 
   //////////////// VIDEO CHAT STUFF \\\\\\\\\\\\\\\\
+  // The socket event handler functions were wrapped
+  // in useCallback but I got rid of that because it
+  // was breaking video chat for some reason.
   const userStream = useRef<MediaStream | undefined>(undefined);
   const [isStreaming, setIsStreaming] = useState(false);
   const initVideo = async (cb: Function) => {

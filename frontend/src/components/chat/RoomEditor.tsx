@@ -137,7 +137,7 @@ export default function RoomEditor() {
           >
             Random image
           </button>
-          <button type="submit">Create</button>
+          <button type="submit">{editRoomId ? "Update" : "Create"}</button>
           {formik.values.image && (
             <img
               ref={imgRef}

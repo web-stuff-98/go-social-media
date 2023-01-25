@@ -4,6 +4,11 @@ import AsidePostCard from "./AsidePostCard";
 
 let container = null;
 
+const mockPost = {
+  ID: "123",
+  title: "Test post",
+};
+
 beforeEach(() => {
   container = document.createElement("div");
   document.body.appendChild(container);
@@ -16,20 +21,12 @@ afterEach(() => {
 });
 
 describe("the aside post card component for the recent posts feed", () => {
-  test("should render the post card in an article element with a link and title heading", () => {
-    render(
-      <AsidePostCard
-        post={{
-          ID: "123",
-          title: "Test post",
-        }}
-      />,
-      container
-    );
+  test("should render the post card in an article element with the heading inside of an anchor element", () => {
+    render(<AsidePostCard post={mockPost} />, container);
 
     const articleContainer = screen.getByRole("article");
     const link = screen.getByRole("link");
-    const heading = screen.getByRole("heading");
+    const heading = screen.getByText(mockPost.title);
 
     expect(articleContainer).toBeInTheDocument;
     expect(link).toBeInTheDocument;

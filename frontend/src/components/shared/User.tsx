@@ -1,4 +1,4 @@
-import { useRef, useLayoutEffect } from "react";
+import { useRef, useEffect } from "react";
 import type { ReactElement } from "react";
 import { IUser, useAuth } from "../../context/AuthContext";
 import { AiOutlineUser } from "react-icons/ai";
@@ -46,13 +46,12 @@ export default function User({
       userLeftView(uid);
     }
   });
-  useLayoutEffect(() => {
+  useEffect(() => {
     observer.observe(containerRef.current!);
     return () => {
-      if (uid) userLeftView(uid);
       observer.disconnect();
     };
-  }, [containerRef.current]);
+  }, []);
 
   const getDateString = (date: Date) => dateFormatter.format(date);
   const renderDateTime = (dateString: string) => {

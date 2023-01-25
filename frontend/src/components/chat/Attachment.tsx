@@ -62,7 +62,13 @@ export default function Attachment({
             <>
               {
                 {
-                  image: <h1>Image</h1>,
+                  image: (
+                    <img
+                      alt={metaData?.name}
+                      className={classes.image}
+                      src={`${baseURL}/api/attachment/download/${msgId}`}
+                    />
+                  ),
                   file: (
                     <>
                       <a
@@ -82,7 +88,7 @@ export default function Attachment({
                       </button>
                     </>
                   ),
-                  incomplete: <h1>Incomplete</h1>,
+                  incomplete: <h1>this should never be visible</h1>,
                 }[type]
               }
             </>

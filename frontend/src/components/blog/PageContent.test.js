@@ -15,6 +15,9 @@ const getUserData = jest.fn().mockImplementation(() => {
   }));
 });
 
+const userEnteredView = jest.fn().mockImplementation((uid) => {});
+const userLeftView = jest.fn().mockImplementation((uid) => {});
+
 const mockPost = {
   ID: "123",
   title: "Test title",
@@ -28,7 +31,7 @@ const mockPost = {
   vote_neg_count: 3,
   my_vote: null,
   img_url: "",
-  body: "Test body",
+  body: "<p>Test body</p>",
   author_id: "1",
 };
 
@@ -55,7 +58,12 @@ describe("post page content", () => {
     render(
       <BrowserRouter>
         <UsersContext.Provider
-          value={{ getUserData, users: [{ ID: "1", username: "Test User" }] }}
+          value={{
+            getUserData,
+            userEnteredView,
+            userLeftView,
+            users: [{ ID: "1", username: "Test user" }],
+          }}
         >
           <PageContent post={mockPost} setPost={jest.fn()} />
         </UsersContext.Provider>

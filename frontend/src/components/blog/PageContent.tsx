@@ -1,6 +1,6 @@
 import { useUsers } from "../../context/UsersContext";
 import { IPost } from "../../routes/Page";
-import classes from "../../styles/pages/Post.module.scss";
+import classes from "../../styles/pages/Page.module.scss";
 import IconBtn from "../shared/IconBtn";
 import User from "../shared/User";
 import { TiArrowSortedUp, TiArrowSortedDown } from "react-icons/ti";

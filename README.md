@@ -1,4 +1,4 @@
-This is the second version of my Go project, and it actually works. Its also the successor to Prisma-Social-Media which was messy and probably much slower than this.
+This is the second version of my Go project, and it actually works. Its also the successor to Prisma-Social-Media which was quite messy and probably much slower than this.
 
 I already completed the project doing manual testing, I just wrote basic unit tests that check if things are rendering and requests are being made because I keep getting errors that don't have any solutions online when I try to write unit
 tests for anything complex. I will improve the tests if I can figure out how to resolve annoying Jest errors.
@@ -7,7 +7,7 @@ I also added a file called DOC.md which is supposed to explain how everything wo
 
 I may also replace the React Context API with Redux and maybe replace my useEffect API calls with SWR or React Query
 
-It uses net/http, gorilla mux and gorilla websocket, you can download and upload attachments and watch the progress bar. It uploads the files in chunks, uploads are also really slow because it's using MongoDB for storage on the free tier.
+It uses net/http, gorilla mux and gorilla websocket, you can video chat in groups or in private and download and upload attachments and watch the progress bar. It uploads the files in chunks, uploads are also really slow because it's using MongoDB for storage on the free tier.
 
 It is not hosted yet, I will host it soon after I refactor stuff and decide when I am done.
 

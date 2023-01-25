@@ -15,6 +15,9 @@ const getUserData = jest.fn().mockImplementation(() => {
   }));
 });
 
+const userEnteredView = jest.fn().mockImplementation((uid) => {});
+const userLeftView = jest.fn().mockImplementation((uid) => {});
+
 const mockPost = {
   ID: "123",
   title: "Test post title",
@@ -27,8 +30,9 @@ const mockPost = {
   vote_neg_count: 3,
   img_blur: "placeholder",
   img_url: "placeholder",
+  body: "<p>Test body</p>",
   my_vote: null,
-  author_id: "1"
+  author_id: "1",
 };
 
 beforeEach(() => {
@@ -54,7 +58,12 @@ describe("blog post feed card", () => {
     render(
       <BrowserRouter>
         <UsersContext.Provider
-          value={{ getUserData, users: [{ ID: 1, username: "Test user" }] }}
+          value={{
+            getUserData,
+            userEnteredView,
+            userLeftView,
+            users: [{ ID: 1, username: "Test user" }],
+          }}
         >
           <PostCard post={mockPost} />
         </UsersContext.Provider>

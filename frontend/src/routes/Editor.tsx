@@ -16,9 +16,7 @@ import type { IResMsg } from "../components/shared/ResMsg";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { z } from "zod";
-import FieldErrorTip, {
-  ValidationErr,
-} from "../components/shared/forms/FieldErrorTip";
+import FieldErrorTip from "../components/shared/forms/FieldErrorTip";
 import FormikInputAndLabel from "../components/shared/forms/FormikInputLabel";
 import FormikFileButtonInput from "../components/shared/forms/FormikFileButtonInput";
 import useFormikValidate from "../hooks/useFormikValidate";
