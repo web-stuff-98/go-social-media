@@ -22,3 +22,4 @@ It uses net/http, gorilla mux and gorilla websocket, you can download and upload
 - Updates & DB cleanup via changestreams
 - Recursion for deleting orphans & downloading files
 - Refresh tokens
+- Live updates for everything
