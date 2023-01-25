@@ -1,8 +1,13 @@
-import { screen, render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { unmountComponentAtNode } from "react-dom";
 import AsidePostCard from "./AsidePostCard";
 
 let container = null;
+
+const mockPost = {
+  ID: "123",
+  title: "Test post",
+};
 
 beforeEach(() => {
   container = document.createElement("div");
@@ -15,19 +20,16 @@ afterEach(() => {
   container = null;
 });
 
-describe("aside post card component", () => {
-  test("should render the title of the post inside of a link", () => {
-    render(
-      <AsidePostCard
-        post={{ title: "Post title", slug: "/page/post-title" }}
-      />,
-      container
-    );
+describe("the aside post card component for the recent posts feed", () => {
+  test("should render the post card in an article element with the heading inside of an anchor element", () => {
+    render(<AsidePostCard post={mockPost} />, container);
 
-    const linkElement = screen.getByRole("link");
-    const titleElement = screen.getByRole("heading");
+    const articleContainer = screen.getByRole("article");
+    const link = screen.getByRole("link");
+    const heading = screen.getByText(mockPost.title);
 
-    expect(linkElement).toBeInTheDocument();
-    expect(titleElement).toBeInTheDocument();
+    expect(articleContainer).toBeInTheDocument;
+    expect(link).toBeInTheDocument;
+    expect(heading).toBeInTheDocument;
   });
 });

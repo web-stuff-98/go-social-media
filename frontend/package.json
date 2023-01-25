@@ -57,6 +57,19 @@
     "@testing-library/jest-dom": "^5.16.5",
     "@types/jest": "^29.2.6",
     "@types/lodash": "^4.14.191",
-    "@types/simple-peer": "^9.11.5"
+    "@types/simple-peer": "^9.11.5",
+    "ts-jest": "^29.0.5"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.ts?$": "ts-jest"
+    },
+    "transformIgnorePatterns": [
+      "<rootDir>/node_modules/"
+    ],
+    "moduleNameMapper": {
+      "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/__mocks__/fileMock.js",
+      "\\.(css|less|scss|sass)$": "identity-obj-proxy"
+    }
   }
 }
