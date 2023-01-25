@@ -24,8 +24,8 @@ describe("aside post card component", () => {
       container
     );
 
-    const linkElement = screen.findByRole("link");
-    const titleElement = screen.findByRole("heading");
+    const linkElement = screen.getByRole("link");
+    const titleElement = screen.getByRole("heading");
 
     expect(linkElement).toBeInTheDocument();
     expect(titleElement).toBeInTheDocument();
