@@ -9,6 +9,8 @@ I may also replace the React Context API with Redux and maybe replace my useEffe
 
 It uses net/http, gorilla mux and gorilla websocket, you can download and upload attachments and watch the progress bar. It uploads the files in chunks, uploads are also really slow because it's using MongoDB for storage on the free tier.
 
+It is not hosted yet, I will host it soon after I refactor stuff and decide when I am done.
+
 ### Stuff
 
 - Group & private video chat using simple-peer
