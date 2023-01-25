@@ -61,7 +61,7 @@ export default function Comment({
     <div className={classes.container}>
       <div className={classes.top}>
         <User
-          additionalStuff={[
+          AdditionalStuff={
             <div className={classes.userIcons}>
               <div className={classes.vert}>
                 <div className={classes.votesContainer}>
@@ -161,8 +161,8 @@ export default function Comment({
                   />
                 </div>
               )}
-            </div>,
-          ]}
+            </div>
+          }
           date={comment.created_at ? new Date(comment.created_at) : new Date()}
           uid={comment.author_id}
           user={getUserData(comment.author_id)}

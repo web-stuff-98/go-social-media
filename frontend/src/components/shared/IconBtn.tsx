@@ -3,6 +3,7 @@ import { IconType } from "react-icons/lib";
 import classes from "../../styles/components/shared/IconBtn.module.scss";
 
 const IconBtn = ({
+  testid,
   Icon,
   children,
   name,
@@ -14,6 +15,7 @@ const IconBtn = ({
   type = "button",
   ...props
 }: {
+  testid?: string;
   Icon: IconType;
   children?: ReactNode;
   name: string;

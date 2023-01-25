@@ -16,7 +16,7 @@ type DisappearedUser = {
   disappearedAt: Date;
 };
 
-const UsersContext = createContext<{
+export const UsersContext = createContext<{
   users: IUser[];
   getUserData: (uid: string) => IUser;
   cacheUserData: (uid: string, force?: boolean) => void;

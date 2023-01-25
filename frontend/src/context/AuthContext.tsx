@@ -32,41 +32,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { openModal } = useModal();
 
   const login = async (username: string, password: string) => {
-    try {
-      const user = await makeRequest("/api/account/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json;charset=UTF-8" },
-        data: { username, password },
-        withCredentials: true,
-      });
-      reconnectSocket();
-      setUser(user);
-    } catch (e) {
-      openModal("Message", {
-        msg: `${e}`,
-        err: true,
-        pen: false,
-      });
-    }
+    const user = await makeRequest("/api/account/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json;charset=UTF-8" },
+      data: { username, password },
+      withCredentials: true,
+    });
+    reconnectSocket();
+    setUser(user);
   };
 
   const register = async (username: string, password: string) => {
-    try {
-      const user = await makeRequest("/api/account/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json;charset=UTF-8" },
-        data: { username, password },
-        withCredentials: true,
-      });
-      setUser(user);
-      reconnectSocket();
-    } catch (e) {
-      openModal("Message", {
-        msg: `${e}`,
-        err: true,
-        pen: false,
-      });
-    }
+    const user = await makeRequest("/api/account/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json;charset=UTF-8" },
+      data: { username, password },
+      withCredentials: true,
+    });
+    setUser(user);
+    reconnectSocket();
   };
 
   const logout = async () => {
@@ -99,10 +83,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       withCredentials: true,
       method: "POST",
     })
-      .then((data:any) => {
+      .then((data: any) => {
         setUser(data.ID ? data : undefined);
       })
-      .catch((e:unknown) => {
+      .catch((e: unknown) => {
         setUser(undefined);
         reconnectSocket();
       });

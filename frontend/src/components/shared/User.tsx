@@ -1,4 +1,5 @@
-import { useRef, useLayoutEffect, ReactElement } from "react";
+import { useRef, useLayoutEffect } from "react";
+import type { ReactElement } from "react";
 import { IUser, useAuth } from "../../context/AuthContext";
 import { AiOutlineUser } from "react-icons/ai";
 import { useUsers } from "../../context/UsersContext";
@@ -17,8 +18,9 @@ export default function User({
   date,
   reverse,
   light,
-  additionalStuff,
+  AdditionalStuff,
   small,
+  testid,
 }: {
   user?: IUser;
   uid: string;
@@ -26,8 +28,9 @@ export default function User({
   date?: Date;
   reverse?: boolean;
   light?: boolean;
-  additionalStuff?: ReactElement[];
+  AdditionalStuff?: ReactElement;
   small?: boolean;
+  testid?: string;
 }) {
   const { userEnteredView, cacheUserData, userLeftView } = useUsers();
   const { openUserdropdown } = useUserdropdown();
@@ -70,6 +73,7 @@ export default function User({
 
   return (
     <div
+      data-testid={testid}
       style={reverse ? { flexDirection: "row-reverse" } : {}}
       ref={containerRef}
       className={classes.container}
@@ -108,10 +112,8 @@ export default function User({
               />
             )}
           </span>
-          {additionalStuff && (
-            <div className={classes.additionalStuff}>
-              {additionalStuff.map((btn) => btn)}
-            </div>
+          {AdditionalStuff && (
+            <div className={classes.additionalStuff}>{AdditionalStuff}</div>
           )}
           <div
             style={{
@@ -139,6 +141,9 @@ export default function User({
             {date && renderDateTime(getDateString(date))}
           </div>
         </>
+      )}
+      {!user && AdditionalStuff && (
+        <div className={classes.additionalStuff}>{AdditionalStuff}</div>
       )}
     </div>
   );

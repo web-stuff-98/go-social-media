@@ -93,7 +93,7 @@ export default function PostCard({
   const renderUser = (uid: string) => {
     return (
       <User
-        additionalStuff={[
+        AdditionalStuff={
           <div className={classes.votesContainer}>
             <IconBtn
               ariaLabel="Vote up"
@@ -173,8 +173,8 @@ export default function PostCard({
                     });
               }}
             />
-          </div>,
-        ]}
+          </div>
+        }
         reverse={reverse}
         date={new Date(post.created_at || 0)}
         uid={uid}
