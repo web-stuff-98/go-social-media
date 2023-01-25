@@ -1,7 +1,7 @@
 import classes from "../styles/pages/Page.module.scss";
 import { IPostCard } from "./Blog";
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { getPost, submitComment, voteOnPost } from "../services/posts";
+import { getPost, submitComment } from "../services/posts";
 import { useNavigate, useParams } from "react-router-dom";
 import ResMsg, { IResMsg } from "../components/shared/ResMsg";
 import useSocket from "../context/SocketContext";
@@ -15,10 +15,6 @@ import { CommentForm } from "../components/comments/CommentForm";
 import { IComment } from "../components/comments/Comment";
 import Comments from "../components/comments/Comments";
 import { useUsers } from "../context/UsersContext";
-import User from "../components/shared/User";
-import { TiArrowSortedUp, TiArrowSortedDown } from "react-icons/ti";
-import IconBtn from "../components/shared/IconBtn";
-import { useModal } from "../context/ModalContext";
 import { useAuth } from "../context/AuthContext";
 import PageContent from "../components/blog/PageContent";
 
@@ -29,8 +25,7 @@ export interface IPost extends IPostCard {
 export default function Page() {
   const { openSubscription, closeSubscription, socket } = useSocket();
   const { slug } = useParams();
-  const { openModal } = useModal();
-  const { cacheUserData, getUserData } = useUsers();
+  const { cacheUserData } = useUsers();
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -95,7 +90,6 @@ export default function Page() {
     const data = JSON.parse(e.data);
     if (!data["DATA"]) return;
     data["DATA"] = JSON.parse(data["DATA"]);
-    console.log(data);
     if (instanceOfChangeData(data)) {
       if (data.ENTITY === "POST") {
         if (data.DATA.ID !== post?.ID) return;

@@ -119,7 +119,6 @@ export default function Chat() {
 
   const handleVidChatAllUsers = (uids: string[]) => {
     const peers: PeerWithID[] = [];
-    console.log("All users");
     if (uids)
       uids.forEach((id) => {
         const peer = createPeer(id);
@@ -136,7 +135,6 @@ export default function Chat() {
     signal: Peer.SignalData,
     callerUID: string
   ) => {
-    console.log("User joined");
     const peer = addPeer(signal, callerUID);
     setPeers((peers) => [...peers, { peer, UID: callerUID }]);
     peersRef.current.push({
@@ -149,7 +147,6 @@ export default function Chat() {
     signal: Peer.SignalData,
     id: string
   ) => {
-    console.log("Receiving returned signal");
     const item = peersRef.current.find((p) => p.UID === id);
     setTimeout(() => {
       item?.peer.signal(signal);
@@ -157,7 +154,6 @@ export default function Chat() {
   };
 
   const handleVidChatUserLeft = (id: string) => {
-    console.log("User left");
     const peerRef = peersRef.current.find((p) => p.UID === id);
     peerRef?.peer.destroy();
     setPeers((peers) => peers.filter((p) => p.UID !== id));
@@ -190,7 +186,6 @@ export default function Chat() {
       stream: userStream.current,
       config: ICE_Config,
     });
-    console.log("Adding peer");
     peer.on("signal", (signal) =>
       socket?.send(
         JSON.stringify({

@@ -51,9 +51,11 @@ export default function RoomEditor() {
       });
   };
 
-  const { validate, validationErrs } = useFormikValidate(z.object({
-    name: z.string().max(16).min(2),
-  }))
+  const { validate, validationErrs } = useFormikValidate(
+    z.object({
+      name: z.string().max(16).min(2),
+    })
+  );
 
   const formik = useFormik({
     initialValues: { name: "", image: null },
@@ -66,7 +68,7 @@ export default function RoomEditor() {
         if (editRoomId) {
           id = editRoomId;
           await updateRoom({
-            ...(vals as Pick<IRoomCard, "name">),
+            name: vals.name,
             ID: editRoomId,
           });
         } else {
@@ -115,6 +117,7 @@ export default function RoomEditor() {
             onBlur={formik.handleBlur}
           />
           <FormikFileButtonInput
+            buttonTestId="Image file button"
             name="image"
             id="image"
             ariaLabel="Select room image"

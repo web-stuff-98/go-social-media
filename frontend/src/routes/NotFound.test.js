@@ -6,7 +6,7 @@ Useless test. I am learning how to write them.
 */
 
 describe("not found page", () => {
-  test("should render a 404 not found page with a heading and a paragraph", () => {
+  test("should render a page with a heading and a paragraph", () => {
     render(<NotFound />);
 
     const heading = screen.getByTestId("heading");

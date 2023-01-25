@@ -11,6 +11,7 @@ import { FormikErrors } from "formik";
  */
 
 const FormikFileButtonInput = ({
+  buttonTestId,
   name,
   id,
   ariaLabel,
@@ -22,6 +23,7 @@ const FormikFileButtonInput = ({
   setOriginalChanged,
   showLabel,
 }: {
+  buttonTestId: string;
   name: string;
   id: string;
   ariaLabel: string;
@@ -59,7 +61,12 @@ const FormikFileButtonInput = ({
         accept={accept}
         ref={inputRef}
       />
-      <button onClick={() => inputRef.current?.click()} type="button">
+      <button
+        data-testid={buttonTestId}
+        name={name}
+        onClick={() => inputRef.current?.click()}
+        type="button"
+      >
         Select {name}
       </button>
       {touched && (

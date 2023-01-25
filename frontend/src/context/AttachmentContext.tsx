@@ -101,7 +101,6 @@ export const AttachmentProvider = ({ children }: { children: ReactNode }) => {
           data,
         });
       }
-      console.log("Attachment upload complete");
     } catch (error) {
       openModal("Message", {
         msg: "Client attachment upload error: " + error,

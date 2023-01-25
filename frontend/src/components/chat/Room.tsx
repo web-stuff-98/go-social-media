@@ -24,7 +24,6 @@ import { useModal } from "../../context/ModalContext";
 import { IAttachmentData, IMsgAttachmentProgress } from "./Attachment";
 import VideoChat from "./VideoChat";
 
-import Peer from "simple-peer";
 import * as process from "process";
 (window as any).process = process;
 

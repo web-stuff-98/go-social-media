@@ -34,7 +34,7 @@ export default function Editor() {
   const loadPostIntoEditor = (slug: string) => {
     setResMsg({ msg: "Loading post...", err: false, pen: true });
     getPost(slug)
-      .then((p:any) => {
+      .then((p: any) => {
         formik.setFieldValue("title", p.title);
         formik.setFieldValue("description", p.description);
         formik.setFieldValue("body", p.body);
@@ -146,7 +146,10 @@ export default function Editor() {
           />
           <div className={classes.quillOuterContainer}>
             <label htmlFor="body">Body</label>
-            <div className={classes.quillContainer}>
+            <div
+              data-testid="quill container"
+              className={classes.quillContainer}
+            >
               <ReactQuill
                 theme="snow"
                 id="body"
@@ -160,6 +163,7 @@ export default function Editor() {
           </div>
           <div className={classes.buttons}>
             <FormikFileButtonInput
+              buttonTestId="Image file button"
               name="Image file"
               id="file"
               ariaLabel="Select a cover image"
@@ -170,6 +174,7 @@ export default function Editor() {
               setOriginalChanged={setOriginalImageModified}
             />
             <button
+              data-testid="Random image button"
               onClick={() => randomImage()}
               aria-label="Select random image file"
               type="button"
