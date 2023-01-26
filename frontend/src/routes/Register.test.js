@@ -22,7 +22,26 @@ afterEach(() => {
 });
 
 describe("registration page", () => {
-  test("should render a registration form with a username and password input and a submit button. Inputting a username and password then clicking on the button should trigger the register function from AuthContext.", async () => {
+  test("should render a registration form with a username and password input and a submit button", async () => {
+    await act(async () => {
+      render(
+        <AuthContext.Provider>
+          <Register />
+        </AuthContext.Provider>,
+        container
+      );
+    });
+
+    const usernameInput = screen.getByTestId("username");
+    const passwordInput = screen.getByTestId("password");
+    const submitButton = screen.getByRole("button");
+
+    expect(usernameInput).toBeInTheDocument();
+    expect(passwordInput).toBeInTheDocument();
+    expect(submitButton).toBeInTheDocument();
+  });
+
+  test("Inputting a username and password then clicking on the button should trigger the register function from AuthContext", async () => {
     const registerMock = jest.fn();
 
     await act(async () => {
@@ -37,10 +56,6 @@ describe("registration page", () => {
     const usernameInput = screen.getByTestId("username");
     const passwordInput = screen.getByTestId("password");
     const submitButton = screen.getByRole("button");
-
-    expect(usernameInput).toBeInTheDocument();
-    expect(passwordInput).toBeInTheDocument();
-    expect(submitButton).toBeInTheDocument();
 
     fireEvent.change(usernameInput, { target: { value: "Test Acc" } });
     fireEvent.change(passwordInput, { target: { value: "Test Pass" } });

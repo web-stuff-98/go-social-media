@@ -1,5 +1,6 @@
 import { screen, render } from "@testing-library/react";
 import { act } from "react-dom/test-utils";
+import { ChatContext } from "./Chat";
 import Menu from "./Menu";
 
 let container = null;
@@ -17,7 +18,12 @@ afterEach(() => {
 describe("chat menu section", () => {
   test("should render the buttons for conversations, rooms and the room editor", async () => {
     await act(async () => {
-      render(<Menu />, container);
+      render(
+        <ChatContext.Provider value={{ setSection: jest.fn() }}>
+          <Menu />
+        </ChatContext.Provider>,
+        container
+      );
     });
 
     const conversationsMenuButton = screen.getByRole("button", {

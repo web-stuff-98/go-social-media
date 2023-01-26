@@ -109,6 +109,7 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
     }
     setVisibleUsers((p) => [...p, uid]);
     setDisappearedUsers((p) => [...p.filter((u) => u.uid !== uid)]);
+    cacheUserData(uid);
   };
   const userLeftView = (uid: string) => {
     if (currentUser && currentUser.ID === uid) return;
@@ -159,7 +160,7 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
 
   const handleMessage = useCallback((e: MessageEvent) => {
     const data = JSON.parse(e.data);
-    if(!data["DATA"]) return
+    if (!data["DATA"]) return;
     data["DATA"] = JSON.parse(data["DATA"]);
     if (instanceOfChangeData(data)) {
       if (data.ENTITY === "USER") {

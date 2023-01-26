@@ -22,7 +22,7 @@ afterEach(() => {
 });
 
 describe("login page", () => {
-  test("should render a login form with a username and password input and a submit button. Inputting a username and password then clicking on the button should trigger the login function from AuthContext.", async () => {
+  test("should render a login form with a username and password input and a submit button", async () => {
     const loginMock = jest.fn();
 
     await act(async () => {
@@ -41,6 +41,19 @@ describe("login page", () => {
     expect(usernameInput).toBeInTheDocument();
     expect(passwordInput).toBeInTheDocument();
     expect(submitButton).toBeInTheDocument();
+  });
+
+  test("Inputting a username and password then clicking on the button should trigger the login function from AuthContext", async () => {
+    const loginMock = jest.fn();
+
+    await act(async () => {
+      render(
+        <AuthContext.Provider value={{ login: loginMock }}>
+          <Login />
+        </AuthContext.Provider>,
+        container
+      );
+    });
 
     fireEvent.change(usernameInput, { target: { value: "Test Acc" } });
     fireEvent.change(passwordInput, { target: { value: "Test Pass" } });

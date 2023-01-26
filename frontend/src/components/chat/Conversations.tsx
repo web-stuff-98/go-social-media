@@ -52,49 +52,50 @@ export default function Conversations() {
     useState(-1);
   const selectedConversationIndexRef = useRef(-1);
 
+  const loadConvs = async () => {
+    try {
+      const uids = await getConversations();
+      uids.forEach((uid: string) => cacheUserData(uid));
+      setConversations(uids.map((uid: string) => ({ uid, messages: [] })));
+    } catch (e) {
+      openModal("Message", {
+        msg: `${e}`,
+        err: true,
+        pen: false,
+      });
+    }
+  };
+
   useEffect(() => {
     if (!currentUser) return;
-    async () => {
-      try {
-        const uids = await getConversations();
-        uids.forEach((uid: string) => cacheUserData(uid));
-        setConversations(uids.map((uid: string) => ({ uid, messages: [] })));
-      } catch (e) {
-        openModal("Message", {
-          msg: `${e}`,
-          err: true,
-          pen: false,
-        });
-      }
-    };
+    loadConvs();
   }, [currentUser]);
 
-  const openConversation = (uid: string) => {
+  const openConversation = async (uid: string) => {
     selectedConversationRef.current = uid;
     const i = conversations.findIndex((c) => c.uid === uid);
     selectedConversationIndexRef.current = i;
     setSelectedConversationIndex(i);
     setSelectedConversation(uid);
-    getConversation(uid)
-      .then((messages) => {
-        setConversations((convs) => {
-          let newConvs = convs;
-          const i = convs.findIndex((c) => c.uid === uid);
-          if (i === -1) {
-            newConvs.push({ uid, messages });
-          } else {
-            newConvs[i] = { uid, messages };
-          }
-          return [...newConvs];
-        });
-      })
-      .catch((e) => {
-        openModal("Message", {
-          msg: `${e}`,
-          err: true,
-          pen: false,
-        });
+    try {
+      const messages = await getConversation(uid);
+      setConversations((convs) => {
+        let newConvs = convs;
+        const i = convs.findIndex((c) => c.uid === uid);
+        if (i === -1) {
+          newConvs.push({ uid, messages });
+        } else {
+          newConvs[i] = { uid, messages };
+        }
+        return [...newConvs];
       });
+    } catch (e) {
+      openModal("Message", {
+        msg: `${e}`,
+        err: true,
+        pen: false,
+      });
+    }
   };
 
   const handleMessage = useCallback(async (e: MessageEvent) => {

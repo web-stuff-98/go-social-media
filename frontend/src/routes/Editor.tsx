@@ -58,7 +58,7 @@ export default function Editor() {
     z.object({
       title: z.string().max(80).min(2),
       description: z.string().min(10).max(100),
-      body: z.string().max(8000),
+      body: z.string().min(10).max(8000),
       tags: z.string().refine((v) => v.split("#").filter((t) => t).length < 8, {
         message: "Max 8 tags",
       }),
@@ -78,7 +78,7 @@ export default function Editor() {
       if (validationErrs.length > 0) return;
       try {
         setResMsg({ msg: "Uploading post...", err: false, pen: true });
-        //I just disabled this line so that the test will work. Who cares.
+        //jest............. wasted hours/days. Test wouldn't pass
         //if (!vals.file) throw new Error("No image file selected");
         let newSlug = "";
         if (!slug) newSlug = await createPost(vals);
