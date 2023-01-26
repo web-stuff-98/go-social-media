@@ -16,12 +16,12 @@ export default function VideoChat({
   id: string;
 }) {
   const { user } = useAuth();
-  const { socket } = useSocket();
+  const { sendIfPossible } = useSocket();
   const { userStream, isStreaming, peers, initVideo, leftVidChat } = useChat();
 
   useEffect(() => {
     initVideo(() => {
-      socket?.send(
+      sendIfPossible(
         JSON.stringify({
           event_type: "VID_JOIN",
           join_id: id,

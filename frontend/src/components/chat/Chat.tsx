@@ -73,7 +73,7 @@ export const useChat = () => useContext(ChatContext);
 export default function Chat() {
   const { pathname } = useLocation();
   const { openModal } = useModal();
-  const { socket } = useSocket();
+  const { socket, sendIfPossible } = useSocket();
 
   const [section, setSection] = useState<ChatSection>(ChatSection.MENU);
   const [roomId, setRoomId] = useState("");
@@ -170,7 +170,7 @@ export default function Chat() {
       config: ICE_Config,
     });
     peer.on("signal", (signal) =>
-      socket?.send(
+      sendIfPossible(
         JSON.stringify({
           event_type: "VID_SENDING_SIGNAL_IN",
           signal_json: JSON.stringify(signal),
@@ -189,7 +189,7 @@ export default function Chat() {
       config: ICE_Config,
     });
     peer.on("signal", (signal) =>
-      socket?.send(
+      sendIfPossible(
         JSON.stringify({
           event_type: "VID_RETURNING_SIGNAL_IN",
           signal_json: JSON.stringify(signal),
@@ -226,7 +226,7 @@ export default function Chat() {
   };
 
   const leftVidChat = (isRoom: boolean, id: string) => {
-    socket?.send(
+    sendIfPossible(
       JSON.stringify({
         event_type: "VID_LEAVE",
         is_room: isRoom,

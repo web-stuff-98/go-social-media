@@ -44,7 +44,7 @@ export interface IRoom extends IRoomCard {
 
 export default function Room() {
   const { roomId, setSection } = useChat();
-  const { socket, openSubscription, closeSubscription } = useSocket();
+  const { socket, openSubscription, closeSubscription, sendIfPossible } = useSocket();
   const { user } = useAuth();
   const { cacheUserData } = useUsers();
   const { uploadAttachment } = useAttachment();
@@ -82,7 +82,7 @@ export default function Room() {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (messageInput.length > 200) return;
-    socket?.send(
+    sendIfPossible(
       JSON.stringify({
         event_type: "ROOM_MESSAGE",
         content: messageInput,

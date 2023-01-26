@@ -25,12 +25,14 @@ const SocketContext = createContext<{
   reconnectSocket: () => void;
   openSubscription: (name: string) => void;
   closeSubscription: (name: string) => void;
+  sendIfPossible: (data: string) => void;
 }>({
   socket: undefined,
   connectSocket: () => {},
   reconnectSocket: () => {},
   openSubscription: () => {},
   closeSubscription: () => {},
+  sendIfPossible: () => {},
 });
 
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
@@ -41,9 +43,17 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   // Store subscriptions in state so that if the websocket reconnects the subscriptions can be opened back up again
   const [openSubscriptions, setOpenSubscriptions] = useState<string[]>([]);
 
+  const sendIfPossible = (data: string) => {
+    if (socket) {
+      if (socket.OPEN === 1) {
+        socket.send(data);
+      }
+    }
+  };
+
   const onOpen = () => {
     if (openSubscriptions.length !== 0)
-      socket?.send(
+      sendIfPossible(
         JSON.stringify({
           event_type: "OPEN_SUBSCRIPTIONS",
           names: openSubscriptions,
@@ -66,7 +76,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const openSubscription = (subscriptionName: string) => {
-    socket?.send(
+    sendIfPossible(
       JSON.stringify({
         event_type: "OPEN_SUBSCRIPTION",
         name: subscriptionName,
@@ -79,7 +89,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       ]);
   };
   const closeSubscription = (subscriptionName: string) => {
-    socket?.send(
+    sendIfPossible(
       JSON.stringify({
         event_type: "CLOSE_SUBSCRIPTION",
         name: subscriptionName,
@@ -125,6 +135,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         openSubscription,
         closeSubscription,
         reconnectSocket,
+        sendIfPossible,
       }}
     >
       {children}

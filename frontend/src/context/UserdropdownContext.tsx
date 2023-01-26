@@ -25,7 +25,7 @@ type UserMenuSection = "Menu" | "DirectMessage";
 
 export function UserdropdownProvider({ children }: { children: ReactNode }) {
   const { width: scrollbarWidth } = useScrollbarSize();
-  const { socket } = useSocket();
+  const { sendIfPossible } = useSocket();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [uid, setUid] = useState("");
@@ -41,14 +41,14 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
 
   const privateMessageSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    socket?.send(
+    sendIfPossible(
       JSON.stringify({
         event_type: "PRIVATE_MESSAGE",
         content: messageInput,
         recipient_id: uid,
       })
     );
-    setMessageInput("")
+    setMessageInput("");
     closeUserDropdown();
   };
 

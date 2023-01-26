@@ -39,7 +39,7 @@ export type Conversation = {
 
 export default function Conversations() {
   const { getUserData, cacheUserData } = useUsers();
-  const { socket } = useSocket();
+  const { socket, sendIfPossible } = useSocket();
   const { uploadAttachment } = useAttachment();
   const { user: currentUser } = useAuth();
   const { openModal } = useModal();
@@ -228,7 +228,7 @@ export default function Conversations() {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!selectedConversation || messageInput.length > 200) return;
-    socket?.send(
+    sendIfPossible(
       JSON.stringify({
         event_type: "PRIVATE_MESSAGE",
         content: messageInput,
