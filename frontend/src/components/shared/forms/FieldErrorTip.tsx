@@ -1,7 +1,8 @@
 import ErrorTip from "./ErrorTip";
 import { Fragment } from "react";
 
-// ValidationErr is based on what formik outputs. path[0] should be the ID of the field.
+// ValidationErr is based on what zod outputs for errors with schema.parse, unders the "issues" key.
+// path[0] should be the ID of the field.
 export type ValidationErr = {
   path: string[];
   message: string;

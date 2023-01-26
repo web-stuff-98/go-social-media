@@ -1,22 +1,14 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
 import { unmountComponentAtNode } from "react-dom";
 import { BrowserRouter } from "react-router-dom";
 import { UsersContext } from "../../context/UsersContext";
 import PageContent from "./PageContent";
+import * as postServices from "../../services/posts";
+
+postServices.voteOnPost = jest.fn();
 
 let container = null;
-
 let upvoteBtn, downvoteBtn;
-
-const getUserData = jest.fn().mockImplementation(() => {
-  jest.fn((id) => ({
-    id,
-    name: "Test User",
-  }));
-});
-
-const userEnteredView = jest.fn().mockImplementation((uid) => {});
-const userLeftView = jest.fn().mockImplementation((uid) => {});
 
 const mockPost = {
   ID: "123",
@@ -54,21 +46,36 @@ afterEach(() => {
 });
 
 describe("post page content", () => {
-  test("should render the blog post heading, subheading, HTML content, author & voting buttons", async () => {
-    render(
-      <BrowserRouter>
-        <UsersContext.Provider
-          value={{
-            getUserData,
-            userEnteredView,
-            userLeftView,
-            users: [{ ID: "1", username: "Test user" }],
-          }}
-        >
-          <PageContent post={mockPost} setPost={jest.fn()} />
-        </UsersContext.Provider>
-      </BrowserRouter>,
-      container
+  const getUserData = jest.fn().mockImplementation(() => {
+    jest.fn((id) => ({
+      id,
+      name: "Test User",
+    }));
+  });
+  const userEnteredView = jest.fn().mockImplementation((uid) => {});
+  const userLeftView = jest.fn().mockImplementation((uid) => {});
+
+  test("should render the blog post heading, subheading, HTML content, author & voting buttons. Clicking on the voting buttons should trigger voteOnPost", async () => {
+    await act(async () =>
+      render(
+        <BrowserRouter>
+          <UsersContext.Provider
+            value={{
+              getUserData,
+              userEnteredView,
+              userLeftView,
+              users: [{ ID: "1", username: "Test user" }],
+            }}
+          >
+            <PageContent
+              post={mockPost}
+              voteOnPost={jest.fn()}
+              setPost={jest.fn()}
+            />
+          </UsersContext.Provider>
+        </BrowserRouter>,
+        container
+      )
     );
 
     const heading = screen.getByTestId("heading");
@@ -91,33 +98,10 @@ describe("post page content", () => {
     expect(author).toBeInTheDocument();
     expect(upvoteBtn).toBeInTheDocument();
     expect(downvoteBtn).toBeInTheDocument();
-  });
-
-  test("clicking vote up should make a fetch request", () => {
-    const axiosSpy = jest
-      .spyOn(global, "fetch")
-      .mockImplementation(
-        async () => await new Promise((resolve) => setTimeout(resolve, 100))
-      );
 
     upvoteBtn.click();
-
-    expect(axiosSpy).toHaveBeenCalled();
-
-    global.fetch.mockClear();
-  });
-
-  test("clicking vote down should make a fetch request", () => {
-    const axiosSpy = jest
-      .spyOn(global, "fetch")
-      .mockImplementation(
-        async () => await new Promise((resolve) => setTimeout(resolve, 100))
-      );
-
     downvoteBtn.click();
 
-    expect(axiosSpy).toHaveBeenCalled;
-
-    global.fetch.mockClear();
+    expect(postServices.voteOnPost).toHaveBeenCalledTimes(2);
   });
 });

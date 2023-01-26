@@ -10,7 +10,7 @@ export interface IUser {
   base64pfp?: string;
 }
 
-const AuthContext = createContext<{
+export const AuthContext = createContext<{
   user?: IUser;
   login: (username: string, password: string) => void;
   logout: () => void;

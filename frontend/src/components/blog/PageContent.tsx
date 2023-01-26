@@ -40,7 +40,6 @@ export default function PageContent({
             AdditionalStuff={
               <div className={classes.votesContainer}>
                 <IconBtn
-
                   ariaLabel="Vote up"
                   name="Vote up"
                   style={{
@@ -54,27 +53,26 @@ export default function PageContent({
                   }}
                   Icon={TiArrowSortedUp}
                   type="button"
-                  onClick={() =>
-                    voteOnPost(post.ID, true)
-                      .catch((e) => {
-                        openModal("Message", {
-                          err: true,
-                          pen: false,
-                          msg: `${e}`,
-                        });
-                      })
-                      .then(() => {
-                        setPost({
-                          ...post,
-                          my_vote: post.my_vote
-                            ? null
-                            : {
-                                uid: user?.ID as string,
-                                is_upvote: true,
-                              },
-                        } as IPost);
-                      })
-                  }
+                  onClick={async () => {
+                    try {
+                      await voteOnPost(post.ID, true);
+                      setPost({
+                        ...post,
+                        my_vote: post.my_vote
+                          ? null
+                          : {
+                              uid: user?.ID as string,
+                              is_upvote: true,
+                            },
+                      } as IPost);
+                    } catch (e) {
+                      openModal("Message", {
+                        err: true,
+                        pen: false,
+                        msg: `${e}`,
+                      });
+                    }
+                  }}
                 />
                 {post.vote_pos_count +
                   (post.my_vote ? (post.my_vote.is_upvote ? 1 : 0) : 0) -
@@ -94,27 +92,26 @@ export default function PageContent({
                   }}
                   Icon={TiArrowSortedDown}
                   type="button"
-                  onClick={() =>
-                    voteOnPost(post.ID, false)
-                      .catch((e) => {
-                        openModal("Message", {
-                          err: true,
-                          pen: false,
-                          msg: `${e}`,
-                        });
-                      })
-                      .then(() => {
-                        setPost({
-                          ...post,
-                          my_vote: post.my_vote
-                            ? null
-                            : {
-                                uid: user?.ID as string,
-                                is_upvote: false,
-                              },
-                        } as IPost);
-                      })
-                  }
+                  onClick={async () => {
+                    try {
+                      await voteOnPost(post.ID, false);
+                      setPost({
+                        ...post,
+                        my_vote: post.my_vote
+                          ? null
+                          : {
+                              uid: user?.ID as string,
+                              is_upvote: false,
+                            },
+                      } as IPost);
+                    } catch (e) {
+                      openModal("Message", {
+                        err: true,
+                        pen: false,
+                        msg: `${e}`,
+                      });
+                    }
+                  }}
                 />
               </div>
             }

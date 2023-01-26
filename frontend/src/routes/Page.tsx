@@ -51,32 +51,33 @@ export default function Page() {
   const getReplies = (parentId: string): IComment[] =>
     commentsByParentId[parentId as keyof typeof commentsByParentId];
 
-  const loadPost = () => {
+  const loadPost = async () => {
     if (!slug) return;
     setResMsg({ msg: "", err: false, pen: true });
-    getPost(slug)
-      .then((p) => {
-        setPost({
-          ...(p as Omit<IPost, "comments">),
-          my_vote:
-            p.my_vote?.uid === "000000000000000000000000" ? null : p.my_vote,
-        });
-        setComments(
-          p.comments
-            ? p.comments.map((cmt: IComment) => {
-                let outCmt = cmt;
-                if (cmt.my_vote?.uid === "000000000000000000000000")
-                  outCmt.my_vote = null;
-                return outCmt;
-              })
-            : []
-        );
-        setResMsg({ msg: "", err: false, pen: false });
-        cacheUserData(p.author_id);
-        setImgURL(`${baseURL}/api/posts/${p.ID}/image?v=1`);
-        openSubscription(`post_page=${p.ID}`);
-      })
-      .catch((e) => setResMsg({ msg: `${e}`, err: true, pen: false }));
+    try {
+      const p = await getPost(slug);
+      setPost({
+        ...(p as Omit<IPost, "comments">),
+        my_vote:
+          p.my_vote?.uid === "000000000000000000000000" ? null : p.my_vote,
+      });
+      setComments(
+        p.comments
+          ? p.comments.map((cmt: IComment) => {
+              let outCmt = cmt;
+              if (cmt.my_vote?.uid === "000000000000000000000000")
+                outCmt.my_vote = null;
+              return outCmt;
+            })
+          : []
+      );
+      setResMsg({ msg: "", err: false, pen: false });
+      cacheUserData(p.author_id);
+      setImgURL(`${baseURL}/api/posts/${p.ID}/image?v=1`);
+      openSubscription(`post_page=${p.ID}`);
+    } catch (e) {
+      setResMsg({ msg: `${e}`, err: true, pen: false });
+    }
   };
 
   useEffect(() => {

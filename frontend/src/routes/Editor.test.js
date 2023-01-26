@@ -2,12 +2,26 @@ import { render, screen } from "@testing-library/react";
 import { unmountComponentAtNode } from "react-dom";
 import { act } from "react-dom/test-utils";
 import Editor from "./Editor";
+import * as postServices from "../services/posts";
+import { BrowserRouter } from "react-router-dom";
+
+postServices.createPost = jest.fn().mockReturnValueOnce("test-post-slug");
+postServices.updatePost = jest.fn().mockReturnValueOnce("test-post-slug");
+postServices.getRandomImage = jest.fn();
 
 /*
 Useless test. I am learning how to write them.
 */
 
 let container = null;
+let titleInput,
+  descriptionInput,
+  tagsInput,
+  quillContainer,
+  quillEditor,
+  submitButton,
+  selectImageButton,
+  randomImageButton;
 
 beforeEach(() => {
   container = document.createElement("div");
@@ -21,47 +35,36 @@ afterEach(() => {
 });
 
 describe("blog post editor", () => {
-  test("should render a form with a title, description, tags, and HTML editor input with a submit button, a select image button and a random image button. Clicking on the submit button and the random image button should send fetch requests.", async () => {
+  test("should render a form with a title, description, tags, and HTML editor input with a submit button, a select image button and a random image button", async () => {
     await act(async () => {
-      render(<Editor />, container);
+      render(
+        <BrowserRouter>
+          <Editor />
+        </BrowserRouter>,
+        container
+      );
     });
 
-    const titleInput = screen.getByTestId("title");
-    const descriptionInput = screen.getByTestId("description");
-    const tagsInput = screen.getByTestId("tags");
-    const quillContainer = screen.getByTestId("quill container");
+    titleInput = screen.getByTestId("title");
+    descriptionInput = screen.getByTestId("description");
+    tagsInput = screen.getByTestId("tags");
+    quillContainer = screen.getByTestId("quill container");
+    quillEditor = document.getElementsByClassName("ql-editor ql-blank");
 
-    const submitButton = screen.getByRole("button", {
+    submitButton = screen.getByRole("button", {
       name: "Submit",
     });
-    const selectImageButton = screen.getByTestId("Image file button");
-    const randomImageButton = screen.getByTestId("Random image button");
+    selectImageButton = screen.getByTestId("Image file button");
+    randomImageButton = screen.getByTestId("Random image button");
 
-    expect(titleInput).toBeInTheDocument;
-    expect(descriptionInput).toBeInTheDocument;
-    expect(tagsInput).toBeInTheDocument;
-    expect(quillContainer).toBeInTheDocument;
+    expect(titleInput).toBeInTheDocument();
+    expect(descriptionInput).toBeInTheDocument();
+    expect(tagsInput).toBeInTheDocument();
+    expect(quillContainer).toBeInTheDocument();
+    expect(quillEditor[0]).toBeInTheDocument();
 
-    expect(submitButton).toBeInTheDocument;
-    expect(selectImageButton).toBeInTheDocument;
-    expect(randomImageButton).toBeInTheDocument;
-
-    const axiosSpy = jest
-      .spyOn(global, "fetch")
-      .mockImplementation(
-        async () => await new Promise((resolve) => setTimeout(resolve, 100))
-      );
-
-    await act(async () => {
-      submitButton.click();
-    });
-
-    await act(async () => {
-      randomImageButton.click();
-    });
-
-    expect(axiosSpy).toHaveBeenCalledTimes;
-
-    global.fetch.mockClear();
+    expect(submitButton).toBeInTheDocument();
+    expect(selectImageButton).toBeInTheDocument();
+    expect(randomImageButton).toBeInTheDocument();
   });
 });

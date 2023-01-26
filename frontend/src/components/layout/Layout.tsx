@@ -1,8 +1,6 @@
 import classes from "../../styles/components/Layout.module.scss";
 import Nav from "./Nav";
-
 import type { CSSProperties } from "react";
-
 import { Outlet, useLocation } from "react-router-dom";
 import { useInterface } from "../../context/InterfaceContext";
 import { useMouse } from "../../context/MouseContext";

@@ -14,14 +14,15 @@ export default function Comments({
   postId: string;
   replyingTo: string;
   setReplyingTo: (to: string) => void;
-  updateMyVoteOnComment: (id:string, isUpvote:boolean) => void
+  updateMyVoteOnComment: (id: string, isUpvote: boolean) => void;
 }) {
   return (
     <div className={classes.container}>
       {comments &&
         comments.map((cmt) => (
           <Comment
-          updateMyVoteOnComment={updateMyVoteOnComment}
+            key={cmt.ID}
+            updateMyVoteOnComment={updateMyVoteOnComment}
             getReplies={getReplies}
             setReplyingTo={setReplyingTo}
             replyingTo={replyingTo}

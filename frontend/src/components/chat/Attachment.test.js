@@ -1,6 +1,8 @@
 import { screen, render } from "@testing-library/react";
 import Attachment from "./Attachment";
 
+jest.mock("axios");
+
 describe("the attachment component", () => {
   test("should render a progress bar while the upload is pending", () => {
     render(
@@ -12,7 +14,7 @@ describe("the attachment component", () => {
     expect(progressElement.toBeInTheDocument);
   });
 
-  test("the attachment is complete and if the attachment is not recognized as an image a button with a hidden download link should be present. Clicking on the button should trigger a fetch request.", () => {
+  test("the attachment is complete and if the attachment is not recognized as an image a button with a hidden download link should be present", () => {
     render(
       <Attachment
         metaData={{ type: "application/pdf" }}
@@ -25,23 +27,11 @@ describe("the attachment component", () => {
     });
     const linkElement = screen.getByRole("link", { hidden: true });
 
-    expect(buttonElement).toBeInTheDocument;
-    expect(linkElement).toBeInTheDocument;
-
-    const axiosSpy = jest
-      .spyOn(global, "fetch")
-      .mockImplementation(
-        async () => await new Promise((resolve) => setTimeout(resolve, 100))
-      );
-
-    buttonElement.click();
-
-    expect(axiosSpy).toHaveBeenCalled;
-
-    global.fetch.mockClear();
+    expect(buttonElement).toBeInTheDocument();
+    expect(linkElement).toBeInTheDocument();
   });
 
-  test("the attachment is complete and is an image, the image should be present, and a fetch request should also be made to retrieve the image binary", () => {
+  test("the attachment is complete and is an image, the image should be present", () => {
     render(
       <Attachment
         metaData={{ type: "image/jpg" }}
@@ -51,17 +41,7 @@ describe("the attachment component", () => {
 
     const imgElement = screen.getByRole("img");
 
-    expect(imgElement).toBeInTheDocument;
-
-    const axiosSpy = jest
-      .spyOn(global, "fetch")
-      .mockImplementation(
-        async () => await new Promise((resolve) => setTimeout(resolve, 100))
-      );
-
-    expect(axiosSpy).toHaveBeenCalled;
-
-    global.fetch.mockClear();
+    expect(imgElement).toBeInTheDocument();
   });
 
   test("should render a message saying the attachment failed to upload", () => {
@@ -71,6 +51,6 @@ describe("the attachment component", () => {
 
     const containerElem = screen.getByText("Upload failed");
 
-    expect(containerElem).toBeInTheDocument;
+    expect(containerElem).toBeInTheDocument();
   });
 });

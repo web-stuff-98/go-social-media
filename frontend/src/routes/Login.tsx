@@ -22,7 +22,7 @@ export default function Login() {
       password: z.string().min(2).max(100),
     })
   );
-  
+
   const formik = useFormik({
     initialValues: {
       username: "",

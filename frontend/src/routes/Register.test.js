@@ -1,6 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { unmountComponentAtNode } from "react-dom";
 import { act } from "react-dom/test-utils";
+import { AuthContext } from "../context/AuthContext";
 import Register from "./Register";
 
 /*
@@ -21,31 +22,33 @@ afterEach(() => {
 });
 
 describe("registration page", () => {
-  test("should render a registration form with a username and password input and a submit button. Clicking on the button should send a fetch request.", async () => {
+  test("should render a registration form with a username and password input and a submit button. Inputting a username and password then clicking on the button should trigger the register function from AuthContext.", async () => {
+    const registerMock = jest.fn();
+
     await act(async () => {
-      render(<Register />, container);
+      render(
+        <AuthContext.Provider value={{ register: registerMock }}>
+          <Register />
+        </AuthContext.Provider>,
+        container
+      );
     });
 
     const usernameInput = screen.getByTestId("username");
     const passwordInput = screen.getByTestId("password");
     const submitButton = screen.getByRole("button");
 
-    expect(usernameInput).toBeInTheDocument;
-    expect(passwordInput).toBeInTheDocument;
-    expect(submitButton).toBeInTheDocument;
+    expect(usernameInput).toBeInTheDocument();
+    expect(passwordInput).toBeInTheDocument();
+    expect(submitButton).toBeInTheDocument();
 
-    const axiosSpy = jest
-      .spyOn(global, "fetch")
-      .mockImplementation(
-        async () => await new Promise((resolve) => setTimeout(resolve, 100))
-      );
+    fireEvent.change(usernameInput, { target: { value: "Test Acc" } });
+    fireEvent.change(passwordInput, { target: { value: "Test Pass" } });
 
     await act(async () => {
       submitButton.click();
     });
 
-    expect(axiosSpy).toHaveBeenCalled;
-
-    global.fetch.mockClear();
+    expect(registerMock).toHaveBeenCalled();
   });
 });

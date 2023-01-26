@@ -208,6 +208,7 @@ export default function Comment({
         <div className={classes.childComments}>
           {childComments.map((cmt: IComment) => (
             <Comment
+              key={cmt.ID}
               updateMyVoteOnComment={updateMyVoteOnComment}
               getReplies={getReplies}
               setReplyingTo={setReplyingTo}

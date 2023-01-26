@@ -1,4 +1,5 @@
 import type { CancelToken } from "axios";
+import axios from "axios";
 import { baseURL, makeRequest } from "./makeRequest";
 
 export type SortOrder = "DESC" | "ASC";
@@ -66,6 +67,14 @@ const getPostThumb = async (id: string, cancelToken: CancelToken) => {
   });
   const blob = new Blob([data], { type: "image/jpeg" });
   return URL.createObjectURL(blob);
+};
+
+const getRandomImage = async () => {
+  const res = await axios({
+    url: "https://picsum.photos/1000/400",
+    responseType: "arraybuffer",
+  });
+  return new File([res.data], "image.jpg", { type: "image/jpeg" });
 };
 
 const getPostImage = async (id: string, cancelToken?: CancelToken) => {
@@ -142,6 +151,7 @@ export {
   getPost,
   createPost,
   updatePost,
+  getRandomImage,
   uploadPostImage,
   getPage,
   getPostThumb,

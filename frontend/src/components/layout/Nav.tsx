@@ -4,7 +4,6 @@ import { useAuth } from "../../context/AuthContext";
 import { useState } from "react";
 import { useInterface } from "../../context/InterfaceContext";
 import { MdMenu } from "react-icons/md";
-import usePosts from "../../context/PostsContext";
 import User from "../shared/User";
 
 export default function Nav() {
@@ -12,12 +11,6 @@ export default function Nav() {
   const {
     state: { isMobile },
   } = useInterface();
-  const {
-    getSortOrderFromParams,
-    getSortModeFromParams,
-    setSortModeInParams,
-    setSortOrderInParams,
-  } = usePosts();
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
