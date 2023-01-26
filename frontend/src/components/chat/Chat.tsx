@@ -31,7 +31,7 @@ export enum ChatSection {
   "EDITOR" = "Editor",
 }
 
-const ChatContext = createContext<{
+export const ChatContext = createContext<{
   section: ChatSection;
   setSection: (to: ChatSection) => void;
 
@@ -90,10 +90,12 @@ export default function Chat() {
     setSection(ChatSection.EDITOR);
   };
 
-  //////////////// VIDEO CHAT STUFF \\\\\\\\\\\\\\\\
-  // The socket event handler functions were wrapped
-  // in useCallback but I got rid of that because it
-  // was breaking video chat for some reason.
+  /////////////////////////////////////////////////////
+  //////////////// VIDEO CHAT STUFF ///////////////////
+  // The socket event handler functions were wrapped //
+  // in useCallback but I got rid of that because it //
+  // was breaking video chat for some reason.        //
+  /////////////////////////////////////////////////////
   const userStream = useRef<MediaStream | undefined>(undefined);
   const [isStreaming, setIsStreaming] = useState(false);
   const initVideo = async (cb: Function) => {
@@ -278,16 +280,16 @@ export default function Chat() {
           </div>
           <ChatContext.Provider
             value={{
-              section,
               setSection,
-              roomId,
-              editRoomId,
               openRoom,
               openRoomEditor,
               initVideo,
+              leftVidChat,
+              section,
+              roomId,
+              editRoomId,
               isStreaming,
               peers,
-              leftVidChat,
               userStream: userStream.current,
             }}
           >
@@ -306,6 +308,7 @@ export default function Chat() {
         </>
       ) : (
         <button
+          name="Open chat"
           aria-label="Open chat"
           onClick={() => setChatOpen(true)}
           className={classes.chatIconButton}

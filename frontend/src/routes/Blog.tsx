@@ -46,7 +46,6 @@ export default function Blog() {
     newPosts,
     nextPage,
     prevPage,
-    getPageWithParams,
     addOrRemoveTagInParams,
     setTermInParams,
     getSortModeFromParams,
@@ -58,7 +57,6 @@ export default function Blog() {
 
   useEffect(() => {
     openSubscription("post_feed");
-    getPageWithParams();
     return () => {
       closeSubscription("post_feed");
     };

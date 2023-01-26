@@ -90,102 +90,6 @@ export default function PostCard({
     };
   }, [post.img_url, visible]);
 
-  const renderUser = (uid: string) => {
-    return (
-      <User
-        testid="author"
-        AdditionalStuff={
-          <div className={classes.votesContainer}>
-            <IconBtn
-              testid="Vote up"
-              ariaLabel="Vote up"
-              name="Vote up"
-              style={{
-                color: "lime",
-                ...(post.my_vote && post.my_vote.is_upvote
-                  ? { stroke: "1px" }
-                  : { filter: "opacity(0.5)" }),
-              }}
-              svgStyle={{
-                transform: "scale(1.166)",
-              }}
-              Icon={TiArrowSortedUp}
-              type="button"
-              onClick={() => {
-                if (user)
-                  voteOnPost(post.ID, true)
-                    .catch((e) => {
-                      openModal("Message", {
-                        err: true,
-                        pen: false,
-                        msg: `${e}`,
-                      });
-                    })
-                    .then(() => {
-                      updatePostCard({
-                        ID: post.ID,
-                        my_vote: post.my_vote
-                          ? null
-                          : {
-                              uid: user?.ID as string,
-                              is_upvote: true,
-                            },
-                      });
-                    });
-              }}
-            />
-            {post.vote_pos_count +
-              (post.my_vote ? (post.my_vote.is_upvote ? 1 : 0) : 0) -
-              (post.vote_neg_count +
-                (post.my_vote ? (post.my_vote.is_upvote ? 0 : 1) : 0))}
-            <IconBtn
-              testid="Vote down"
-              ariaLabel="Vote down"
-              name="Vote down"
-              style={{
-                color: "red",
-                ...(post.my_vote && !post.my_vote.is_upvote
-                  ? { stroke: "1px" }
-                  : { filter: "opacity(0.5)" }),
-              }}
-              svgStyle={{
-                transform: "scale(1.166)",
-              }}
-              Icon={TiArrowSortedDown}
-              type="button"
-              onClick={() => {
-                if (user)
-                  voteOnPost(post.ID, false)
-                    .catch((e) => {
-                      openModal("Message", {
-                        err: true,
-                        pen: false,
-                        msg: `${e}`,
-                      });
-                    })
-                    .then(() => {
-                      updatePostCard({
-                        ID: post.ID,
-                        my_vote: post.my_vote
-                          ? null
-                          : {
-                              uid: user?.ID as string,
-                              is_upvote: false,
-                            },
-                      });
-                    });
-              }}
-            />
-          </div>
-        }
-        reverse={reverse}
-        date={new Date(post.created_at || 0)}
-        uid={uid}
-        user={getUserData(uid)}
-      />
-    );
-  };
-
   return (
     <article
       ref={containerRef}
@@ -283,7 +187,98 @@ export default function PostCard({
                 }
                 className={classes.userContainer}
               >
-                {renderUser(post.author_id)}
+                {
+                  <User
+                    testid="author"
+                    AdditionalStuff={
+                      <div className={classes.votesContainer}>
+                        <IconBtn
+                          testid="Vote up"
+                          ariaLabel="Vote up"
+                          name="Vote up"
+                          style={{
+                            color: "lime",
+                            ...(post.my_vote && post.my_vote.is_upvote
+                              ? { stroke: "1px" }
+                              : { filter: "opacity(0.5)" }),
+                          }}
+                          svgStyle={{
+                            transform: "scale(1.166)",
+                          }}
+                          Icon={TiArrowSortedUp}
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              if (user) await voteOnPost(post.ID, true);
+                            } catch (e) {
+                              updatePostCard({
+                                ID: post.ID,
+                                my_vote: post.my_vote
+                                  ? null
+                                  : {
+                                      uid: user?.ID as string,
+                                      is_upvote: true,
+                                    },
+                              });
+                            }
+                          }}
+                        />
+                        {post.vote_pos_count +
+                          (post.my_vote
+                            ? post.my_vote.is_upvote
+                              ? 1
+                              : 0
+                            : 0) -
+                          (post.vote_neg_count +
+                            (post.my_vote
+                              ? post.my_vote.is_upvote
+                                ? 0
+                                : 1
+                              : 0))}
+                        <IconBtn
+                          testid="Vote down"
+                          ariaLabel="Vote down"
+                          name="Vote down"
+                          style={{
+                            color: "red",
+                            ...(post.my_vote && !post.my_vote.is_upvote
+                              ? { stroke: "1px" }
+                              : { filter: "opacity(0.5)" }),
+                          }}
+                          svgStyle={{
+                            transform: "scale(1.166)",
+                          }}
+                          Icon={TiArrowSortedDown}
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              if (user) await voteOnPost(post.ID, false);
+                              updatePostCard({
+                                ID: post.ID,
+                                my_vote: post.my_vote
+                                  ? null
+                                  : {
+                                      uid: user?.ID as string,
+                                      is_upvote: false,
+                                    },
+                              });
+                            } catch (e) {
+                              openModal("Message", {
+                                err: true,
+                                pen: false,
+                                msg: `${e}`,
+                              });
+                            }
+                          }}
+                        />
+                      </div>
+                    }
+                    reverse={reverse}
+                    date={new Date(post.created_at || 0)}
+                    uid={post.author_id}
+                    user={getUserData(post.author_id)}
+                  />
+                }
                 <a href={`/post/${post.slug}`}>View page</a>
               </div>
             </div>

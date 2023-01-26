@@ -35,6 +35,7 @@ const IconBtn = ({
         : { filter: "opacity(0.5)", pointerEvents: "none" }),
     }}
     type="button"
+    name={name}
     aria-label={ariaLabel}
     className={classes.container}
     onClick={() => onClick()}

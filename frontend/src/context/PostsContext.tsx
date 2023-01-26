@@ -179,7 +179,12 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleSearch = useMemo(
-    () => debounce(() => getPageWithParams(), 300),
+    () =>
+      debounce(() => {
+        if (page) {
+          getPageWithParams();
+        }
+      }, 300),
     [searchParams, page]
   );
 
@@ -268,7 +273,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
 
   const handleMessage = useCallback((e: MessageEvent) => {
     const data = JSON.parse(e.data);
-    if(!data["DATA"]) return
+    if (!data["DATA"]) return;
     data["DATA"] = JSON.parse(data["DATA"]);
     if (instanceOfChangeData(data)) {
       if (data.ENTITY === "POST") {
@@ -292,7 +297,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
         if (data.METHOD === "INSERT") {
           // Add new posts to new posts array
           createPostCardOnNewest(data.DATA as IPostCard);
-          setPostsCount(p => p + 1);
+          setPostsCount((p) => p + 1);
           if (getSortModeFromParams === "DATE") {
             if (getSortOrderFromParams === "DESC" && page === "1") {
               /* If sorting by most recent posts and

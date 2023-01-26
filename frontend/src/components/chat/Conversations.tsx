@@ -54,20 +54,19 @@ export default function Conversations() {
 
   useEffect(() => {
     if (!currentUser) return;
-    getConversations()
-      .then((uids) => {
-        if (uids) {
-          uids.forEach((uid: string) => cacheUserData(uid));
-          setConversations(uids.map((uid: string) => ({ uid, messages: [] })));
-        }
-      })
-      .catch((e) => {
+    async () => {
+      try {
+        const uids = await getConversations();
+        uids.forEach((uid: string) => cacheUserData(uid));
+        setConversations(uids.map((uid: string) => ({ uid, messages: [] })));
+      } catch (e) {
         openModal("Message", {
           msg: `${e}`,
           err: true,
           pen: false,
         });
-      });
+      }
+    };
   }, [currentUser]);
 
   const openConversation = (uid: string) => {
@@ -262,24 +261,24 @@ export default function Conversations() {
     <>
       <div className={classes.users}>
         {conversations.map((c) => (
-              <button
-              key={c.uid}
-              onClick={() => {
-                openConversation(c.uid as string);
-              }}
-              name={`Open conversation with ${c.uid}`}
-              aria-label={`Open conversation with ${c.uid}`}
-              style={
-                selectedConversation === c.uid
-                  ? {
-                      background: "rgba(32,64,96,0.1666)",
-                    }
-                  : {}
-              }
-              className={classes.user}
-            >
-              <User small uid={c.uid} user={getUserData(c.uid)} />
-            </button>
+          <button
+            key={c.uid}
+            onClick={() => {
+              openConversation(c.uid as string);
+            }}
+            name={`Open conversation with ${c.uid}`}
+            aria-label={`Open conversation with ${c.uid}`}
+            style={
+              selectedConversation === c.uid
+                ? {
+                    background: "rgba(32,64,96,0.1666)",
+                  }
+                : {}
+            }
+            className={classes.user}
+          >
+            <User small uid={c.uid} user={getUserData(c.uid)} />
+          </button>
         ))}
       </div>
       <div className={classes.right}>

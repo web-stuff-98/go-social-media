@@ -13,8 +13,8 @@ postServices.getRandomImage = jest.fn();
 Useless test. I am learning how to write them.
 */
 
-let container = null;
-let titleInput,
+let container,
+  titleInput,
   descriptionInput,
   tagsInput,
   quillContainer,

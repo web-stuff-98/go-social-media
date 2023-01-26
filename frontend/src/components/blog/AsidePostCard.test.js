@@ -28,8 +28,8 @@ describe("the aside post card component for the recent posts feed", () => {
     const link = screen.getByRole("link");
     const heading = screen.getByText(mockPost.title);
 
-    expect(articleContainer).toBeInTheDocument;
-    expect(link).toBeInTheDocument;
-    expect(heading).toBeInTheDocument;
+    expect(articleContainer).toBeInTheDocument();
+    expect(link).toBeInTheDocument();
+    expect(heading).toBeInTheDocument();
   });
 });

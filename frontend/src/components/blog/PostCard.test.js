@@ -3,9 +3,12 @@ import { unmountComponentAtNode } from "react-dom";
 import { BrowserRouter } from "react-router-dom";
 import { UsersContext } from "../../context/UsersContext";
 import PostCard from "./PostCard";
+import * as postServices from "../../services/posts";
+import { AuthContext } from "../../context/AuthContext";
+
+postServices.voteOnPost = jest.fn();
 
 let container = null;
-
 let upvoteBtn, downvoteBtn;
 
 const getUserData = jest.fn().mockImplementation(() => {
@@ -57,16 +60,18 @@ describe("blog post feed card", () => {
   test("should render the post card inside an article container with the title, description, tags, author and voting buttons", () => {
     render(
       <BrowserRouter>
-        <UsersContext.Provider
-          value={{
-            getUserData,
-            userEnteredView,
-            userLeftView,
-            users: [{ ID: 1, username: "Test user" }],
-          }}
-        >
-          <PostCard post={mockPost} />
-        </UsersContext.Provider>
+        <AuthContext.Provider value={{ user: { ID: "1" } }}>
+          <UsersContext.Provider
+            value={{
+              getUserData,
+              userEnteredView,
+              userLeftView,
+              users: [{ ID: "1", username: "Test user" }],
+            }}
+          >
+            <PostCard post={mockPost} />
+          </UsersContext.Provider>
+        </AuthContext.Provider>
       </BrowserRouter>,
       container
     );
@@ -90,40 +95,17 @@ describe("blog post feed card", () => {
       hidden: true,
     });
 
-    expect(articleContainer).toBeInTheDocument;
-    expect(title).toBeInTheDocument;
-    expect(description).toBeInTheDocument;
-    expect(author).toBeInTheDocument;
-    expect(upvoteBtn).toBeInTheDocument;
-    expect(downvoteBtn).toBeInTheDocument;
-    expectTags.forEach((t) => expect(t).toBeInTheDocument);
-  });
-
-  test("clicking vote up should make a fetch request", () => {
-    const axiosSpy = jest
-      .spyOn(global, "fetch")
-      .mockImplementation(
-        async () => await new Promise((resolve) => setTimeout(resolve, 100))
-      );
+    expect(articleContainer).toBeInTheDocument();
+    expect(title).toBeInTheDocument();
+    expect(description).toBeInTheDocument();
+    expect(author).toBeInTheDocument();
+    expect(upvoteBtn).toBeInTheDocument();
+    expect(downvoteBtn).toBeInTheDocument();
+    expectTags.forEach((t) => expect(t).toBeInTheDocument());
 
     upvoteBtn.click();
-
-    expect(axiosSpy).toHaveBeenCalled;
-
-    global.fetch.mockClear();
-  });
-
-  test("clicking vote down should make a fetch request", () => {
-    const axiosSpy = jest
-      .spyOn(global, "fetch")
-      .mockImplementation(
-        async () => await new Promise((resolve) => setTimeout(resolve, 100))
-      );
-
     downvoteBtn.click();
 
-    expect(axiosSpy).toHaveBeenCalled;
-
-    global.fetch.mockClear();
+    expect(postServices.voteOnPost).toHaveBeenCalledTimes(2);
   });
 });

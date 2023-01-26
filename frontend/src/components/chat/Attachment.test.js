@@ -1,8 +1,6 @@
 import { screen, render } from "@testing-library/react";
 import Attachment from "./Attachment";
 
-jest.mock("axios");
-
 describe("the attachment component", () => {
   test("should render a progress bar while the upload is pending", () => {
     render(
