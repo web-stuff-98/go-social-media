@@ -81,15 +81,15 @@ export default function Editor() {
       if (validationErrs.length > 0) return;
       try {
         setResMsg({ msg: "Uploading post...", err: false, pen: true });
-        if (!originalImageModified && !slug) throw new Error("No image file selected");
+        if (!originalImageModified && !slug)
+          throw new Error("No image file selected");
         let newSlug = "";
-        let valsWithoutFile = vals
-        delete vals.file
+        const valsWithoutFile = vals;
+        delete vals.file;
         if (!slug) newSlug = await createPost(valsWithoutFile);
-        if (slug) await updatePost(valsWithoutFile, slug);
-        if (!slug || originalImageModified) {
+        else await updatePost(valsWithoutFile, slug);
+        if (!slug || originalImageModified)
           await uploadPostImage(vals.file as unknown as File, slug || newSlug);
-        }
         setResMsg({ msg: "Post created", err: false, pen: false });
       } catch (e) {
         setResMsg({ msg: `${e}`, err: true, pen: false });
