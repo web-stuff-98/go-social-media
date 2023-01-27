@@ -69,7 +69,7 @@ jest.mock("react-router-dom", () => ({
 }));
 
 describe("blog post editor update post", () => {
-  test("should render a form with a title, description, tags, and HTML editor input with a submit button, a select image button and a random image button", async () => {
+  test("should render a form with a title, description, tags, and HTML editor input with an update button, a select image button and a random image button", async () => {
     await act(async () => {
       render(<Editor />, container);
     });
@@ -132,6 +132,14 @@ describe("blog post editor update post", () => {
       await submitButton.click();
     });
 
-    expect(postServices.updatePost).toHaveBeenCalled();
+    expect(postServices.updatePost).toHaveBeenCalledWith(
+      {
+        title: "Test title placeholder",
+        description: "Test description placeholder",
+        tags: "#Test tag 1 #Test tag 2",
+        body: "<p>Test quill content</p>",
+      },
+      "test-post-slug"
+    );
   });
 });

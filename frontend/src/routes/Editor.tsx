@@ -83,8 +83,10 @@ export default function Editor() {
         setResMsg({ msg: "Uploading post...", err: false, pen: true });
         if (!originalImageModified && !slug) throw new Error("No image file selected");
         let newSlug = "";
-        if (!slug) newSlug = await createPost(vals as Omit<any, "file">);
-        if (slug) await updatePost(vals as Omit<any, "file">, slug);
+        let valsWithoutFile = vals
+        delete vals.file
+        if (!slug) newSlug = await createPost(valsWithoutFile);
+        if (slug) await updatePost(valsWithoutFile, slug);
         if (!slug || originalImageModified) {
           await uploadPostImage(vals.file as unknown as File, slug || newSlug);
         }
