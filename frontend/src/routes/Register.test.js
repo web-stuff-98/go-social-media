@@ -21,11 +21,13 @@ afterEach(() => {
   container = null;
 });
 
+const registerMock = jest.fn();
+
 describe("registration page", () => {
   test("should render a registration form with a username and password input and a submit button", async () => {
     await act(async () => {
       render(
-        <AuthContext.Provider>
+        <AuthContext.Provider value={{ register: registerMock }}>
           <Register />
         </AuthContext.Provider>,
         container
@@ -42,8 +44,6 @@ describe("registration page", () => {
   });
 
   test("Inputting a username and password then clicking on the button should trigger the register function from AuthContext", async () => {
-    const registerMock = jest.fn();
-
     await act(async () => {
       render(
         <AuthContext.Provider value={{ register: registerMock }}>

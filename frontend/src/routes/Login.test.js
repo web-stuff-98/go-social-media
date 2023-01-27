@@ -55,6 +55,10 @@ describe("login page", () => {
       );
     });
 
+    const usernameInput = screen.getByTestId("username");
+    const passwordInput = screen.getByTestId("password");
+    const submitButton = screen.getByRole("button");
+
     fireEvent.change(usernameInput, { target: { value: "Test Acc" } });
     fireEvent.change(passwordInput, { target: { value: "Test Pass" } });
 

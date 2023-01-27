@@ -23,17 +23,13 @@ export function CommentForm({
   onClickOutside?: Function;
 }) {
   const [message, setMessage] = useState(initialValue);
+  const [mouseInside, setMouseInside] = useState(false);
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     onSubmit(message);
-    setMessage("")
+    setMessage("");
   }
-
-  const [mouseInside, setMouseInside] = useState(false);
-
-  const onMouseEnter = () => setMouseInside(true);
-  const onMouseLeave = () => setMouseInside(false);
 
   useEffect(() => {
     const clicked = () => {
@@ -48,25 +44,27 @@ export function CommentForm({
   }, [mouseInside]);
 
   return (
-    <form className={classes.container} onSubmit={handleSubmit}>
-      <div className={classes.inner}>
-        <input
-          autoFocus={autoFocus}
-          value={message}
-          placeholder={placeholder}
-          onChange={(e) => setMessage(e.target.value)}
-          onMouseEnter={() => onMouseEnter()}
-          onMouseLeave={() => onMouseLeave()}
-        />
-        <button type="submit" aria-label="Submit" disabled={loading}>
-          {loading ? (
-            <ImSpinner8 className={classes.spinner} />
-          ) : (
-            <MdSend className={classes.sendIcon} />
-          )}
-        </button>
-        {error && <ErrorTip message={String(error)} />}
-      </div>
+    <form
+      data-testid="form"
+      className={classes.container}
+      onSubmit={handleSubmit}
+    >
+      <input
+        autoFocus={autoFocus}
+        value={message}
+        placeholder={placeholder}
+        onChange={(e) => setMessage(e.target.value)}
+        onMouseEnter={() => setMouseInside(true)}
+        onMouseLeave={() => setMouseInside(false)}
+      />
+      <button type="submit" aria-label="Submit" disabled={loading}>
+        {loading ? (
+          <ImSpinner8 className={classes.spinner} />
+        ) : (
+          <MdSend className={classes.sendIcon} />
+        )}
+      </button>
+      {error && <ErrorTip message={String(error)} />}
     </form>
   );
 }

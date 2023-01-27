@@ -61,6 +61,7 @@ export default function Comment({
     <div className={classes.container}>
       <div className={classes.top}>
         <User
+        testid="author"
           AdditionalStuff={
             <div className={classes.userIcons}>
               <div className={classes.vert}>
@@ -75,19 +76,18 @@ export default function Comment({
                         : { filter: "opacity(0.5)" }),
                     }}
                     Icon={TiArrowSortedUp}
-                    onClick={() => {
-                      if (user)
-                        voteOnPostComment(postId, comment.ID, true)
-                          .catch((e) => {
-                            openModal("Message", {
-                              err: true,
-                              pen: false,
-                              msg: `${e}`,
-                            });
-                          })
-                          .then(() => {
-                            updateMyVoteOnComment(comment.ID, true);
-                          });
+                    onClick={async () => {
+                      if (!user) return;
+                      try {
+                        await voteOnPostComment(postId, comment.ID, true);
+                        updateMyVoteOnComment(comment.ID, true);
+                      } catch (e) {
+                        openModal("Message", {
+                          err: true,
+                          pen: false,
+                          msg: `${e}`,
+                        });
+                      }
                     }}
                     type="button"
                   />
@@ -113,19 +113,18 @@ export default function Comment({
                         : { filter: "opacity(0.5)" }),
                     }}
                     Icon={TiArrowSortedDown}
-                    onClick={() => {
-                      if (user)
-                        voteOnPostComment(postId, comment.ID, false)
-                          .catch((e) => {
-                            openModal("Message", {
-                              err: true,
-                              pen: false,
-                              msg: `${e}`,
-                            });
-                          })
-                          .then(() => {
-                            updateMyVoteOnComment(comment.ID, false);
-                          });
+                    onClick={async () => {
+                      if (!user) return;
+                      try {
+                        await voteOnPostComment(postId, comment.ID, false);
+                        updateMyVoteOnComment(comment.ID, false);
+                      } catch (e) {
+                        openModal("Message", {
+                          err: true,
+                          pen: false,
+                          msg: `${e}`,
+                        });
+                      }
                     }}
                     type="button"
                   />
@@ -136,24 +135,27 @@ export default function Comment({
                   <IconBtn
                     type="button"
                     ariaLabel="Edit comment"
-                    name="edit"
+                    name="Edit comment"
                     onClick={() => setIsEditing(true)}
                     Icon={AiFillEdit}
                   />
                   <IconBtn
                     type="button"
                     ariaLabel="Delete comment"
-                    name="delete"
+                    name="Delete comment"
                     style={{ color: "red" }}
                     onClick={() =>
                       openModal("Confirm", {
                         msg: "Are you sure you want to delete this comment?",
                         err: false,
                         pen: false,
-                        confirmationCallback: () =>
-                          deleteComment(postId, comment.ID).catch((e) =>
-                            setErr(`${e}`)
-                          ),
+                        confirmationCallback: async () => {
+                          try {
+                            await deleteComment(postId, comment.ID);
+                          } catch (e) {
+                            setErr(`${e}`);
+                          }
+                        },
                         cancellationCallback: () => {},
                       })
                     }
@@ -172,8 +174,12 @@ export default function Comment({
             <CommentForm
               autoFocus
               initialValue={comment.content}
-              onSubmit={(c: string) => {
-                updateComment(postId, comment.ID, c).catch((e) => setErr(e));
+              onSubmit={async (c: string) => {
+                try {
+                  updateComment(postId, comment.ID, c);
+                } catch (e) {
+                  setErr(`${e}`);
+                }
               }}
               onClickOutside={() => setIsEditing(false)}
               placeholder="Edit comment..."

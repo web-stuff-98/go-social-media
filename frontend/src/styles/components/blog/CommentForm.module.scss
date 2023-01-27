@@ -3,30 +3,27 @@
   margin-bottom: var(--padding);
   display: flex;
   box-sizing: border-box;
-  .inner {
-    flex-grow: 1;
-    position: relative;
+  flex-grow: 1;
+  position: relative;
+  input {
+    width: 100%;
+  }
+
+  button {
+    background: none;
+    padding: 0 var(--padding);
     display: flex;
-    input {
-      width: 100%;
-    }
+    align-items: center;
+    justify-content: center;
+    border: none;
+  }
 
-    button {
-      background: none;
-      padding: 0 var(--padding);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: none;
-    }
+  .spinner {
+    animation: spin 700ms linear infinite;
+  }
 
-    .spinner {
-      animation: spin 700ms linear infinite;
-    }
-
-    .sendIcon {
-      font-size: var(--font-lg);
-    }
+  .sendIcon {
+    font-size: var(--font-lg);
   }
 }
 
