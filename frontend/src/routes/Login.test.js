@@ -66,6 +66,6 @@ describe("login page", () => {
       submitButton.click();
     });
 
-    expect(loginMock).toHaveBeenCalled();
+    expect(loginMock).toHaveBeenCalledWith("Test Acc", "Test Pass");
   });
 });

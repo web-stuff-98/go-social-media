@@ -64,6 +64,6 @@ describe("registration page", () => {
       submitButton.click();
     });
 
-    expect(registerMock).toHaveBeenCalled();
+    expect(registerMock).toHaveBeenCalledWith("Test Acc", "Test Pass");
   });
 });
