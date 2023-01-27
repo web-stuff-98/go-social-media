@@ -3,10 +3,8 @@ import { unmountComponentAtNode } from "react-dom";
 import { act } from "react-dom/test-utils";
 import Editor from "./Editor";
 import * as postServices from "../services/posts";
-import { BrowserRouter } from "react-router-dom";
 
 postServices.createPost = jest.fn().mockReturnValueOnce("test-post-slug");
-postServices.updatePost = jest.fn().mockReturnValueOnce("test-post-slug");
 postServices.getRandomImage = jest.fn().mockResolvedValueOnce(
   new File(
     [
@@ -46,15 +44,10 @@ afterEach(() => {
   container = null;
 });
 
-describe("blog post editor", () => {
+describe("blog post editor create post", () => {
   test("should render a form with a title, description, tags, and HTML editor input with a submit button, a select image button and a random image button", async () => {
     await act(async () => {
-      render(
-        <BrowserRouter>
-          <Editor />
-        </BrowserRouter>,
-        container
-      );
+      render(<Editor />, container);
     });
 
     titleInput = screen.getByTestId("title");
@@ -63,9 +56,7 @@ describe("blog post editor", () => {
     quillContainer = screen.getByTestId("quill container");
     quillEditor = document.getElementsByClassName("ql-editor ql-blank");
 
-    submitButton = screen.getByRole("button", {
-      name: "Submit",
-    });
+    submitButton = screen.getByText("Submit");
     selectImageButton = screen.getByTestId("Image file button");
     randomImageButton = screen.getByTestId("Random image button");
 
@@ -82,12 +73,7 @@ describe("blog post editor", () => {
 
   test("filling out the inputs, pressing the random image button and clicking submit should trigger the createPost function from post services", async () => {
     await act(async () => {
-      render(
-        <BrowserRouter>
-          <Editor />
-        </BrowserRouter>,
-        container
-      );
+      render(<Editor />, container);
     });
 
     titleInput = screen.getByTestId("title");
@@ -109,9 +95,7 @@ describe("blog post editor", () => {
       quillEditor[0].innerHTML = "<p>Test quill content</p>";
     });
 
-    submitButton = screen.getByRole("button", {
-      name: "Submit",
-    });
+    submitButton = screen.getByText("Submit");
     randomImageButton = screen.getByTestId("Random image button");
 
     await act(async () => {
@@ -122,6 +106,11 @@ describe("blog post editor", () => {
       await submitButton.click();
     });
 
-    expect(postServices.createPost).toHaveBeenCalled();
+    expect(postServices.createPost).toHaveBeenCalledWith({
+      title: "Test title placeholder",
+      description: "Test description placeholder",
+      tags: "#Test tag 1 #Test tag 2",
+      body: "<p>Test quill content</p>",
+    });
   });
 });

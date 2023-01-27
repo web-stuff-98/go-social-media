@@ -38,7 +38,10 @@ export default function Editor() {
       formik.setFieldValue("title", p.title);
       formik.setFieldValue("description", p.description);
       formik.setFieldValue("body", p.body);
-      formik.setFieldValue("tags", "#" + p.tags.join("#"));
+      formik.setFieldValue(
+        "tags",
+        "#" + p.tags.map((t: string) => t.trim()).join("#")
+      );
       const file = await getPostImageFile(p.ID);
       formik.setFieldValue("file", file);
       setResMsg({ msg: "", err: false, pen: false });
@@ -78,11 +81,10 @@ export default function Editor() {
       if (validationErrs.length > 0) return;
       try {
         setResMsg({ msg: "Uploading post...", err: false, pen: true });
-        //jest............. wasted hours/days. Test wouldn't pass
-        //if (!vals.file) throw new Error("No image file selected");
+        if (!originalImageModified && !slug) throw new Error("No image file selected");
         let newSlug = "";
-        if (!slug) newSlug = await createPost(vals);
-        if (slug) await updatePost(vals, slug);
+        if (!slug) newSlug = await createPost(vals as Omit<any, "file">);
+        if (slug) await updatePost(vals as Omit<any, "file">, slug);
         if (!slug || originalImageModified) {
           await uploadPostImage(vals.file as unknown as File, slug || newSlug);
         }
