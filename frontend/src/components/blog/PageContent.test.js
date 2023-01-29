@@ -100,8 +100,9 @@ describe("post page content", () => {
     expect(downvoteBtn).toBeInTheDocument();
 
     upvoteBtn.click();
-    downvoteBtn.click();
+    expect(postServices.voteOnPost).toHaveBeenCalledWith("123", true);
 
-    expect(postServices.voteOnPost).toHaveBeenCalledTimes(2);
+    downvoteBtn.click();
+    expect(postServices.voteOnPost).toHaveBeenCalledWith("123", false);
   });
 });

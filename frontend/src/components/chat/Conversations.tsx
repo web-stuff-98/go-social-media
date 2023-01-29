@@ -150,7 +150,7 @@ export default function Conversations() {
         }
         if (fileRef.current) {
           setFile(undefined);
-          await uploadAttachment(
+          uploadAttachment(
             fileRef.current,
             data.DATA.ID,
             data.DATA.recipient_id,
@@ -260,7 +260,7 @@ export default function Conversations() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   return (
     <>
-      <div className={classes.users}>
+      <div data-testid="Users list" className={classes.users}>
         {conversations.map((c) => (
           <button
             key={c.uid}
@@ -278,12 +278,15 @@ export default function Conversations() {
             }
             className={classes.user}
           >
-            <User small uid={c.uid} user={getUserData(c.uid)} />
+            <User testid={`conversation uid:${c.uid}`} small uid={c.uid} user={getUserData(c.uid)} />
           </button>
         ))}
       </div>
       <div className={classes.right}>
-        <div className={classes.messagesAndVideoChat}>
+        <div
+          data-testid="Messages and video chat"
+          className={classes.messagesAndVideoChat}
+        >
           {selectedConversation && vidChatOpen && (
             <VideoChat id={selectedConversation} />
           )}

@@ -37,43 +37,33 @@ export default function Settings() {
         err: false,
         pen: false,
         msg: `Are you sure you want to use ${name} as your profile picture?`,
-        confirmationCallback: () => {
+        confirmationCallback: async () => {
           setResMsg({ msg: "", err: false, pen: true });
-          const formData = new FormData();
-          formData.append("file", fileRef.current as File, "pfp");
-          makeRequest("/api/account/pfp", {
-            method: "POST",
-            withCredentials: true,
-            data: formData,
-          })
-            .then(async () => {
-              try {
-                const b64 = await new Promise<string>((resolve, reject) => {
-                  const fr = new FileReader();
-                  fr.readAsDataURL(fileRef.current!);
-                  fr.onloadend = () => resolve(fr.result as string);
-                  fr.onabort = () => reject("Aborted");
-                  fr.onerror = () => reject("Error");
-                });
-                updateUserState({ base64pfp: b64 });
-                closeModal();
-              } catch (e) {
-                openModal("Message", {
-                  err: true,
-                  msg: `${e}`,
-                  pen: false,
-                });
-              }
-              setResMsg({ msg: "", err: false, pen: false });
-            })
-            .catch((e) => {
-              openModal("Message", {
-                err: true,
-                msg: `${e}`,
-                pen: false,
-              });
-              setResMsg({ msg: "", err: false, pen: false });
+          try {
+            const formData = new FormData();
+            formData.append("file", fileRef.current as File, "pfp");
+            await makeRequest("/api/account/pfp", {
+              method: "POST",
+              withCredentials: true,
+              data: formData,
             });
+            const b64 = await new Promise<string>((resolve, reject) => {
+              const fr = new FileReader();
+              fr.readAsDataURL(fileRef.current!);
+              fr.onloadend = () => resolve(fr.result as string);
+              fr.onabort = () => reject("Aborted");
+              fr.onerror = () => reject("Error");
+            });
+            updateUserState({ base64pfp: b64 });
+            closeModal();
+          } catch (e) {
+            openModal("Message", {
+              err: true,
+              msg: `${e}`,
+              pen: false,
+            });
+            setResMsg({ msg: "", err: false, pen: false });
+          }
         },
         cancellationCallback: () => {},
       });
@@ -119,7 +109,7 @@ export default function Settings() {
                     err: false,
                     pen: true,
                   });
-                  await deleteAccount();
+                  deleteAccount();
                   openModal("Message", {
                     msg: "Account deleted",
                     err: false,

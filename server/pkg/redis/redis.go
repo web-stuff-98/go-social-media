@@ -1,13 +1,10 @@
 package rdb
 
 import (
-	"context"
 	"log"
 
 	"github.com/go-redis/redis/v9"
 )
-
-var ctx = context.Background()
 
 func Init() *redis.Client {
 	rdb := redis.NewClient(&redis.Options{
@@ -15,6 +12,6 @@ func Init() *redis.Client {
 		Password: "",
 		DB:       0,
 	})
-	log.Println("Connected to redis...")
+	log.Println("Redis client created...")
 	return rdb
 }
