@@ -13,7 +13,7 @@ import IconBtn from "../shared/IconBtn";
 import { useModal } from "../../context/ModalContext";
 import User from "../shared/User";
 import { useUsers } from "../../context/UsersContext";
-import { TiArrowSortedUp, TiArrowSortedDown } from "react-icons/ti";
+import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
 
 export default function PostCard({
@@ -199,13 +199,13 @@ export default function PostCard({
                           style={{
                             color: "lime",
                             ...(post.my_vote && post.my_vote.is_upvote
-                              ? { stroke: "1px" }
+                              ? { }
                               : { filter: "opacity(0.5)" }),
                           }}
                           svgStyle={{
                             transform: "scale(1.166)",
                           }}
-                          Icon={TiArrowSortedUp}
+                          Icon={FaChevronUp}
                           type="button"
                           onClick={async () => {
                             try {
@@ -242,13 +242,13 @@ export default function PostCard({
                           style={{
                             color: "red",
                             ...(post.my_vote && !post.my_vote.is_upvote
-                              ? { stroke: "1px" }
+                              ? { }
                               : { filter: "opacity(0.5)" }),
                           }}
                           svgStyle={{
                             transform: "scale(1.166)",
                           }}
-                          Icon={TiArrowSortedDown}
+                          Icon={FaChevronDown}
                           type="button"
                           onClick={async () => {
                             try {

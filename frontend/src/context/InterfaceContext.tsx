@@ -62,8 +62,8 @@ export const InterfaceProvider = ({ children }: { children: ReactNode }) => {
         (Math.min(hi, Math.max(window.innerWidth, lo)) - lo) / (hi - lo);
       const v = lerp(
         window.innerWidth / 6 / 2,
-        window.innerWidth / 2 / 2,
-        Math.pow(a, 0.8)
+        window.innerWidth / 1.8 / 2,
+        Math.pow(a, 0.5)
       );
       let squareness =
         window.innerWidth > window.innerHeight

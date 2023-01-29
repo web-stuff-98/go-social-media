@@ -15,21 +15,25 @@ export default function PrivateMessage({
   reverse: boolean;
 }) {
   const getDateString = (date: Date) => dateFormatter.format(date);
-  const renderDateTime = (dateString: string) => {
-    return (
-      <>
-        <span>{dateString.split(", ")[0]}</span>
-        <span>{dateString.split(", ")[1]}</span>
-      </>
-    );
-  };
+  const DateTime = ({ dateString }: { dateString: string }) => (
+    <>
+      <span aria-label="Date" data-testid="Date">
+        {dateString.split(", ")[0].replaceAll("/20","/")}
+      </span>
+      <span aria-label="Time" data-testid="Time">
+        {dateString.split(", ")[1]}
+      </span>
+    </>
+  );
 
   return (
     <div
+      data-testid="Container"
       style={reverse ? { flexDirection: "row-reverse" } : {}}
       className={classes.container}
     >
       <div
+        data-testid="Content container"
         style={reverse ? { textAlign: "right" } : {}}
         className={classes.content}
       >
@@ -52,10 +56,11 @@ export default function PrivateMessage({
         )}
       </div>
       <div
+        data-testid="Date container"
         style={reverse ? { textAlign: "left" } : {}}
         className={classes.date}
       >
-        {renderDateTime(getDateString(new Date(msg.created_at)))}
+        <DateTime dateString={getDateString(new Date(msg.created_at))} />
       </div>
     </div>
   );

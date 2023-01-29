@@ -44,7 +44,8 @@ export interface IRoom extends IRoomCard {
 
 export default function Room() {
   const { roomId, setSection } = useChat();
-  const { socket, openSubscription, closeSubscription, sendIfPossible } = useSocket();
+  const { socket, openSubscription, closeSubscription, sendIfPossible } =
+    useSocket();
   const { user } = useAuth();
   const { cacheUserData } = useUsers();
   const { uploadAttachment } = useAttachment();
@@ -53,22 +54,27 @@ export default function Room() {
   const fileRef = useRef<File>();
   const [file, setFile] = useState<File>();
   const [room, setRoom] = useState<IRoom>();
-  const [vidChatOpen, setVidChatOpen] = useState(false)
+  const [vidChatOpen, setVidChatOpen] = useState(false);
   const [resMsg, setResMsg] = useState<IResMsg>({
     msg: "",
     err: false,
     pen: false,
   });
 
+  const loadRoom = async () => {
+    setResMsg({ msg: "", err: false, pen: true });
+    try {
+      const room = await getRoom(roomId);
+      setRoom({ ...room, messages: room.messages || [] });
+      setResMsg({ msg: "", err: false, pen: false });
+    } catch (e) {
+      setResMsg({ msg: `${e}`, err: true, pen: false });
+    }
+  };
+
   useEffect(() => {
     openSubscription(`room=${roomId}`);
-    setResMsg({ msg: "", err: false, pen: true });
-    getRoom(roomId)
-      .then((room: IRoom) => {
-        setRoom({ ...room, messages: room.messages || [] });
-        setResMsg({ msg: "", err: false, pen: false });
-      })
-      .catch((e) => setResMsg({ msg: `${e}`, err: true, pen: false }));
+    loadRoom();
     return () => {
       closeSubscription(`room=${roomId}`);
     };
@@ -79,8 +85,8 @@ export default function Room() {
     setMessageInput(e.target.value);
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = (e?: FormEvent<HTMLFormElement>) => {
+    e?.preventDefault();
     if (messageInput.length > 200) return;
     sendIfPossible(
       JSON.stringify({
@@ -105,7 +111,7 @@ export default function Room() {
       });
       if (data.DATA.uid === user?.ID && fileRef.current) {
         setFile(undefined);
-        await uploadAttachment(fileRef.current, data.DATA.ID, roomId, true);
+        uploadAttachment(fileRef.current, data.DATA.ID, roomId, true);
         fileRef.current = undefined;
       }
     }
@@ -184,7 +190,10 @@ export default function Room() {
   return (
     <div className={classes.container}>
       {room ? (
-        <div className={classes.messagesAndVideoChat}>
+        <div
+          data-testid="Messages and videochat"
+          className={classes.messagesAndVideoChat}
+        >
           {vidChatOpen && <VideoChat isRoom id={room.ID} />}
           {room.messages.length > 0 ? (
             <div className={classes.messages}>
@@ -197,13 +206,15 @@ export default function Room() {
               ))}
             </div>
           ) : (
-            <p style={{textAlign:"center"}}>This room has recieved no messages.</p>
+            <p style={{ textAlign: "center" }}>
+              The room has recieved no messages.
+            </p>
           )}
         </div>
       ) : (
         <></>
       )}
-      <form onSubmit={handleSubmit} className={classes.messageForm}>
+      <form data-testid="Message form" onSubmit={handleSubmit} className={classes.messageForm}>
         <input ref={fileInputRef} type="file" onChange={handleFile} />
         <IconBtn
           name="Video chat"
@@ -213,8 +224,8 @@ export default function Room() {
           Icon={RiWebcamLine}
         />
         <IconBtn
-          name="Send"
-          ariaLabel="Send message"
+          name="Select file"
+          ariaLabel="Select file"
           type="button"
           Icon={MdFileCopy}
           style={
@@ -232,7 +243,9 @@ export default function Room() {
           required
         />
         <IconBtn
-          name="Send"
+          testid="Send message"
+          onClick={() => handleSubmit()}
+          name="Send button"
           ariaLabel="Send message"
           type="submit"
           Icon={MdSend}

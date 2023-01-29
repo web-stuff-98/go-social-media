@@ -225,7 +225,8 @@ export default function Conversations() {
   const handleMessageInput = (e: ChangeEvent<HTMLInputElement>) =>
     setMessageInput(e.target.value);
 
-  const handleSubmit = () => {
+  const handleSubmit = (e?: FormEvent<HTMLFormElement>) => {
+    e?.preventDefault();
     if (!selectedConversation || messageInput.length > 200 || !messageInput)
       return;
     sendIfPossible(
@@ -306,7 +307,11 @@ export default function Conversations() {
               ))}
           </div>
         </div>
-        <div className={classes.messageForm}>
+        <form
+          data-testid="Message form"
+          onSubmit={handleSubmit}
+          className={classes.messageForm}
+        >
           <input ref={fileInputRef} type="file" onChange={handleFile} />
           <IconBtn
             name="Video chat"
@@ -337,7 +342,7 @@ export default function Conversations() {
           />
           <IconBtn
             onClick={() => handleSubmit()}
-            type="submit"
+            type="button"
             testid="Send button"
             name="Send"
             ariaLabel="Send message"
@@ -346,7 +351,7 @@ export default function Conversations() {
           {messageInput.length > 200 && (
             <ErrorTip message="Maximum 200 characters" />
           )}
-        </div>
+        </form>
       </div>
     </>
   );
