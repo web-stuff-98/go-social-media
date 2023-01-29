@@ -19,7 +19,7 @@ Change events (DELETE, INSERT, UPDATE) come through from the server like this :
 }
 */
 
-const SocketContext = createContext<{
+export const SocketContext = createContext<{
   socket?: WebSocket;
   connectSocket: () => void;
   reconnectSocket: () => void;

@@ -23,13 +23,9 @@ afterEach(() => {
 
 describe("login page", () => {
   test("should render a login form with a username and password input and a submit button", async () => {
-    const loginMock = jest.fn();
-
     await act(async () => {
       render(
-        <AuthContext.Provider value={{ login: loginMock }}>
-          <Login />
-        </AuthContext.Provider>,
+          <Login />,
         container
       );
     });

@@ -47,10 +47,10 @@ export default function Conversations() {
   const [vidChatOpen, setVidChatOpen] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState("");
-  const selectedConversationRef = useRef("");
   const [selectedConversationIndex, setSelectedConversationIndex] =
     useState(-1);
   const selectedConversationIndexRef = useRef(-1);
+  const selectedConversationRef = useRef("");
 
   const loadConvs = async () => {
     try {
@@ -225,9 +225,9 @@ export default function Conversations() {
   const handleMessageInput = (e: ChangeEvent<HTMLInputElement>) =>
     setMessageInput(e.target.value);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!selectedConversation || messageInput.length > 200) return;
+  const handleSubmit = () => {
+    if (!selectedConversation || messageInput.length > 200 || !messageInput)
+      return;
     sendIfPossible(
       JSON.stringify({
         event_type: "PRIVATE_MESSAGE",
@@ -278,7 +278,12 @@ export default function Conversations() {
             }
             className={classes.user}
           >
-            <User testid={`conversation uid:${c.uid}`} small uid={c.uid} user={getUserData(c.uid)} />
+            <User
+              testid={`conversation uid:${c.uid}`}
+              small
+              uid={c.uid}
+              user={getUserData(c.uid)}
+            />
           </button>
         ))}
       </div>
@@ -301,7 +306,7 @@ export default function Conversations() {
               ))}
           </div>
         </div>
-        <form onSubmit={handleSubmit} className={classes.messageForm}>
+        <div className={classes.messageForm}>
           <input ref={fileInputRef} type="file" onChange={handleFile} />
           <IconBtn
             name="Video chat"
@@ -322,17 +327,26 @@ export default function Conversations() {
             onClick={() => fileInputRef.current?.click()}
           />
           <input
+            data-testid="Message input"
+            name="Message input"
             value={messageInput}
             onChange={handleMessageInput}
             placeholder="Send a message..."
             type="text"
             required
           />
-          <IconBtn name="Send" ariaLabel="Send message" Icon={MdSend} />
+          <IconBtn
+            onClick={() => handleSubmit()}
+            type="submit"
+            testid="Send button"
+            name="Send"
+            ariaLabel="Send message"
+            Icon={MdSend}
+          />
           {messageInput.length > 200 && (
             <ErrorTip message="Maximum 200 characters" />
           )}
-        </form>
+        </div>
       </div>
     </>
   );

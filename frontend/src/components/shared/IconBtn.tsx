@@ -39,6 +39,7 @@ const IconBtn = ({
     aria-label={ariaLabel}
     className={classes.container}
     onClick={() => onClick()}
+    data-testid={testid}
   >
     <Icon
       style={{
