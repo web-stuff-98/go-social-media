@@ -57,7 +57,12 @@ export function CommentForm({
         onMouseEnter={() => setMouseInside(true)}
         onMouseLeave={() => setMouseInside(false)}
       />
-      <button type="submit" aria-label="Submit" disabled={loading}>
+      <button
+        name="Submit comment"
+        type="submit"
+        aria-label="Submit comment"
+        disabled={loading}
+      >
         {loading ? (
           <ImSpinner8 className={classes.spinner} />
         ) : (

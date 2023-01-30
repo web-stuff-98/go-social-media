@@ -1,6 +1,10 @@
 import classes from "../../styles/components/blog/Comments.module.scss";
 import Comment, { IComment } from "./Comment";
 
+/*
+ This doesn't really need a test (probably)
+*/
+
 export default function Comments({
   comments,
   postId,

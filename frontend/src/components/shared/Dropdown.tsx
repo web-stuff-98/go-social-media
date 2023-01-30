@@ -45,6 +45,7 @@ export default function Dropdown({
 
     return (
       <button
+        data-testid={"Index " + itemIndex}
         className={light ? "lightButton" : ""}
         key={name}
         type="button"
