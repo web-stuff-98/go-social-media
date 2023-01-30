@@ -42,16 +42,15 @@ export default function Rooms() {
     [searchInput, page]
   );
 
-  const updatePage = () => {
-    getRoomPage(pageNum, searchInput)
-      .then(({ count, rooms }: { count: string; rooms: string }) => {
-        setCount(Number(count));
-        setPage(JSON.parse(rooms) as IRoomCard[]);
-        setResMsg({ msg: "", err: false, pen: false });
-      })
-      .catch((e) => {
-        setResMsg({ msg: `${e}`, err: true, pen: false });
-      });
+  const updatePage = async () => {
+    try {
+      const { count, rooms } = await getRoomPage(pageNum, searchInput);
+      setCount(Number(count));
+      setPage(JSON.parse(rooms) as IRoomCard[]);
+      setResMsg({ msg: "", err: false, pen: false });
+    } catch (e) {
+      setResMsg({ msg: `${e}`, err: true, pen: false });
+    }
   };
 
   useEffect(() => {
@@ -71,7 +70,7 @@ export default function Rooms() {
 
   const handleMessage = useCallback((e: MessageEvent) => {
     const data = JSON.parse(e.data);
-    if(!data["DATA"]) return
+    if (!data["DATA"]) return;
     data["DATA"] = JSON.parse(data["DATA"]);
     if (instanceOfChangeData(data)) {
       if (data.ENTITY === "ROOM") {
@@ -89,14 +88,19 @@ export default function Rooms() {
 
   return (
     <div className={classes.container}>
-      <div className={classes.rooms}>
+      <div data-testid="Rooms list container" className={classes.rooms}>
         {page && !resMsg.pen && page.map((r) => <RoomCard key={r.ID} r={r} />)}
-        <div className={classes.resMsg}>
+        <div
+          data-testid="Rooms list ResMsg container"
+          className={classes.resMsg}
+        >
           <ResMsg resMsg={resMsg} />
         </div>
       </div>
-      <form className={classes.searchContainer}>
+      <form role="form" name="Search rooms" className={classes.searchContainer}>
         <input
+          data-testid="Search room name input"
+          name="Search room name"
           value={searchInput}
           onChange={(e: ChangeEvent<HTMLInputElement>) =>
             setSearchInput(e.target.value)
@@ -104,9 +108,18 @@ export default function Rooms() {
           type="text"
           placeholder="Search rooms..."
         />
-        <IconBtn Icon={FaSearch} ariaLabel="Search rooms" name="Search rooms" />
+        <IconBtn
+          testid="Search room button"
+          type="submit"
+          Icon={FaSearch}
+          ariaLabel="Search rooms"
+          name="Search rooms"
+        />
       </form>
-      <div className={classes.paginationControls}>
+      <div
+        data-testid="Pagination controls container"
+        className={classes.paginationControls}
+      >
         <IconBtn
           onClick={prevPage}
           name="Prev page"
