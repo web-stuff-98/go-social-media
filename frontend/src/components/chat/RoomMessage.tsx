@@ -15,6 +15,7 @@ export default function RoomMessage({
 
   return (
     <div
+      data-testid="Content container"
       style={
         reverse
           ? {

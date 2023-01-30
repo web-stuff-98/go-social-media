@@ -3,12 +3,9 @@ import classes from "../../styles/components/chat/RoomEditor.module.scss";
 import ResMsg, { IResMsg } from "../shared/ResMsg";
 import { useState, useRef, useEffect } from "react";
 import {
-  createRoom,
   getRandomRoomImage,
   getRoom,
   getRoomImageAsBlob,
-  updateRoom,
-  uploadRoomImage,
 } from "../../services/rooms";
 import { IRoomCard } from "./Rooms";
 import { z } from "zod";
@@ -87,6 +84,7 @@ export default function RoomEditor() {
       {!resMsg.pen && (
         <>
           <FormikInputAndLabel
+            touched={formik.touched.name}
             name="Room name"
             id="name"
             ariaLabel="Room name"
@@ -140,6 +138,7 @@ export default function RoomEditor() {
       )}
       {(resMsg.pen || resMsg.msg) && (
         <div
+        data-testid="ResMsg container"
           style={{
             width: `${imgRef.current ? `${imgRef.current.width}px` : "12rem"}`,
           }}

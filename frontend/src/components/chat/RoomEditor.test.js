@@ -1,4 +1,4 @@
-import { screen, render, fireEvent } from "@testing-library/react";
+import { screen, render, fireEvent, waitFor } from "@testing-library/react";
 import { unmountComponentAtNode } from "react-dom";
 import { ChatContext } from "./Chat";
 import RoomEditor from "./RoomEditor";
@@ -7,6 +7,13 @@ import { AuthContext } from "../../context/AuthContext";
 import { act } from "react-dom/test-utils";
 
 roomServices.createRoom = jest.fn().mockResolvedValueOnce("1");
+roomServices.getRoom = jest.fn().mockReturnValue({
+  ID: "1",
+  name: "Room name",
+  author_id: "1",
+  img_blur: "placeholder",
+  img_url: "",
+});
 roomServices.getRandomRoomImage = jest.fn().mockResolvedValueOnce(
   new File(
     [
@@ -140,16 +147,16 @@ describe("room editor", () => {
       );
     });
 
-    const roomNameInput = screen.getByRole("textbox", {
-      name: "Room name",
-      hidden: true,
-    });
+    expect(roomServices.getRoom).toHaveBeenCalled();
+
+    // jest couldn't find this with getByRole for some reason......?
+    const roomNameInput = screen.getByTestId("name");
     const randomRoomImageBtn = screen.getByRole("button", {
       name: "Random image",
       hidden: true,
     });
     const submitBtn = screen.getByRole("button", {
-      name: "Create room",
+      name: "Update room",
       hidden: true,
     });
 
