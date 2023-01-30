@@ -60,6 +60,7 @@ export default function Blog() {
     return () => {
       closeSubscription("post_feed");
     };
+    // eslint-disable-next-line
   }, []);
 
   return (
