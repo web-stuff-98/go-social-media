@@ -1,5 +1,6 @@
 import classes from "../../styles/components/Layout.module.scss";
 import Nav from "./Nav";
+import { useMemo } from "react";
 import type { CSSProperties } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useInterface } from "../../context/InterfaceContext";
@@ -14,7 +15,7 @@ export default function Layout() {
   const { pathname } = useLocation();
   const mousePos = useMouse();
 
-  const getStyle = () => {
+  const getStyle = useMemo(() => {
     switch (iState.containerMode) {
       case "Feed": {
         const properties: CSSProperties = {
@@ -58,7 +59,7 @@ export default function Layout() {
         return properties;
       }
     }
-  };
+  }, [pathname]);
 
   return (
     <div className={classes.container}>
@@ -89,7 +90,7 @@ export default function Layout() {
       <Header />
       <Nav />
       {user && <Chat />}
-      <main style={getStyle()}>
+      <main style={getStyle}>
         <Outlet />
       </main>
     </div>
