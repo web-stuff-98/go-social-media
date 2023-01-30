@@ -21,6 +21,7 @@ import useSocket from "../../context/SocketContext";
 import { BsFillChatRightFill } from "react-icons/bs";
 
 import * as process from "process";
+import ChatTopTray from "./ChatTopTray";
 (window as any).process = process;
 
 export enum ChatSection {
@@ -259,25 +260,6 @@ export default function Chat() {
     >
       {chatOpen ? (
         <>
-          <div className={classes.topTray}>
-            {section}
-            <div className={classes.icons}>
-              {section !== ChatSection.MENU && (
-                <IconBtn
-                  onClick={() => setSection(ChatSection.MENU)}
-                  name="Chat menu"
-                  ariaLabel="Chat menu"
-                  Icon={MdMenu}
-                />
-              )}
-              <IconBtn
-                name="Close chat"
-                ariaLabel="Close chat"
-                onClick={() => setChatOpen(false)}
-                Icon={IoMdClose}
-              />
-            </div>
-          </div>
           <ChatContext.Provider
             value={{
               setSection,
@@ -293,6 +275,8 @@ export default function Chat() {
               userStream: userStream.current,
             }}
           >
+            <ChatTopTray closeChat={() => setChatOpen(false)} />
+
             <div className={classes.inner}>
               {
                 {

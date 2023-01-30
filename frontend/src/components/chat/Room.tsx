@@ -87,7 +87,7 @@ export default function Room() {
 
   const handleSubmit = (e?: FormEvent<HTMLFormElement>) => {
     e?.preventDefault();
-    if (messageInput.length > 200) return;
+    if (messageInput.length > 200 || !messageInput) return;
     sendIfPossible(
       JSON.stringify({
         event_type: "ROOM_MESSAGE",
@@ -214,7 +214,11 @@ export default function Room() {
       ) : (
         <></>
       )}
-      <form data-testid="Message form" onSubmit={handleSubmit} className={classes.messageForm}>
+      <form
+        data-testid="Message form"
+        onSubmit={handleSubmit}
+        className={classes.messageForm}
+      >
         <input ref={fileInputRef} type="file" onChange={handleFile} />
         <IconBtn
           name="Video chat"
@@ -247,7 +251,7 @@ export default function Room() {
           onClick={() => handleSubmit()}
           name="Send button"
           ariaLabel="Send message"
-          type="submit"
+          type="button"
           Icon={MdSend}
         />
         {messageInput.length > 200 && (

@@ -15,12 +15,19 @@ export default function RoomCard({ r }: { r: IRoomCard }) {
   const { openRoom, openRoomEditor } = useChat();
   const [imgURL, setImgURL] = useState("");
 
+  const loadImage = async () => {
+    try {
+      setImgURL("");
+      const url = await getRoomImage(r.ID);
+      setImgURL(url);
+    } catch (e) {
+      console.log("Failed to load room image:", e);
+    }
+  };
+
   useEffect(() => {
     if (r.img_blur) {
-      setImgURL(r.img_blur);
-      getRoomImage(r.ID)
-        .then((url) => setImgURL(url))
-        .catch(() => {});
+      loadImage();
     } else {
       setImgURL("");
     }
@@ -35,6 +42,7 @@ export default function RoomCard({ r }: { r: IRoomCard }) {
 
   return (
     <div
+      data-testid="Container"
       style={
         r.img_blur
           ? {

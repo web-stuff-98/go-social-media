@@ -33,22 +33,17 @@ export default function RoomEditor() {
     pen: false,
   });
 
-  const loadRoom = () => {
+  const loadRoom = async () => {
     setResMsg({ msg: "", err: false, pen: true });
-    getRoom(editRoomId)
-      .then((r: IRoomCard) => {
-        formik.setFieldValue("name", r.name);
-        getRoomImageAsBlob(editRoomId)
-          .then((b) => {
-            formik.setFieldValue("image", b);
-            setImgURL(URL.createObjectURL(b));
-          })
-          .catch(() => {});
-        setResMsg({ msg: "", err: false, pen: false });
-      })
-      .catch((e) => {
-        setResMsg({ msg: `${e}`, err: true, pen: false });
-      });
+    try {
+      const r: IRoomCard = await getRoom(editRoomId);
+      formik.setFieldValue("name", r.name);
+      const b: Blob = await getRoomImageAsBlob(editRoomId);
+      formik.setFieldValue("image", b);
+      setImgURL(URL.createObjectURL(b));
+    } catch (e) {
+      setResMsg({ msg: "", err: false, pen: false });
+    }
   };
 
   const { validate, validationErrs } = useFormikValidate(
@@ -93,7 +88,7 @@ export default function RoomEditor() {
 
   const randomImage = async () => {
     const res = await axios({
-      url: "https://picsum.photos/1000/300",
+      url: "https://picsum.photos/500/200",
       responseType: "arraybuffer",
     });
     const file = new File([res.data], "image.jpg", { type: "image/jpeg" });
