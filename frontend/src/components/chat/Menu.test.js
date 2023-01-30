@@ -23,14 +23,11 @@ jest.mock("react-router-dom", () => ({
   }),
 }));
 
-let mockSetSection;
-
 async function RenderComponent() {
   //Render the chat component instead of the Menu component. Menu component should be inside Chat component.
-  mockSetSection = jest.fn();
   await act(async () => {
     render(
-      <ChatContext.Provider value={{ setSection: mockSetSection }}>
+      <ChatContext.Provider value={{ setSection: jest.fn() }}>
         <Chat />
       </ChatContext.Provider>,
       container

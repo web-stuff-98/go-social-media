@@ -1,8 +1,5 @@
 import classes from "../../styles/components/chat/Chat.module.scss";
-import IconBtn from "../shared/IconBtn";
-import { IoMdClose } from "react-icons/io";
 import Conversations from "./Conversations";
-import { MdMenu } from "react-icons/md";
 import { useState, createContext, useContext, useRef, useEffect } from "react";
 import Menu from "./Menu";
 import RoomEditor from "./RoomEditor";
@@ -22,7 +19,16 @@ import { BsFillChatRightFill } from "react-icons/bs";
 
 import * as process from "process";
 import ChatTopTray from "./ChatTopTray";
+import { createRoom, updateRoom, uploadRoomImage } from "../../services/rooms";
 (window as any).process = process;
+
+/*
+  This contains all the video chat functions and state,
+  it also contains openRoom and openRoomEditor, and the
+  create/update room function. I had to put the create
+  update room function in here because I couldn't get
+  the test to pass otherwise.
+*/
 
 export enum ChatSection {
   "MENU" = "Menu",
@@ -47,6 +53,12 @@ export const ChatContext = createContext<{
   isStreaming: boolean;
   peers: PeerWithID[];
   leftVidChat: (isRoom: boolean, id: string) => void;
+
+  handleCreateUpdateRoom: (
+    vals: { name: string; image?: File },
+    originalImageChanged: boolean,
+    numErrs: number
+  ) => void;
 }>({
   section: ChatSection.MENU,
   setSection: () => {},
@@ -62,6 +74,8 @@ export const ChatContext = createContext<{
   isStreaming: false,
   peers: [],
   leftVidChat: () => {},
+
+  handleCreateUpdateRoom: () => {},
 });
 
 export type PeerWithID = {
@@ -89,6 +103,30 @@ export default function Chat() {
   const openRoomEditor = (id: string) => {
     setEditRoomId(id);
     setSection(ChatSection.EDITOR);
+  };
+
+  const handleCreateUpdateRoom = async (
+    vals: { name: string; image?: File },
+    originalImageChanged: boolean,
+    numErrs: number
+  ) => {
+    if (numErrs > 0) return;
+    let id: string;
+    if (editRoomId) {
+      id = editRoomId;
+      await updateRoom({
+        name: vals.name,
+        ID: editRoomId,
+      });
+    } else {
+      id = await createRoom(vals);
+    }
+    if (
+      (vals.image && !editRoomId) ||
+      (editRoomId && originalImageChanged && vals.image)
+    ) {
+      await uploadRoomImage(vals.image, id);
+    }
   };
 
   /////////////////////////////////////////////////////
@@ -273,10 +311,10 @@ export default function Chat() {
               isStreaming,
               peers,
               userStream: userStream.current,
+              handleCreateUpdateRoom,
             }}
           >
             <ChatTopTray closeChat={() => setChatOpen(false)} />
-
             <div className={classes.inner}>
               {
                 {

@@ -1,3 +1,4 @@
+import axios from "axios";
 import { IRoomCard } from "../components/chat/Rooms";
 import { makeRequest } from "./makeRequest";
 
@@ -31,7 +32,16 @@ const getRoomImageAsBlob = async (id: string) => {
   const data = await makeRequest(`/api/rooms/${id}/image`, {
     responseType: "arraybuffer",
   });
-  return new Blob([data], { type: "image/jpeg" })
+  return new Blob([data], { type: "image/jpeg" });
+};
+
+const getRandomRoomImage = async () => {
+  const res = await axios({
+    url: "https://picsum.photos/500/200",
+    responseType: "arraybuffer",
+  });
+  const file = new File([res.data], "image.jpg", { type: "image/jpeg" });
+  return file;
 };
 
 const deleteRoom = (id: string) =>
@@ -41,9 +51,14 @@ const deleteRoom = (id: string) =>
   });
 
 const getRoomPage = (page: number, term: string) =>
-  makeRequest(`/api/rooms/page/${page}${term ? `?term=${term.replaceAll(" ", "+")}` : ""}`, {
-    withCredentials: true,
-  });
+  makeRequest(
+    `/api/rooms/page/${page}${
+      term ? `?term=${term.replaceAll(" ", "+")}` : ""
+    }`,
+    {
+      withCredentials: true,
+    }
+  );
 
 const uploadRoomImage = (file: File, id: string) => {
   const data = new FormData();
@@ -63,5 +78,6 @@ export {
   deleteRoom,
   getRoomPage,
   getRoom,
-  getRoomImageAsBlob
+  getRoomImageAsBlob,
+  getRandomRoomImage,
 };

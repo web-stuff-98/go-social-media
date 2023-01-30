@@ -4,12 +4,12 @@ import ResMsg, { IResMsg } from "../shared/ResMsg";
 import { useState, useRef, useEffect } from "react";
 import {
   createRoom,
+  getRandomRoomImage,
   getRoom,
   getRoomImageAsBlob,
   updateRoom,
   uploadRoomImage,
 } from "../../services/rooms";
-import axios from "axios";
 import { IRoomCard } from "./Rooms";
 import { z } from "zod";
 import { useChat } from "./Chat";
@@ -18,12 +18,7 @@ import FormikFileButtonInput from "../shared/forms/FormikFileButtonInput";
 import useFormikValidate from "../../hooks/useFormikValidate";
 
 export default function RoomEditor() {
-  const { editRoomId } = useChat();
-
-  useEffect(() => {
-    if (!editRoomId) return;
-    loadRoom();
-  }, [editRoomId]);
+  const { editRoomId, handleCreateUpdateRoom } = useChat();
 
   const [originalImageChanged, setOriginalImageChanged] = useState(false);
   const [imgURL, setImgURL] = useState("");
@@ -38,13 +33,22 @@ export default function RoomEditor() {
     try {
       const r: IRoomCard = await getRoom(editRoomId);
       formik.setFieldValue("name", r.name);
-      const b: Blob = await getRoomImageAsBlob(editRoomId);
+      const b: Blob = await getRoomImageAsBlob(editRoomId).catch(() => {
+        throw new Error("Room image error");
+      });
       formik.setFieldValue("image", b);
       setImgURL(URL.createObjectURL(b));
     } catch (e) {
-      setResMsg({ msg: "", err: false, pen: false });
+      //If its a room image error that means the room has no image, so its
+      //just a not found error
+      setResMsg({ msg: "", err: `${e}` !== "Room image error", pen: false });
     }
   };
+
+  useEffect(() => {
+    if (!editRoomId) return;
+    loadRoom();
+  }, [editRoomId]);
 
   const { validate, validationErrs } = useFormikValidate(
     z.object({
@@ -55,43 +59,23 @@ export default function RoomEditor() {
   const formik = useFormik({
     initialValues: { name: "", image: null },
     validate,
-    onSubmit: async (vals) => {
-      if (validationErrs.length > 0) return;
+    onSubmit: async (vals: { name: string; image?: any }) => {
       try {
-        setResMsg({ msg: "", err: false, pen: true });
-        let id: string;
-        if (editRoomId) {
-          id = editRoomId;
-          await updateRoom({
-            name: vals.name,
-            ID: editRoomId,
-          });
-        } else {
-          id = await createRoom(vals as Pick<IRoomCard, "name">);
-        }
-        if (
-          (vals.image && !editRoomId) ||
-          (editRoomId && originalImageChanged && vals.image)
-        ) {
-          await uploadRoomImage(vals.image, id);
-        }
-        setResMsg({
-          msg: editRoomId ? "Room updated" : "Room created",
-          err: false,
-          pen: false,
-        });
+        setResMsg({ msg: "", pen: true, err: false });
+        handleCreateUpdateRoom(
+          vals,
+          originalImageChanged,
+          validationErrs.length
+        );
+        setResMsg({ msg: "", pen: false, err: false });
       } catch (e) {
-        setResMsg({ msg: `${e}`, err: true, pen: false });
+        setResMsg({ msg: `${e}`, pen: false, err: false });
       }
     },
   });
 
   const randomImage = async () => {
-    const res = await axios({
-      url: "https://picsum.photos/500/200",
-      responseType: "arraybuffer",
-    });
-    const file = new File([res.data], "image.jpg", { type: "image/jpeg" });
+    const file = await getRandomRoomImage();
     formik.setFieldValue("image", file);
     setImgURL(URL.createObjectURL(file));
     setOriginalImageChanged(true);
@@ -103,7 +87,7 @@ export default function RoomEditor() {
       {!resMsg.pen && (
         <>
           <FormikInputAndLabel
-            name="name"
+            name="Room name"
             id="name"
             ariaLabel="Room name"
             validationErrs={validationErrs}
@@ -113,7 +97,7 @@ export default function RoomEditor() {
           />
           <FormikFileButtonInput
             buttonTestId="Image file button"
-            name="image"
+            name="Select room image"
             id="image"
             ariaLabel="Select room image"
             accept=".jpeg,.jpeg,.png"
@@ -125,25 +109,33 @@ export default function RoomEditor() {
           />
           <button
             name="Random image"
-            onClick={() =>
-              randomImage().catch((e) =>
-                setResMsg({ msg: `${e}`, err: true, pen: false })
-              )
-            }
+            onClick={async () => {
+              try {
+                await randomImage();
+              } catch (e) {
+                setResMsg({ msg: `${e}`, err: true, pen: false });
+              }
+            }}
             aria-label="Random image"
             type="button"
           >
             Random image
           </button>
-          <button type="submit">{editRoomId ? "Update" : "Create"}</button>
-          {formik.values.image && (
-            <img
-              ref={imgRef}
-              alt="Preview"
-              className={classes.imgPreview}
-              src={imgURL}
-            />
-          )}
+          <button
+            aria-label={editRoomId ? "Update room" : "Create room"}
+            name={editRoomId ? "Update room" : "Create room"}
+            type="submit"
+          >
+            {editRoomId ? "Update" : "Create"}
+          </button>
+          <img
+            data-testid="Image preview"
+            ref={imgRef}
+            alt="Image preview"
+            style={formik.values.image ? {} : { display: "none" }}
+            className={classes.imgPreview}
+            src={imgURL}
+          />
         </>
       )}
       {(resMsg.pen || resMsg.msg) && (
