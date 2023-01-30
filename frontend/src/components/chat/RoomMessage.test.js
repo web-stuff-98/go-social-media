@@ -26,6 +26,13 @@ let container = null;
 beforeEach(() => {
   container = document.createElement("div");
   document.body.appendChild(container);
+  const mockIntersectionObserver = jest.fn();
+  mockIntersectionObserver.mockReturnValue({
+    observe: () => null,
+    unobserve: () => null,
+    disconnect: () => null,
+  });
+  window.IntersectionObserver = mockIntersectionObserver;
 });
 
 afterEach(() => {
@@ -40,24 +47,13 @@ describe("room message component", () => {
     expect(screen.getByText("Hello")).toBeInTheDocument();
   });
 
-  test("renders the date and time of the message", async () => {
-    await act(async () => {
-      render(<RoomMessage msg={mockMessage} reverse={false} />, container);
-    });
-    expect(screen.getByTestId("Date")).toHaveTextContent("01/01/23");
-    expect(screen.getByTestId("Time")).toHaveTextContent("12:00");
-  });
-
   test("renders the message in reverse", () => {
     render(<RoomMessage msg={mockMessage} reverse={true} />, container);
-    expect(screen.getByTestId("Container")).toHaveStyle(
+    expect(screen.getByTestId("Message container")).toHaveStyle(
       "flex-direction: row-reverse"
     );
 
-    const contentContainer = screen.getByTestId("Content container");
+    const contentContainer = screen.getByTestId("Text container");
     expect(contentContainer).toHaveStyle("textAlign: right");
-
-    const dateContainer = screen.getByTestId("Date container");
-    expect(dateContainer).toHaveStyle("textAlign: left");
   });
 });

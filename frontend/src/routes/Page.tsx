@@ -26,8 +26,8 @@ export default function Page() {
   const { openSubscription, closeSubscription, socket } = useSocket();
   const { slug } = useParams();
   const { cacheUserData } = useUsers();
-  const navigate = useNavigate();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [resMsg, setResMsg] = useState<IResMsg>({
     msg: "",
@@ -36,7 +36,6 @@ export default function Page() {
   });
   const [post, setPost] = useState<IPost>();
   const [imgURL, setImgURL] = useState("");
-
   const [replyingTo, setReplyingTo] = useState("");
   const [comments, setComments] = useState<IComment[]>([]);
   const commentsByParentId = useMemo<any>(() => {
@@ -85,6 +84,7 @@ export default function Page() {
     return () => {
       closeSubscription(`post_page=${post?.ID}`);
     };
+    // eslint-disable-next-line
   }, [slug]);
 
   const handleMessage = useCallback((e: MessageEvent) => {
@@ -169,6 +169,7 @@ export default function Page() {
       });
       return;
     }
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -176,6 +177,7 @@ export default function Page() {
     return () => {
       if (socket) socket?.removeEventListener("message", handleMessage);
     };
+    // eslint-disable-next-line
   }, [socket]);
 
   const [cmtErr, setCmtErr] = useState("");
@@ -202,9 +204,13 @@ export default function Page() {
         <CommentForm
           loading={false}
           error={cmtErr}
-          onSubmit={(c: string) =>
-            submitComment(c, post!.ID, "").catch((e) => setCmtErr(`${e}`))
-          }
+          onSubmit={async (c: string) => {
+            try {
+              await submitComment(c, post!.ID, "");
+            } catch (e) {
+              setCmtErr(`${e}`);
+            }
+          }}
           placeholder="Add a comment..."
         />
         <Comments

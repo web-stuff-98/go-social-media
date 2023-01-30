@@ -23,15 +23,18 @@ export default function PageContent({
 
   return (
     <>
-      <div className={classes.imageTitleContainer}>
+      <div
+        data-testid="Image and title"
+        className={classes.imageTitleContainer}
+      >
         <img className={classes.image} alt={post.title} src={imgURL} />
         <div className={classes.text}>
           <div className={classes.titleDescription}>
-            <h1 data-testid="heading">{post.title}</h1>
-            <h1 data-testid="subheading">{post.description}</h1>
+            <h1 data-testid="Heading">{post.title}</h1>
+            <h1 data-testid="Subheading">{post.description}</h1>
           </div>
           <User
-            testid="author"
+            testid="Author"
             reverse
             light
             date={new Date(post.created_at || 0)}
@@ -119,7 +122,7 @@ export default function PageContent({
         </div>
       </div>
       <div
-        data-testid="content"
+        data-testid="Content"
         className={classes.html}
         dangerouslySetInnerHTML={{ __html: post.body }}
       />

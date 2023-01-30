@@ -45,6 +45,7 @@ export default function VideoChat({
     return () => {
       leftVidChat(Boolean(isRoom), id);
     };
+    // eslint-disable-next-line
   }, []);
 
   return (
@@ -69,6 +70,7 @@ function PeerVideoWindow({ peerWithID }: { peerWithID: PeerWithID }) {
     return () => {
       peerWithID?.peer.off("stream", handleStream);
     };
+    // eslint-disable-next-line
   }, []);
 
   return <VideoWindow uid={peerWithID.UID} stream={stream} />;
@@ -102,7 +104,12 @@ function VideoWindow({
   };
 
   return (
-    <div data-testid={ownVideo ? "Users video chat window" : `Uid ${uid}s video chat window`} className={classes.videoWindow}>
+    <div
+      data-testid={
+        ownVideo ? "Users video chat window" : `Uid ${uid}s video chat window`
+      }
+      className={classes.videoWindow}
+    >
       <div className={classes.inner}>
         <div className={classes.topTray}>
           <div className={classes.text}>

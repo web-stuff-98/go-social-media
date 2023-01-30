@@ -19,7 +19,7 @@ describe("comment form", () => {
   test("submits the form with the message input", async () => {
     const onSubmit = jest.fn();
     render(<CommentForm onSubmit={onSubmit} />, container);
-    const form = screen.getByTestId("form");
+    const form = screen.getByTestId("Comment form");
     const input = screen.getByRole("textbox");
     fireEvent.change(input, { target: { value: "test message" } });
     fireEvent.submit(form);

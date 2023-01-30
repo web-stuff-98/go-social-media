@@ -78,10 +78,10 @@ describe("post page content", () => {
       )
     );
 
-    const heading = screen.getByTestId("heading");
-    const subheading = screen.getByTestId("subheading");
-    const content = screen.getByTestId("content");
-    const author = screen.getByTestId("author");
+    const heading = screen.getByTestId("Heading");
+    const subheading = screen.getByTestId("Subheading");
+    const content = screen.getByTestId("Content");
+    const author = screen.getByTestId("Author");
 
     upvoteBtn = screen.getByRole("button", {
       name: "Vote up",

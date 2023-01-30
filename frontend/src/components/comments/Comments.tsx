@@ -21,7 +21,7 @@ export default function Comments({
   updateMyVoteOnComment: (id: string, isUpvote: boolean) => void;
 }) {
   return (
-    <div className={classes.container}>
+    <div data-testid="Comments container" className={classes.container}>
       {comments &&
         comments.map((cmt) => (
           <Comment

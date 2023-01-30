@@ -109,6 +109,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         pen: false,
       });
     }
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -125,6 +126,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         socket.close();
       }
     };
+    // eslint-disable-next-line
   }, [socket]);
 
   return (

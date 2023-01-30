@@ -15,7 +15,7 @@ export default function RoomMessage({
 
   return (
     <div
-      data-testid="Content container"
+      data-testid="Message container"
       style={
         reverse
           ? {
@@ -34,6 +34,7 @@ export default function RoomMessage({
       />
       <div className={classes.content}>
         <div
+          data-testid="Text container"
           style={reverse ? { textAlign: "right" } : {}}
           className={classes.text}
         >

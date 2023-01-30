@@ -45,6 +45,7 @@ export default function RoomEditor() {
   useEffect(() => {
     if (!editRoomId) return;
     loadRoom();
+    // eslint-disable-next-line
   }, [editRoomId]);
 
   const { validate, validationErrs } = useFormikValidate(
@@ -129,7 +130,7 @@ export default function RoomEditor() {
           <img
             data-testid="Image preview"
             ref={imgRef}
-            alt="Image preview"
+            alt="Room cover preview"
             style={formik.values.image ? {} : { display: "none" }}
             className={classes.imgPreview}
             src={imgURL}
@@ -138,7 +139,7 @@ export default function RoomEditor() {
       )}
       {(resMsg.pen || resMsg.msg) && (
         <div
-        data-testid="ResMsg container"
+          data-testid="ResMsg container"
           style={{
             width: `${imgRef.current ? `${imgRef.current.width}px` : "12rem"}`,
           }}

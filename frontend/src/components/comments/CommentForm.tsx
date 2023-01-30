@@ -41,11 +41,12 @@ export function CommentForm({
     return () => {
       document.removeEventListener("mousedown", clicked);
     };
+    // eslint-disable-next-line
   }, [mouseInside]);
 
   return (
     <form
-      data-testid="form"
+      data-testid="Comment form"
       className={classes.container}
       onSubmit={handleSubmit}
     >

@@ -277,6 +277,7 @@ export default function Chat() {
     return () => {
       socket?.removeEventListener("message", handleMessage);
     };
+    // eslint-disable-next-line
   }, [socket]);
 
   return (

@@ -35,10 +35,12 @@ export default function Rooms() {
   useEffect(() => {
     setResMsg({ msg: "", err: false, pen: true });
     handleSearch();
+    // eslint-disable-next-line
   }, [pageNum, searchInput]);
 
   const handleSearch = useMemo(
     () => debounce(() => updatePage(), 300),
+    // eslint-disable-next-line
     [searchInput, page]
   );
 
@@ -58,6 +60,7 @@ export default function Rooms() {
     return () => {
       closeSubscription("room_feed");
     };
+    // eslint-disable-next-line
   }, []);
 
   const nextPage = () => {
@@ -77,6 +80,7 @@ export default function Rooms() {
         updatePage();
       }
     }
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -84,6 +88,7 @@ export default function Rooms() {
     return () => {
       if (socket) socket?.removeEventListener("message", handleMessage);
     };
+    // eslint-disable-next-line
   }, [socket]);
 
   return (
@@ -97,7 +102,7 @@ export default function Rooms() {
           <ResMsg resMsg={resMsg} />
         </div>
       </div>
-      <form role="form" name="Search rooms" className={classes.searchContainer}>
+      <form name="Search rooms" className={classes.searchContainer}>
         <input
           data-testid="Search room name input"
           name="Search room name"

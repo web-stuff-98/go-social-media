@@ -78,6 +78,7 @@ export default function Room() {
     return () => {
       closeSubscription(`room=${roomId}`);
     };
+    // eslint-disable-next-line
   }, []);
 
   const [messageInput, setMessageInput] = useState("");
@@ -161,6 +162,7 @@ export default function Room() {
         }
       });
     }
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -168,6 +170,7 @@ export default function Room() {
     return () => {
       socket?.removeEventListener("message", handleMessage);
     };
+    // eslint-disable-next-line
   }, [socket]);
 
   const handleFile = async (e: ChangeEvent<HTMLInputElement>) => {

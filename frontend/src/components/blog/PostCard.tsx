@@ -1,6 +1,6 @@
 import { useInterface } from "../../context/InterfaceContext";
 import { IPostCard } from "../../routes/Blog";
-import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import classes from "../../styles/components/blog/PostCard.module.scss";
 import { deletePost, getPostThumb, voteOnPost } from "../../services/posts";
 import type { CancelToken, CancelTokenSource } from "axios";
@@ -55,12 +55,12 @@ export default function PostCard({
       }
     }
   });
-  useLayoutEffect(() => {
+  useEffect(() => {
     observer.observe(containerRef.current!);
     return () => {
       observer.disconnect();
     };
-    //putting the ref in the dependency array was the only way to get this working properly for some reason
+    // eslint-disable-next-line
   }, [containerRef.current]);
 
   useEffect(() => {
@@ -68,6 +68,7 @@ export default function PostCard({
     return () => {
       postLeftView(post.ID);
     };
+    // eslint-disable-next-line
   }, []);
 
   //Rerender of image is triggered when img_url query param v=1 increments
@@ -88,6 +89,7 @@ export default function PostCard({
         imgCancelSource.current?.cancel("Image no longer visible");
       }
     };
+    // eslint-disable-next-line
   }, [post.img_url, visible]);
 
   return (
@@ -199,7 +201,7 @@ export default function PostCard({
                           style={{
                             color: "lime",
                             ...(post.my_vote && post.my_vote.is_upvote
-                              ? { }
+                              ? {}
                               : { filter: "opacity(0.5)" }),
                           }}
                           svgStyle={{
@@ -242,7 +244,7 @@ export default function PostCard({
                           style={{
                             color: "red",
                             ...(post.my_vote && !post.my_vote.is_upvote
-                              ? { }
+                              ? {}
                               : { filter: "opacity(0.5)" }),
                           }}
                           svgStyle={{

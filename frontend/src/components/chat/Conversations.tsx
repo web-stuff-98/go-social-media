@@ -69,6 +69,7 @@ export default function Conversations() {
   useEffect(() => {
     if (!currentUser) return;
     loadConvs();
+    // eslint-disable-next-line
   }, [currentUser]);
 
   const openConversation = async (uid: string) => {
@@ -212,6 +213,7 @@ export default function Conversations() {
         });
       }
     }
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -219,6 +221,7 @@ export default function Conversations() {
     return () => {
       socket?.removeEventListener("message", handleMessage);
     };
+    // eslint-disable-next-line
   }, [socket]);
 
   const [messageInput, setMessageInput] = useState("");

@@ -27,6 +27,7 @@ export default function Editor() {
   useEffect(() => {
     if (!slug) return;
     loadPostIntoEditor(slug);
+    // eslint-disable-next-line
   }, [slug]);
 
   const [originalImageModified, setOriginalImageModified] = useState(false);

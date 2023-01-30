@@ -31,6 +31,7 @@ export default function RoomCard({ r }: { r: IRoomCard }) {
     } else {
       setImgURL("");
     }
+    // eslint-disable-next-line
   }, [r.img_url]);
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export default function RoomCard({ r }: { r: IRoomCard }) {
     return () => {
       closeSubscription("room_card=" + r.ID);
     };
+    // eslint-disable-next-line
   }, []);
 
   return (
