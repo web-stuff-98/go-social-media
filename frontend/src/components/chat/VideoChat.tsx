@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { PeerWithID, useChat } from "./Chat";
 import { useUsers } from "../../context/UsersContext";
 import useSocket from "../../context/SocketContext";
+import { useModal } from "../../context/ModalContext";
 
 export default function VideoChat({
   isRoom,
@@ -17,10 +18,12 @@ export default function VideoChat({
 }) {
   const { user } = useAuth();
   const { sendIfPossible } = useSocket();
+  const { openModal } = useModal();
   const { userStream, isStreaming, peers, initVideo, leftVidChat } = useChat();
 
-  useEffect(() => {
-    initVideo(() => {
+  const setupVideo = async () => {
+    try {
+      await initVideo();
       sendIfPossible(
         JSON.stringify({
           event_type: "VID_JOIN",
@@ -28,7 +31,17 @@ export default function VideoChat({
           is_room: Boolean(isRoom),
         })
       );
-    });
+    } catch (e) {
+      openModal("Message", {
+        msg: `Failed to open video chat: ${e}`,
+        err: true,
+        pen: false,
+      });
+    }
+  };
+
+  useEffect(() => {
+    setupVideo();
     return () => {
       leftVidChat(Boolean(isRoom), id);
     };
@@ -89,7 +102,7 @@ function VideoWindow({
   };
 
   return (
-    <div className={classes.videoWindow}>
+    <div data-testid={ownVideo ? "Users video chat window" : `Uid ${uid}s video chat window`} className={classes.videoWindow}>
       <div className={classes.inner}>
         <div className={classes.topTray}>
           <div className={classes.text}>

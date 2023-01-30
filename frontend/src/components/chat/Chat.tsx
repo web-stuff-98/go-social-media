@@ -6,7 +6,6 @@ import RoomEditor from "./RoomEditor";
 import Rooms from "./Rooms";
 import { useLocation } from "react-router-dom";
 import Room from "./Room";
-import { useModal } from "../../context/ModalContext";
 import Peer from "simple-peer";
 import {
   instanceOfReceivingReturnedSignal,
@@ -48,7 +47,7 @@ export const ChatContext = createContext<{
   roomId: string;
   editRoomId: string;
 
-  initVideo: (cb: Function) => void;
+  initVideo: () => Promise<void>;
   userStream?: MediaStream;
   isStreaming: boolean;
   peers: PeerWithID[];
@@ -69,7 +68,7 @@ export const ChatContext = createContext<{
   roomId: "",
   editRoomId: "",
 
-  initVideo: async () => {},
+  initVideo: () => new Promise((r) => r()),
   userStream: undefined,
   isStreaming: false,
   peers: [],
@@ -87,7 +86,6 @@ export const useChat = () => useContext(ChatContext);
 
 export default function Chat() {
   const { pathname } = useLocation();
-  const { openModal } = useModal();
   const { socket, sendIfPossible } = useSocket();
 
   const [section, setSection] = useState<ChatSection>(ChatSection.MENU);
@@ -137,23 +135,20 @@ export default function Chat() {
   /////////////////////////////////////////////////////
   const userStream = useRef<MediaStream | undefined>(undefined);
   const [isStreaming, setIsStreaming] = useState(false);
-  const initVideo = async (cb: Function) => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: true,
-      });
-      userStream.current = stream;
-      setIsStreaming(true);
-      cb();
-    } catch (e) {
-      openModal("Message", {
-        msg: `${e}`,
-        err: true,
-        pen: false,
-      });
-    }
-  };
+  const initVideo = () =>
+    new Promise<void>((resolve, reject) => {
+      navigator.mediaDevices
+        .getUserMedia({
+          audio: true,
+          video: true,
+        })
+        .then((stream) => {
+          userStream.current = stream;
+          setIsStreaming(true);
+          resolve();
+        })
+        .catch((e) => reject(e));
+    });
 
   const peersRef = useRef<PeerWithID[]>([]);
   const [peers, setPeers] = useState<PeerWithID[]>([]);
