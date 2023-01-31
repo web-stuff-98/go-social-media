@@ -1,17 +1,9 @@
 import { useLocation } from "react-router-dom";
 import { useContext, createContext, useReducer, useEffect } from "react";
 import type { ReactNode } from "react";
+import { IDimensions } from "../interfaces/GeneralInterfaces";
 
 type LayoutContainerMode = "Modal" | "Feed" | "Full";
-
-export interface IDimensions {
-  width: number;
-  height: number;
-}
-export interface IPosition {
-  top: number;
-  left: number;
-}
 
 const initialState: State = {
   darkMode: true,

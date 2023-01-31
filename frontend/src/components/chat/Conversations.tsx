@@ -17,25 +17,9 @@ import { useModal } from "../../context/ModalContext";
 import { getConversations, getConversation } from "../../services/chat";
 import ErrorTip from "../shared/forms/ErrorTip";
 import useAttachment from "../../context/AttachmentContext";
-import { IAttachmentData, IMsgAttachmentProgress } from "./Attachment";
 import VideoChat from "./VideoChat";
 import { RiWebcamLine } from "react-icons/ri";
-
-export interface IPrivateMessage {
-  ID: string;
-  uid: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
-  has_attachment: boolean;
-  recipient_id: string;
-  attachment_progress?: IMsgAttachmentProgress;
-  attachment_metadata?: IAttachmentData;
-}
-export type Conversation = {
-  uid: string;
-  messages: IPrivateMessage[];
-};
+import { IConversation } from "../../interfaces/ChatInterfaces";
 
 export default function Conversations() {
   const { getUserData, cacheUserData } = useUsers();
@@ -45,7 +29,7 @@ export default function Conversations() {
   const { openModal } = useModal();
 
   const [vidChatOpen, setVidChatOpen] = useState(false);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<IConversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState("");
   const [selectedConversationIndex, setSelectedConversationIndex] =
     useState(-1);

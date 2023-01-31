@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { createContext, useContext, useState, useEffect } from "react";
-
-import type { IPosition } from "../context/InterfaceContext";
+import { IPosition } from "../interfaces/GeneralInterfaces";
 
 const MouseContext = createContext<IPosition | undefined>(undefined);
 

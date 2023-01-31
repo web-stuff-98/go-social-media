@@ -1,9 +1,8 @@
 import classes from "../styles/pages/Page.module.scss";
-import { IPostCard } from "./Blog";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { getPost, submitComment } from "../services/posts";
 import { useNavigate, useParams } from "react-router-dom";
-import ResMsg, { IResMsg } from "../components/shared/ResMsg";
+import ResMsg from "../components/shared/ResMsg";
 import useSocket from "../context/SocketContext";
 import {
   instanceOfChangeData,
@@ -12,15 +11,12 @@ import {
 } from "../utils/DetermineSocketEvent";
 import { baseURL } from "../services/makeRequest";
 import { CommentForm } from "../components/comments/CommentForm";
-import { IComment } from "../components/comments/Comment";
 import Comments from "../components/comments/Comments";
 import { useUsers } from "../context/UsersContext";
 import { useAuth } from "../context/AuthContext";
 import PageContent from "../components/blog/PageContent";
-
-export interface IPost extends IPostCard {
-  body: string;
-}
+import { IComment, IPost } from "../interfaces/PostInterfaces";
+import { IResMsg } from "../interfaces/GeneralInterfaces";
 
 export default function Page() {
   const { openSubscription, closeSubscription, socket } = useSocket();

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { IRoomCard } from "../components/chat/Rooms";
+import { IRoomCard } from "../interfaces/ChatInterfaces";
 import { makeRequest } from "./makeRequest";
 
 const createRoom = (data: Pick<IRoomCard, "name">) =>

@@ -3,12 +3,7 @@ import type { ReactNode } from "react";
 import { makeRequest } from "../services/makeRequest";
 import useSocket from "./SocketContext";
 import { useModal } from "./ModalContext";
-
-export interface IUser {
-  ID: string;
-  username: string;
-  base64pfp?: string;
-}
+import { IUser } from "../interfaces/GeneralInterfaces";
 
 export const AuthContext = createContext<{
   user?: IUser;

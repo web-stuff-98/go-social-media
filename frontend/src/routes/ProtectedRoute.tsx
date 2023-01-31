@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { IUser } from "../context/AuthContext";
+import { IUser } from "../interfaces/GeneralInterfaces";
 
 export default function ProtectedRoute<ReactNode>({
   user,

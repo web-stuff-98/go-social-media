@@ -13,13 +13,13 @@ import {
 } from "../services/posts";
 import { useState, useEffect } from "react";
 import ResMsg from "../components/shared/ResMsg";
-import type { IResMsg } from "../components/shared/ResMsg";
 import { useParams } from "react-router-dom";
 import { z } from "zod";
 import FieldErrorTip from "../components/shared/forms/FieldErrorTip";
 import FormikInputAndLabel from "../components/shared/forms/FormikInputLabel";
 import FormikFileButtonInput from "../components/shared/forms/FormikFileButtonInput";
 import useFormikValidate from "../hooks/useFormikValidate";
+import { IResMsg } from "../interfaces/GeneralInterfaces";
 
 export default function Editor() {
   const { slug } = useParams();

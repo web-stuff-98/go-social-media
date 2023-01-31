@@ -13,25 +13,6 @@ import usePosts from "../context/PostsContext";
 import useSocket from "../context/SocketContext";
 import classes from "../styles/pages/Blog.module.scss";
 
-export interface IPostCard {
-  ID: string;
-  author_id: string;
-  title: string;
-  description: string;
-  tags: string[];
-  created_at: string;
-  updated_at: string;
-  slug: string;
-  img_blur: string;
-  vote_pos_count: number; // Excludes users own vote
-  vote_neg_count: number; // Excludes users own vote
-  my_vote: null | {
-    uid: string;
-    is_upvote: boolean;
-  };
-  img_url: string; //img_url is stored here so that rerender can be triggered when the image is updated by modifying the query string
-}
-
 export default function Blog() {
   const { openSubscription, closeSubscription } = useSocket();
   const {
@@ -138,7 +119,7 @@ export default function Blog() {
         </div>
       </aside>
       <div className={classes.paginationControls}>
-        <button aria-label="Previous page" onClick={() => prevPage()}>
+        <button name="Previous page" aria-label="Previous page" onClick={() => prevPage()}>
           <BsChevronLeft />
         </button>
         <div className={classes.text}>
@@ -149,7 +130,7 @@ export default function Blog() {
             {posts?.length}/{postsCount}
           </span>
         </div>
-        <button aria-label="Next page" onClick={() => nextPage()}>
+        <button name="Next page" aria-label="Next page" onClick={() => nextPage()}>
           <BsChevronRight />
         </button>
       </div>

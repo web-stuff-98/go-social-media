@@ -1,6 +1,6 @@
+import { IPrivateMessage } from "../../interfaces/ChatInterfaces";
 import classes from "../../styles/components/chat/PrivateMessage.module.scss";
 import Attachment from "./Attachment";
-import { IPrivateMessage } from "./Conversations";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: "short",
@@ -18,7 +18,7 @@ export default function PrivateMessage({
   const DateTime = ({ dateString }: { dateString: string }) => (
     <>
       <span aria-label="Date" data-testid="Date">
-        {dateString.split(", ")[0].replaceAll("/20","/")}
+        {dateString.split(", ")[0].replaceAll("/20", "/")}
       </span>
       <span aria-label="Time" data-testid="Time">
         {dateString.split(", ")[1]}

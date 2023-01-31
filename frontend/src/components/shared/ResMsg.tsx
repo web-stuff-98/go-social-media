@@ -1,16 +1,10 @@
 import formClasses from "../../styles/FormClasses.module.scss";
-
 import { ImSpinner8 } from "react-icons/im";
-
-export interface IResMsg {
-  msg: string;
-  err: boolean;
-  pen: boolean;
-}
+import { IResMsg } from "../../interfaces/GeneralInterfaces";
 
 export default function ResMsg({
   resMsg,
-  large
+  large,
 }: {
   resMsg: IResMsg;
   large?: boolean;
@@ -22,7 +16,12 @@ export default function ResMsg({
           style={resMsg.pen ? { paddingTop: "var(--padding)" } : {}}
           className={resMsg.err ? formClasses.resMsgErr : formClasses.resMsg}
         >
-          {resMsg.pen && <ImSpinner8 style={large ? { width: "2rem", height:"2rem"} : {}} className={formClasses.loadingSpinner} />}
+          {resMsg.pen && (
+            <ImSpinner8
+              style={large ? { width: "2rem", height: "2rem" } : {}}
+              className={formClasses.loadingSpinner}
+            />
+          )}
           {resMsg.msg}
         </div>
       )}

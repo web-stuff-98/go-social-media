@@ -6,8 +6,8 @@ import { useState, useEffect } from "react";
 import { getRoomImage } from "../../services/rooms";
 import useSocket from "../../context/SocketContext";
 import { useChat } from "./Chat";
-import { IRoomCard } from "./Rooms";
 import { useAuth } from "../../context/AuthContext";
+import { IRoomCard } from "../../interfaces/ChatInterfaces";
 
 export default function RoomCard({ r }: { r: IRoomCard }) {
   const { user } = useAuth();

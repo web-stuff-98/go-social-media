@@ -6,10 +6,11 @@ import {
   useCallback,
 } from "react";
 import type { ReactNode } from "react";
-import { IUser, useAuth } from "./AuthContext";
+import { useAuth } from "./AuthContext";
 import { makeRequest } from "../services/makeRequest";
 import useSocket from "./SocketContext";
 import { instanceOfChangeData } from "../utils/DetermineSocketEvent";
+import { IUser } from "../interfaces/GeneralInterfaces";
 
 type DisappearedUser = {
   uid: string;

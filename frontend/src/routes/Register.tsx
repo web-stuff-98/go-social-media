@@ -1,11 +1,12 @@
 import classes from "../styles/LoginRegister.module.scss";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import ResMsg, { IResMsg } from "../components/shared/ResMsg";
+import ResMsg from "../components/shared/ResMsg";
 import { z } from "zod";
 import { useFormik } from "formik";
 import FormikInputAndLabel from "../components/shared/forms/FormikInputLabel";
 import useFormikValidate from "../hooks/useFormikValidate";
+import { IResMsg } from "../interfaces/GeneralInterfaces";
 
 export default function Register() {
   const { register } = useAuth();

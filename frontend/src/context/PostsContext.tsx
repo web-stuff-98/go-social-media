@@ -7,8 +7,6 @@ import {
   useMemo,
 } from "react";
 import type { ReactNode } from "react";
-import { IPostCard } from "../routes/Blog";
-import { IResMsg } from "../components/shared/ResMsg";
 import {
   getNewestPosts,
   getPage,
@@ -29,6 +27,8 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import debounce from "lodash/debounce";
+import { IPostCard } from "../interfaces/PostInterfaces";
+import { IResMsg } from "../interfaces/GeneralInterfaces";
 
 const PostsContext = createContext<{
   posts: IPostCard[];

@@ -7,17 +7,11 @@ import { getRoomPage } from "../../services/rooms";
 import classes from "../../styles/components/chat/Rooms.module.scss";
 import { instanceOfChangeData } from "../../utils/DetermineSocketEvent";
 import IconBtn from "../shared/IconBtn";
-import ResMsg, { IResMsg } from "../shared/ResMsg";
+import ResMsg from "../shared/ResMsg";
 import RoomCard from "./RoomCard";
 import { debounce } from "lodash";
-
-export interface IRoomCard {
-  ID: string;
-  name: string;
-  author_id: string;
-  img_blur?: string;
-  img_url?: string;
-}
+import { IRoomCard } from "../../interfaces/ChatInterfaces";
+import { IResMsg } from "../../interfaces/GeneralInterfaces";
 
 export default function Rooms() {
   const { socket, openSubscription, closeSubscription } = useSocket();

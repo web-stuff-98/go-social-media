@@ -1,5 +1,4 @@
 import { useUsers } from "../../context/UsersContext";
-import { IPost } from "../../routes/Page";
 import classes from "../../styles/pages/Page.module.scss";
 import IconBtn from "../shared/IconBtn";
 import User from "../shared/User";
@@ -7,6 +6,7 @@ import { TiArrowSortedUp, TiArrowSortedDown } from "react-icons/ti";
 import { voteOnPost } from "../../services/posts";
 import { useModal } from "../../context/ModalContext";
 import { useAuth } from "../../context/AuthContext";
+import { IPost } from "../../interfaces/PostInterfaces";
 
 export default function PageContent({
   post,

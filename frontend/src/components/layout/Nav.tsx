@@ -98,7 +98,7 @@ export default function Nav() {
           )}
         </div>
       )}
-      {user && <User reverse light small uid={user.ID} user={user}/>}
+      {user && <User reverse light small uid={user.ID} user={user} />}
     </nav>
   );
 }

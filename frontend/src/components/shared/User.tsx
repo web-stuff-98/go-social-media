@@ -1,10 +1,11 @@
 import { useRef, useEffect } from "react";
 import type { ReactElement } from "react";
-import { IUser, useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import { AiOutlineUser } from "react-icons/ai";
 import { useUsers } from "../../context/UsersContext";
 import classes from "../../styles/components/shared/User.module.scss";
 import { useUserdropdown } from "../../context/UserdropdownContext";
+import { IUser } from "../../interfaces/GeneralInterfaces";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: "short",

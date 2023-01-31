@@ -1,4 +1,4 @@
-import { IPostCard } from "../../routes/Blog";
+import { IPostCard } from "../../interfaces/PostInterfaces";
 import classes from "../../styles/components/blog/AsidePostCard.module.scss";
 
 export default function AsidePostCard({ post }: { post?: IPostCard }) {

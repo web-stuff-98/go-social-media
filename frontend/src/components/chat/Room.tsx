@@ -3,8 +3,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import { getRoom } from "../../services/rooms";
 import { ChatSection, useChat } from "./Chat";
-import ResMsg, { IResMsg } from "../shared/ResMsg";
-import { IRoomCard } from "./Rooms";
+import ResMsg from "../shared/ResMsg";
 import RoomMessage from "./RoomMessage";
 import useSocket from "../../context/SocketContext";
 import { MdFileCopy, MdSend } from "react-icons/md";
@@ -21,26 +20,12 @@ import { useUsers } from "../../context/UsersContext";
 import ErrorTip from "../shared/forms/ErrorTip";
 import useAttachment from "../../context/AttachmentContext";
 import { useModal } from "../../context/ModalContext";
-import { IAttachmentData, IMsgAttachmentProgress } from "./Attachment";
 import VideoChat from "./VideoChat";
 
 import * as process from "process";
+import { IRoom } from "../../interfaces/ChatInterfaces";
+import { IResMsg } from "../../interfaces/GeneralInterfaces";
 (window as any).process = process;
-
-export interface IRoomMessage {
-  ID: string;
-  uid: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
-  has_attachment: boolean;
-  attachment_progress?: IMsgAttachmentProgress;
-  attachment_metadata?: IAttachmentData;
-}
-
-export interface IRoom extends IRoomCard {
-  messages: IRoomMessage[];
-}
 
 export default function Room() {
   const { roomId, setSection } = useChat();

@@ -4,11 +4,11 @@ import User from "../components/shared/User";
 import classes from "../styles/pages/Settings.module.scss";
 import { useAuth } from "../context/AuthContext";
 import ResMsg from "../components/shared/ResMsg";
-import type { IResMsg } from "../components/shared/ResMsg";
 import { makeRequest } from "../services/makeRequest";
 import ProtectedRoute from "./ProtectedRoute";
 import { BsGearWide } from "react-icons/bs";
 import { useModal } from "../context/ModalContext";
+import { IResMsg } from "../interfaces/GeneralInterfaces";
 
 export default function Settings() {
   const { user, deleteAccount, updateUserState } = useAuth();

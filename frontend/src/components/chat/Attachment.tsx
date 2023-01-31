@@ -4,19 +4,9 @@ import { useMemo, useRef } from "react";
 import { BiError } from "react-icons/bi";
 import { AiOutlineDownload } from "react-icons/ai";
 import { baseURL } from "../../services/makeRequest";
+import { IAttachmentData, IMsgAttachmentProgress } from "../../interfaces/ChatInterfaces";
 
-export interface IMsgAttachmentProgress {
-  ratio: number;
-  failed: boolean;
-  pending: boolean;
-}
 
-export interface IAttachmentData {
-  name: string;
-  type: string;
-  size: number;
-  length: number;
-}
 
 export default function Attachment({
   progressData: { failed, ratio, pending },

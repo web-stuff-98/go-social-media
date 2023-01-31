@@ -1,8 +1,8 @@
-import { IRoomMessage } from "./Room";
 import classes from "../../styles/components/chat/Room.module.scss";
 import User from "../shared/User";
 import { useUsers } from "../../context/UsersContext";
 import Attachment from "./Attachment";
+import { IRoomMessage } from "../../interfaces/ChatInterfaces";
 
 export default function RoomMessage({
   msg,

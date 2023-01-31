@@ -1,5 +1,4 @@
 import { useInterface } from "../../context/InterfaceContext";
-import { IPostCard } from "../../routes/Blog";
 import { useState, useEffect, useRef } from "react";
 import classes from "../../styles/components/blog/PostCard.module.scss";
 import { deletePost, getPostThumb, voteOnPost } from "../../services/posts";
@@ -15,6 +14,7 @@ import User from "../shared/User";
 import { useUsers } from "../../context/UsersContext";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
+import { IPostCard } from "../../interfaces/PostInterfaces";
 
 export default function PostCard({
   post,

@@ -16,23 +16,8 @@ import ErrorTip from "../shared/forms/ErrorTip";
 import { CommentForm } from "./CommentForm";
 import { useModal } from "../../context/ModalContext";
 import { useAuth } from "../../context/AuthContext";
-
 import { TiArrowSortedUp, TiArrowSortedDown } from "react-icons/ti";
-
-export interface IComment {
-  ID: string;
-  content: string;
-  author_id: string;
-  created_at: string;
-  updated_at: string;
-  parent_id: string;
-  vote_pos_count: number; // Excludes users own vote
-  vote_neg_count: number; // Excludes users own vote
-  my_vote: null | {
-    uid: string;
-    is_upvote: boolean;
-  };
-}
+import { IComment } from "../../interfaces/PostInterfaces";
 
 export default function Comment({
   comment,
