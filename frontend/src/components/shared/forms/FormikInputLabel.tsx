@@ -16,6 +16,7 @@ const FormikInputAndLabel = ({
   validationErrs,
   onChange,
   onBlur,
+  password,
 }: {
   name: string;
   id: string;
@@ -25,10 +26,12 @@ const FormikInputAndLabel = ({
   validationErrs: ValidationErr[];
   onChange: ChangeEventHandler<HTMLInputElement>;
   onBlur: FocusEventHandler<HTMLInputElement>;
+  password?: boolean;
 }) => (
   <div className={classes.inputLabelWrapper}>
     <label htmlFor={id}>{capitalize(name)}</label>
     <input
+      type={password ? "password" : "text"}
       data-testid={id}
       name={name}
       id={id}

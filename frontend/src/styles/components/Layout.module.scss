@@ -70,7 +70,7 @@
     color: var(--text-color-contrast);
     box-sizing: border-box;
     border-bottom: 2px outset var(--base-medium);
-    border-top: 1px inset rgba(255, 255, 255, 0.05);
+    border-top: 1px inset rgb(64, 64, 64);
 
     .menuIcon {
       padding-left: 0.4rem;
@@ -93,7 +93,7 @@
 
     .dropdownsContainer {
       display: flex;
-      gap:var(--padding-small);
+      gap: var(--padding-small);
       width: 10rem;
     }
 
@@ -125,6 +125,7 @@
     height: var(--header-height);
     z-index: 99;
     text-shadow: 0px 2px 6px rgba(0, 0, 0, 0.5);
+    outline: 1px solid rgb(64, 64, 64);
     box-sizing: border-box;
 
     .logoImg {
@@ -162,7 +163,6 @@
         color: white;
         flex-grow: 1;
       }
-
     }
   }
 }

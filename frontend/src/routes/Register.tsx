@@ -55,6 +55,7 @@ export default function Register() {
         onBlur={formik.handleBlur}
       />
       <FormikInputAndLabel
+        password
         name="password"
         id="password"
         ariaLabel="Password"

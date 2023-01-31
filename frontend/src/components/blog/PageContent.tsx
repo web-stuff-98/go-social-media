@@ -7,6 +7,7 @@ import { voteOnPost } from "../../services/posts";
 import { useModal } from "../../context/ModalContext";
 import { useAuth } from "../../context/AuthContext";
 import { IPost } from "../../interfaces/PostInterfaces";
+import { useInterface } from "../../context/InterfaceContext";
 
 export default function PageContent({
   post,
@@ -20,6 +21,9 @@ export default function PageContent({
   const { getUserData } = useUsers();
   const { openModal } = useModal();
   const { user } = useAuth();
+  const {
+    state: { isMobile },
+  } = useInterface();
 
   return (
     <>
@@ -31,7 +35,7 @@ export default function PageContent({
         <div className={classes.text}>
           <div className={classes.titleDescription}>
             <h1 data-testid="Heading">{post.title}</h1>
-            <h1 data-testid="Subheading">{post.description}</h1>
+            {!isMobile && <h2 data-testid="Subheading">{post.description}</h2>}
           </div>
           <User
             testid="Author"

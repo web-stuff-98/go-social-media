@@ -120,18 +120,18 @@ button,
   --border-radius-small: 2px;
 
   /* Padding/Margin */
-  --padding: 3px;
-  --padding-medium: 2px;
-  --padding-small: 1px;
+  --padding: 4px;
+  --padding-medium: 3px;
+  --padding-small: 2px;
 
   /* Whitespace & Dimensions */
   --horizontal-whitespace: 27.5vw;
 
   /* Font sizes */
-  --font-lg: min(7vw, 1.866rem);
-  --font-md: min(6vw, 1.066rem);
-  --font-sm: min(4.5vw, 0.95rem);
-  --font-xs: min(3.5vw, 0.866rem);
+  --font-lg: min(6vw, 1.866rem);
+  --font-md: min(5vw, 1.066rem);
+  --font-sm: min(4.25vw, 0.95rem);
+  --font-xs: min(3.6vw, 0.866rem);
 
   --cross-background: url(../public/crossbackground.png);
 }

@@ -54,6 +54,7 @@ export default function Login() {
         validationErrs={validationErrs}
       />
       <FormikInputAndLabel
+        password
         name="password"
         id="password"
         ariaLabel="Password"

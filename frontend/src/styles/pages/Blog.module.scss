@@ -23,6 +23,7 @@
     );
     position: fixed;
     padding: calc(var(--padding) + 1px) var(--padding);
+    padding-left: var(--padding-medium);
     box-sizing: border-box;
     right: calc(1px + var(--horizontal-whitespace));
     .inner {
