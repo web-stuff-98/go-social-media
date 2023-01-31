@@ -200,7 +200,7 @@ func RunServer(socketServer *SocketServer) {
 					if countOk {
 						socketServer.ConnectionSubscriptionCount[connData.Conn]++
 					} else {
-						socketServer.ConnectionSubscriptionCount[connData.Conn] = 0
+						socketServer.ConnectionSubscriptionCount[connData.Conn] = 1
 					}
 				}
 			}
