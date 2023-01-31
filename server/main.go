@@ -325,7 +325,12 @@ func main() {
 		for {
 			select {
 			case <-deleteAccountTicker.C:
-				h.Collections.UserCollection.DeleteMany(context.Background(), bson.M{"created_at": bson.M{"$lt": primitive.NewDateTimeFromTime(time.Now().Add(-time.Minute * 20))}, "_id": bson.M{"$nin": protectedUids}})
+				h.Collections.UserCollection.DeleteMany(context.Background(), bson.M{
+					"$and": []bson.M{
+						{"created_at": bson.M{"$lt": primitive.NewDateTimeFromTime(time.Now().Add(-time.Minute * 20))}},
+						{"_id": bson.M{"$nin": protectedUids}},
+					},
+				})
 			}
 		}
 	}()

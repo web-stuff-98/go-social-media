@@ -96,6 +96,9 @@ func Init() (*mongo.Database, *Collections) {
 func cleanUp(colls *Collections) {
 	cleanupTicker := time.NewTicker(24 * time.Hour)
 	quitCleanup := make(chan struct{})
+	defer func() {
+		quitCleanup <- struct{}{}
+	}()
 	go func() {
 		for {
 			select {

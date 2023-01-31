@@ -53,7 +53,7 @@ type UserDataMessage struct {
 	Type string
 }
 type VidChatStatus struct {
-	Id primitive.ObjectID // I can be either another user or a room
+	Id primitive.ObjectID // Can be either another user or a room
 }
 type VidChatOpenData struct {
 	Conn *websocket.Conn
@@ -347,6 +347,9 @@ func RunServer(socketServer *SocketServer) {
 	/* -------- Cleanup ticker -------- */
 	cleanupTicker := time.NewTicker(20 * time.Minute)
 	quitCleanup := make(chan struct{})
+	defer func() {
+		quitCleanup <- struct{}{}
+	}()
 	go func() {
 		for {
 			select {
