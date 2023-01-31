@@ -1,5 +1,4 @@
 import { render, fireEvent, screen } from "@testing-library/react";
-import { act } from "react-dom/test-utils";
 import Dropdown from "./Dropdown";
 
 describe("Dropdown component", () => {

@@ -36,9 +36,6 @@ postServices.getPost = jest.fn().mockResolvedValueOnce({
   img_blur: "",
 });
 
-/*
-Useless test. I am learning how to write them.
-*/
 
 let container,
   titleInput,

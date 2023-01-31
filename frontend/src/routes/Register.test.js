@@ -4,10 +4,6 @@ import { act } from "react-dom/test-utils";
 import { AuthContext } from "../context/AuthContext";
 import Register from "./Register";
 
-/*
-Useless test. I am learning how to write them.
-*/
-
 let container = null;
 
 beforeEach(() => {

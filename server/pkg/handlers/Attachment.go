@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -152,8 +151,6 @@ func (h handler) HandleAttachmentMetadata(w http.ResponseWriter, r *http.Request
 }
 
 func (h handler) UploadAttachmentChunk(w http.ResponseWriter, r *http.Request) {
-	log.Println("Chunk incoming")
-
 	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
@@ -217,9 +214,6 @@ func (h handler) UploadAttachmentChunk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(upload.ChunksDone)
-	log.Println(upload.TotalChunks)
-
 	if upload.ChunksDone > 20 {
 		h.AttachmentServer.UploadFailedChan <- attachmentserver.UploadStatusInfo{
 			MsgID: msgId,
@@ -234,7 +228,6 @@ func (h handler) UploadAttachmentChunk(w http.ResponseWriter, r *http.Request) {
 			MsgID: msgId,
 			Uid:   user.ID,
 		}
-		log.Println("DONE LAST CHUNK")
 	} else {
 		h.AttachmentServer.UploadProgressChan <- attachmentserver.UploadStatusInfo{
 			MsgID: msgId,

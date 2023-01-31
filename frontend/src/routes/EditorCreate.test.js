@@ -19,10 +19,6 @@ postServices.getRandomImage = jest.fn().mockResolvedValueOnce(
   )
 );
 
-/*
-Useless test. I am learning how to write them.
-*/
-
 let container,
   titleInput,
   descriptionInput,

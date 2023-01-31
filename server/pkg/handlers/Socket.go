@@ -90,13 +90,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 			} else if eventType == "PRIVATE_MESSAGE" {
 				var inMsg socketmodels.PrivateMessage
 				if err := json.Unmarshal(p, &inMsg); err != nil {
-					err := conn.WriteJSON(map[string]string{
-						"TYPE": "RESPONSE_MESSAGE",
-						"DATA": `{"msg":"Bad request","err":true}`,
-					})
-					if err != nil {
-						log.Println(err)
-					}
+					sendErrorMessageThroughSocket(conn)
 				} else {
 					inBytes, err := json.Marshal(inMsg)
 					socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
@@ -105,13 +99,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 					}
 					recipientId, err := primitive.ObjectIDFromHex(inMsg.RecipientId)
 					if err != nil {
-						err := conn.WriteJSON(map[string]string{
-							"TYPE": "RESPONSE_MESSAGE",
-							"DATA": `{"msg":"Bad request","err":true}`,
-						})
-						if err != nil {
-							log.Println(err)
-						}
+						sendErrorMessageThroughSocket(conn)
 					} else {
 						msg := &models.PrivateMessage{
 							ID:            primitive.NewObjectIDFromTimestamp(time.Now()),
@@ -135,49 +123,25 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 								"messages_sent_to": recipientId,
 							},
 						}); err != nil {
-							err := conn.WriteJSON(map[string]string{
-								"TYPE": "RESPONSE_MESSAGE",
-								"DATA": `{"msg":"Internal error","err":true}`,
-							})
-							if err != nil {
-								log.Println(err)
-							}
+							sendErrorMessageThroughSocket(conn)
 						} else {
 							if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, bson.M{
 								"$push": bson.M{
 									"messages": msg,
 								},
 							}); err != nil {
-								err := conn.WriteJSON(map[string]string{
-									"TYPE": "RESPONSE_MESSAGE",
-									"DATA": `{"msg":"Internal error","err":true}`,
-								})
-								if err != nil {
-									log.Println(err)
-								}
+								sendErrorMessageThroughSocket(conn)
 							} else {
 								data, err := json.Marshal(msg)
 								if err != nil {
-									err := conn.WriteJSON(map[string]string{
-										"TYPE": "RESPONSE_MESSAGE",
-										"DATA": `{"msg":"Internal error","err":true}`,
-									})
-									if err != nil {
-										log.Println(err)
-									}
+									sendErrorMessageThroughSocket(conn)
 								} else {
 									outBytes, err := json.Marshal(socketmodels.OutMessage{
 										Type: "PRIVATE_MESSAGE",
 										Data: string(data),
 									})
 									if err != nil {
-										err := conn.WriteJSON(map[string]string{
-											"TYPE": "RESPONSE_MESSAGE",
-											"DATA": `{"msg":"Internal error","err":true}`,
-										})
-										if err != nil {
-											log.Println(err)
-										}
+										sendErrorMessageThroughSocket(conn)
 									} else {
 										socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 											Name: "inbox=" + recipientId.Hex(),
@@ -196,33 +160,15 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 				}
 			} else if eventType == "ROOM_MESSAGE" {
 				if *uid == primitive.NilObjectID {
-					err := conn.WriteJSON(map[string]string{
-						"TYPE": "RESPONSE_MESSAGE",
-						"DATA": `{"msg":"Unauthorized","err":true}`,
-					})
-					if err != nil {
-						log.Println(err)
-					}
+					sendErrorMessageThroughSocket(conn)
 				} else {
 					var inMsg socketmodels.RoomMessage
 					if err := json.Unmarshal(p, &inMsg); err != nil {
-						err := conn.WriteJSON(map[string]string{
-							"TYPE": "RESPONSE_MESSAGE",
-							"DATA": `{"msg":"Bad request","err":true}`,
-						})
-						if err != nil {
-							log.Println(err)
-						}
+						sendErrorMessageThroughSocket(conn)
 					} else {
 						roomId, err := primitive.ObjectIDFromHex(inMsg.RoomId)
 						if err != nil {
-							err := conn.WriteJSON(map[string]string{
-								"TYPE": "RESPONSE_MESSAGE",
-								"DATA": `{"msg":"Invalid ID","err":true}`,
-							})
-							if err != nil {
-								log.Println(err)
-							}
+							sendErrorMessageThroughSocket(conn)
 						} else {
 							msg := &models.RoomMessage{
 								ID:            primitive.NewObjectID(),
@@ -245,36 +191,18 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 									"messages": msg,
 								},
 							}); err != nil {
-								err := conn.WriteJSON(map[string]string{
-									"TYPE": "RESPONSE_MESSAGE",
-									"DATA": `{"msg":"Internal error","err":true}`,
-								})
-								if err != nil {
-									log.Println(err)
-								}
+								sendErrorMessageThroughSocket(conn)
 							} else {
 								data, err := json.Marshal(msg)
 								if err != nil {
-									err := conn.WriteJSON(map[string]string{
-										"TYPE": "RESPONSE_MESSAGE",
-										"DATA": `{"msg":"Internal error","err":true}`,
-									})
-									if err != nil {
-										log.Println(err)
-									}
+									sendErrorMessageThroughSocket(conn)
 								} else {
 									outBytes, err := json.Marshal(socketmodels.OutMessage{
 										Type: "ROOM_MESSAGE",
 										Data: string(data),
 									})
 									if err != nil {
-										err := conn.WriteJSON(map[string]string{
-											"TYPE": "RESPONSE_MESSAGE",
-											"DATA": `{"msg":"Internal error","err":true}`,
-										})
-										if err != nil {
-											log.Println(err)
-										}
+										sendErrorMessageThroughSocket(conn)
 									} else {
 										socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 											Name: "room=" + roomId.Hex(),
@@ -442,21 +370,9 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 			} else {
 				// eventType is not recognized, send error
 				if reflect.TypeOf(eventType).String() == "string" {
-					err := conn.WriteJSON(map[string]string{
-						"TYPE": "RESPONSE_MESSAGE",
-						"DATA": `{"msg":"Unrecognized socket event : ` + eventType.(string) + `","err":true}`,
-					})
-					if err != nil {
-						log.Println(err)
-					}
+					sendErrorMessageThroughSocket(conn)
 				} else {
-					err := conn.WriteJSON(map[string]string{
-						"TYPE": "RESPONSE_MESSAGE",
-						"DATA": `{"msg":"Event type must be a string","err":true}`,
-					})
-					if err != nil {
-						log.Println(err)
-					}
+					sendErrorMessageThroughSocket(conn)
 				}
 			}
 		} else {
