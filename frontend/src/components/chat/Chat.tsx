@@ -15,10 +15,16 @@ import {
 } from "../../utils/DetermineSocketEvent";
 import useSocket from "../../context/SocketContext";
 import { BsFillChatRightFill } from "react-icons/bs";
+import {
+  createRoom,
+  updateRoom,
+  uploadRoomImage,
+  deleteRoom as deleteRoomService,
+} from "../../services/rooms";
+import { useModal } from "../../context/ModalContext";
 
 import * as process from "process";
 import ChatTopTray from "./ChatTopTray";
-import { createRoom, updateRoom, uploadRoomImage } from "../../services/rooms";
 (window as any).process = process;
 
 /*
@@ -43,6 +49,7 @@ export const ChatContext = createContext<{
 
   openRoom: (id: string) => void;
   openRoomEditor: (id: string) => void;
+  deleteRoom: (id: string) => void;
 
   roomId: string;
   editRoomId: string;
@@ -64,6 +71,7 @@ export const ChatContext = createContext<{
 
   openRoom: () => {},
   openRoomEditor: () => {},
+  deleteRoom: () => {},
 
   roomId: "",
   editRoomId: "",
@@ -87,6 +95,7 @@ export const useChat = () => useContext(ChatContext);
 export default function Chat() {
   const { pathname } = useLocation();
   const { socket, sendIfPossible } = useSocket();
+  const { openModal } = useModal();
 
   const [section, setSection] = useState<ChatSection>(ChatSection.MENU);
   const [roomId, setRoomId] = useState("");
@@ -101,6 +110,36 @@ export default function Chat() {
   const openRoomEditor = (id: string) => {
     setEditRoomId(id);
     setSection(ChatSection.EDITOR);
+  };
+
+  const deleteRoom = (id: string) => {
+    openModal("Confirm", {
+      msg: "Are you sure you want to delete this room?",
+      err: false,
+      pen: false,
+      confirmationCallback: async () => {
+        try {
+          openModal("Message", {
+            msg: "Deleting room...",
+            err: false,
+            pen: true,
+          });
+          await deleteRoomService(id);
+          openModal("Message", {
+            msg: "Room deleted",
+            err: false,
+            pen: false,
+          });
+        } catch (e) {
+          openModal("Message", {
+            msg: `Error deleting room: ${e}`,
+            err: true,
+            pen: false,
+          });
+        }
+      },
+      cancellationCallback: () => {},
+    });
   };
 
   const handleCreateUpdateRoom = async (
@@ -299,6 +338,7 @@ export default function Chat() {
               setSection,
               openRoom,
               openRoomEditor,
+              deleteRoom,
               initVideo,
               leftVidChat,
               section,

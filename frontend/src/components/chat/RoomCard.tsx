@@ -8,11 +8,12 @@ import useSocket from "../../context/SocketContext";
 import { useChat } from "./Chat";
 import { useAuth } from "../../context/AuthContext";
 import { IRoomCard } from "../../interfaces/ChatInterfaces";
+import { RiDeleteBin2Fill } from "react-icons/ri";
 
 export default function RoomCard({ r }: { r: IRoomCard }) {
   const { user } = useAuth();
   const { openSubscription, closeSubscription } = useSocket();
-  const { openRoom, openRoomEditor } = useChat();
+  const { openRoom, openRoomEditor, deleteRoom } = useChat();
   const [imgURL, setImgURL] = useState("");
 
   const loadImage = async () => {
@@ -57,13 +58,22 @@ export default function RoomCard({ r }: { r: IRoomCard }) {
       {r.name}
       <div className={classes.icons}>
         {user && r.author_id === user.ID && (
-          <IconBtn
-            name="Edit room"
-            ariaLabel="Edit room"
-            style={{ color: "white" }}
-            onClick={() => openRoomEditor(r.ID)}
-            Icon={AiFillEdit}
-          />
+          <>
+            <IconBtn
+              name="Edit room"
+              ariaLabel="Edit room"
+              style={{ color: "white" }}
+              onClick={() => openRoomEditor(r.ID)}
+              Icon={AiFillEdit}
+            />
+            <IconBtn
+              name="Delete room"
+              ariaLabel="Delete room"
+              style={{ color: "red" }}
+              onClick={() => deleteRoom(r.ID)}
+              Icon={RiDeleteBin2Fill}
+            />
+          </>
         )}
         <IconBtn
           name="Enter room"
