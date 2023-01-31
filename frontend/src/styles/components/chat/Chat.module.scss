@@ -1,5 +1,3 @@
-
-
 .container {
   position: fixed;
   right: calc(var(--padding-medium) + var(--horizontal-whitespace));
@@ -10,17 +8,23 @@
   border-radius: var(--border-radius);
   display: flex;
   flex-direction: column;
-  box-shadow: 0px 2px 3px rgba(0,0,0,0.166);
+  box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.166);
 
   .chatIconButton {
-    color:var(--text-color);
+    color: var(--text-color);
     background: none;
     border: none;
     padding: none;
+    transition: filter 100ms ease;
+    filter: drop-shadow(0px 2px 3px rgba(0, 0, 0, 0.5)) opacity(0.5);
+
     svg {
-      width: 2.5rem;
-      height: 2.5rem;
+      width: 2rem;
+      height: 2rem;
     }
+  }
+  .chatIconButton:hover {
+    filter: drop-shadow(0px 2px 3px rgba(0, 0, 0, 0.5)) opacity(1);
   }
 
   .topTray {
@@ -28,11 +32,11 @@
     justify-content: space-between;
     padding: var(--padding-medium);
     border-radius: var(--border-radius-medium);
-    color:grey;
+    color: grey;
     border-bottom: 1px solid var(--base-light);
 
     .icons {
-        display: flex;
+      display: flex;
     }
   }
 
@@ -42,6 +46,5 @@
     gap: var(--padding-medium);
     flex-grow: 1;
     padding: var(--padding-medium);
-
   }
 }

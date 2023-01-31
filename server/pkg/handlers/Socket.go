@@ -50,8 +50,6 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 
 		eventType, eventTypeOk := data["event_type"]
 
-		log.Println(eventType)
-
 		if eventTypeOk {
 			if eventType == "OPEN_SUBSCRIPTION" || eventType == "CLOSE_SUBSCRIPTION" {
 				// Authorization check for private subscriptions is done inside socketServer
@@ -371,8 +369,6 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 				// eventType is not recognized, send error
 				if reflect.TypeOf(eventType).String() == "string" {
 					sendErrorMessageThroughSocket(conn)
-				} else {
-					sendErrorMessageThroughSocket(conn)
 				}
 			}
 		} else {
@@ -408,14 +404,12 @@ func (h handler) WebSocketEndpoint(w http.ResponseWriter, r *http.Request) {
 		Uid:         uid,
 		VidChatOpen: false,
 	}
-	log.Println("Client connected")
 	defer func() {
 		h.SocketServer.UnregisterConn <- socketserver.ConnectionInfo{
 			Conn:        ws,
 			Uid:         uid,
 			VidChatOpen: false,
 		}
-		log.Println("Client Disconnected")
 	}()
 	reader(ws, h.SocketServer, &uid, h.Collections)
 }

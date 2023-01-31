@@ -61,8 +61,9 @@ type VidChatOpenData struct {
 }
 
 type SocketServer struct {
-	Connections   map[*websocket.Conn]primitive.ObjectID
-	Subscriptions map[string]map[*websocket.Conn]primitive.ObjectID
+	Connections                 map[*websocket.Conn]primitive.ObjectID
+	Subscriptions               map[string]map[*websocket.Conn]primitive.ObjectID
+	ConnectionSubscriptionCount map[*websocket.Conn]uint8 //Max subscriptions is 128... nice number half max uint8
 
 	RegisterConn   chan ConnectionInfo
 	UnregisterConn chan ConnectionInfo
@@ -86,8 +87,9 @@ type SocketServer struct {
 
 func Init() (*SocketServer, error) {
 	socketServer := &SocketServer{
-		Connections:   make(map[*websocket.Conn]primitive.ObjectID),
-		Subscriptions: make(map[string]map[*websocket.Conn]primitive.ObjectID),
+		Connections:                 make(map[*websocket.Conn]primitive.ObjectID),
+		Subscriptions:               make(map[string]map[*websocket.Conn]primitive.ObjectID),
+		ConnectionSubscriptionCount: make(map[*websocket.Conn]uint8),
 
 		RegisterConn:   make(chan ConnectionInfo),
 		UnregisterConn: make(chan ConnectionInfo),
@@ -142,6 +144,7 @@ func RunServer(socketServer *SocketServer) {
 				if conn == connData.Conn {
 					delete(socketServer.Connections, conn)
 					delete(socketServer.VidChatStatus, conn)
+					delete(socketServer.ConnectionSubscriptionCount, conn)
 					for _, r := range socketServer.Subscriptions {
 						for c := range r {
 							if c == connData.Conn {
@@ -184,11 +187,21 @@ func RunServer(socketServer *SocketServer) {
 						allow = false
 					}
 				}
+				// Make sure users cannot open too many subscriptions
+				count, countOk := socketServer.ConnectionSubscriptionCount[connData.Conn]
+				if count >= 128 {
+					allow = false
+				}
 				if allow {
 					if socketServer.Subscriptions[connData.Name] == nil {
 						socketServer.Subscriptions[connData.Name] = make(map[*websocket.Conn]primitive.ObjectID)
 					}
 					socketServer.Subscriptions[connData.Name][connData.Conn] = connData.Uid
+					if countOk {
+						socketServer.ConnectionSubscriptionCount[connData.Conn]++
+					} else {
+						socketServer.ConnectionSubscriptionCount[connData.Conn] = 0
+					}
 				}
 			}
 		}
@@ -205,6 +218,9 @@ func RunServer(socketServer *SocketServer) {
 			connData := <-socketServer.UnregisterSubscriptionConn
 			delete(socketServer.Subscriptions[connData.Name], connData.Conn)
 			delete(socketServer.VidChatStatus, connData.Conn)
+			if _, ok := socketServer.ConnectionSubscriptionCount[connData.Conn]; ok {
+				socketServer.ConnectionSubscriptionCount[connData.Conn]--
+			}
 		}
 	}()
 	/* ----- Send data to subscription ----- */
@@ -326,6 +342,11 @@ func RunServer(socketServer *SocketServer) {
 	go func() {
 		for {
 			subsName := <-socketServer.DestroySubscription
+			for c := range socketServer.Subscriptions[subsName] {
+				if _, ok := socketServer.ConnectionSubscriptionCount[c]; ok {
+					socketServer.ConnectionSubscriptionCount[c]--
+				}
+			}
 			delete(socketServer.Subscriptions, subsName)
 		}
 	}()
