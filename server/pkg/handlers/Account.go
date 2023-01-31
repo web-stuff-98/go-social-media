@@ -408,7 +408,7 @@ func (h handler) GetConversation(w http.ResponseWriter, r *http.Request) {
 				msg.AttachmentProgress = models.AttachmentProgress{
 					Failed:  metadata.Failed,
 					Pending: metadata.Pending,
-					Ratio:   0.2,
+					Ratio:   0.05, //arbitrary value
 				}
 			}
 			msg.AttachmentMetadata = models.OutAttachmentMetadata{
