@@ -192,6 +192,7 @@ func RunServer(socketServer *SocketServer) {
 				if count >= 128 {
 					allow = false
 				}
+				// Passed all checks, add the connection to the subscription
 				if allow {
 					if socketServer.Subscriptions[connData.Name] == nil {
 						socketServer.Subscriptions[connData.Name] = make(map[*websocket.Conn]primitive.ObjectID)
