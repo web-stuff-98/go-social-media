@@ -42,23 +42,43 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
   // Store subscriptions in state so that if the websocket reconnects the subscriptions can be opened back up again
   const [openSubscriptions, setOpenSubscriptions] = useState<string[]>([]);
+  // If a message couldn't be sent because the socket isn't properly connected, queue it and wait for the socket
+  const [sendQueue, setSendQueue] = useState<string[]>([]);
+
+  const queueSocketMessage = (msg: string) => setSendQueue((o) => [...o, msg]);
 
   const sendIfPossible = (data: string) => {
     if (socket) {
-      if (socket.OPEN === 1) {
+      if (socket.CONNECTING === 1) {
+        queueSocketMessage(data);
+      }
+      if (socket.CLOSED) {
+        queueSocketMessage(data);
+      }
+      if (socket.CLOSING) {
+        queueSocketMessage(data);
+      }
+      if (socket.OPEN) {
         socket.send(data);
       }
+    } else {
+      queueSocketMessage(data);
     }
   };
 
   const onOpen = () => {
-    if (openSubscriptions.length !== 0)
-      sendIfPossible(
+    if (openSubscriptions.length !== 0) {
+      socket?.send(
         JSON.stringify({
           event_type: "OPEN_SUBSCRIPTIONS",
           names: openSubscriptions,
         })
       );
+    }
+    if (sendQueue.length !== 0) {
+      sendQueue.forEach((msg) => socket?.send(msg));
+      setSendQueue([]);
+    }
   };
 
   const reconnectSocket = () => {

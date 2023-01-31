@@ -60,7 +60,7 @@ export default function Layout() {
       }
     }
     // eslint-disable-next-line
-  }, [pathname]);
+  }, [pathname, iState.containerMode]);
 
   return (
     <div className={classes.container}>
