@@ -15,6 +15,7 @@
     position: relative;
     background-size: cover;
     background-position: center;
+    background: black;
 
     .votesContainer {
       display: flex;
@@ -33,6 +34,7 @@
       object-fit: cover;
       object-position: center;
       border-bottom: 1px solid var(--base-light);
+      mask-image: linear-gradient(to bottom, black 25%, transparent 120%);
     }
 
     .text {
@@ -56,6 +58,7 @@
         display: flex;
         flex-direction: column;
         text-align: left;
+        padding-right: var(--padding);
         h1,
         h2 {
           margin: 0;
@@ -95,5 +98,8 @@
     box-sizing: border-box;
     padding: calc(2 * var(--padding));
     width: 100%;
+    .count {
+      text-align: center;
+    }
   }
 }

@@ -21,6 +21,17 @@ export default function Comments({
   setReplyingTo: (to: string) => void;
   updateMyVoteOnComment: (id: string, isUpvote: boolean) => void;
 }) {
+  const getCountOfAllChildren = (id: string) => {
+    let count = 0;
+    const replies = getReplies(id);
+    if (replies)
+      replies.forEach((reply) => {
+        count++;
+        count += getReplies(reply.ID).length;
+      });
+    return count;
+  };
+
   return (
     <div data-testid="Comments container" className={classes.container}>
       {comments &&
@@ -33,6 +44,7 @@ export default function Comments({
             replyingTo={replyingTo}
             postId={postId}
             comment={cmt}
+            getCountOfAllChildren={getCountOfAllChildren}
           />
         ))}
     </div>

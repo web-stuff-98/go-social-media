@@ -14,6 +14,7 @@ import (
 	"github.com/web-stuff-98/go-social-media/pkg/handlers"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers/middleware"
 	rdb "github.com/web-stuff-98/go-social-media/pkg/redis"
+	"github.com/web-stuff-98/go-social-media/pkg/seed"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -314,9 +315,15 @@ func main() {
 	log.Println("Watching changestreams")
 	changestreams.WatchCollections(DB, SocketServer, AttachmentServer)
 
-	//DB.Drop(context.TODO())
-	protectedUids := []primitive.ObjectID{}
-	//protectedUids, _, _, _ := seed.SeedDB(Collections, 2, 5, 2)
+	protectedUids := make(map[primitive.ObjectID]struct{})
+	//protectedPids := make(map[primitive.ObjectID]struct{})
+	//protectedRids := make(map[primitive.ObjectID]struct{})
+	if os.Getenv("PRODUCTION") == "true" {
+		DB.Drop(context.Background())
+		if protectedUids, _, _, err = seed.SeedDB(Collections, 50, 1000, 200); err != nil {
+			log.Fatalln("Error generating seed:", err)
+		}
+	}
 
 	deleteAccountTicker := time.NewTicker(20 * time.Minute)
 	go func() {
@@ -332,6 +339,10 @@ func main() {
 			}
 		}
 	}()
+
+	// Serve static files
+	fs := http.FileServer(http.Dir("./static"))
+	http.Handle("/", fs)
 
 	log.Println("API open on port", os.Getenv("PORT"))
 	log.Fatal(http.ListenAndServe(fmt.Sprint(":", os.Getenv("PORT")), c.Handler(router)))

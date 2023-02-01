@@ -42,11 +42,11 @@ async function RenderComponent() {
 }
 
 describe("chat menu section", () => {
-  test("should render the buttons for conversations, rooms and the room editor", async () => {
+  test("should render the buttons for inbox, rooms and the room editor", async () => {
     await RenderComponent();
 
-    const conversationsMenuButton = screen.getByRole("button", {
-      name: "Conversations",
+    const inboxMenuButton = screen.getByRole("button", {
+      name: "Inbox",
     });
     const chatroomsMenuButton = screen.getByRole("button", {
       name: "Rooms",
@@ -55,23 +55,23 @@ describe("chat menu section", () => {
       name: "Editor",
     });
 
-    expect(conversationsMenuButton).toBeInTheDocument();
+    expect(inboxMenuButton).toBeInTheDocument();
     expect(chatroomsMenuButton).toBeInTheDocument();
     expect(roomEditorMenuButton).toBeInTheDocument();
   });
 
-  test("clicking on the conversations menu button should open conversations. the room menu icon should be present", async () => {
+  test("clicking on the inbox menu button should open inbox. the room menu icon should be present", async () => {
     await RenderComponent();
 
-    const conversationsMenuButton = screen.getByRole("button", {
-      name: "Conversations",
+    const inboxMenuButton = screen.getByRole("button", {
+      name: "Inbox",
     });
 
     await act(async () => {
-      conversationsMenuButton.click();
+      inboxMenuButton.click();
     });
 
-    expect(screen.getByText("Conversations")).toBeInTheDocument();
+    expect(screen.getByText("Inbox")).toBeInTheDocument();
   });
 
   test("clicking on the rooms menu button should open the chatrooms menu. the room menu icon should be present", async () => {

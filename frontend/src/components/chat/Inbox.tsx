@@ -1,4 +1,4 @@
-import classes from "../../styles/components/chat/Conversations.module.scss";
+import classes from "../../styles/components/chat/Inbox.module.scss";
 import IconBtn from "../shared/IconBtn";
 import { MdFileCopy, MdSend } from "react-icons/md";
 import User from "../shared/User";
@@ -21,7 +21,7 @@ import VideoChat from "./VideoChat";
 import { RiWebcamLine } from "react-icons/ri";
 import { IConversation } from "../../interfaces/ChatInterfaces";
 
-export default function Conversations() {
+export default function Inbox() {
   const { getUserData, cacheUserData } = useUsers();
   const { socket, sendIfPossible } = useSocket();
   const { uploadAttachment } = useAttachment();
@@ -29,7 +29,7 @@ export default function Conversations() {
   const { openModal } = useModal();
 
   const [vidChatOpen, setVidChatOpen] = useState(false);
-  const [conversations, setConversations] = useState<IConversation[]>([]);
+  const [inbox, setInbox] = useState<IConversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState("");
   const [selectedConversationIndex, setSelectedConversationIndex] =
     useState(-1);
@@ -40,7 +40,7 @@ export default function Conversations() {
     try {
       const uids = await getConversations();
       uids.forEach((uid: string) => cacheUserData(uid));
-      setConversations(uids.map((uid: string) => ({ uid, messages: [] })));
+      setInbox(uids.map((uid: string) => ({ uid, messages: [] })));
     } catch (e) {
       openModal("Message", {
         msg: `${e}`,
@@ -58,13 +58,13 @@ export default function Conversations() {
 
   const openConversation = async (uid: string) => {
     selectedConversationRef.current = uid;
-    const i = conversations.findIndex((c) => c.uid === uid);
+    const i = inbox.findIndex((c) => c.uid === uid);
     selectedConversationIndexRef.current = i;
     setSelectedConversationIndex(i);
     setSelectedConversation(uid);
     try {
       const messages = await getConversation(uid);
-      setConversations((convs) => {
+      setInbox((convs) => {
         let newConvs = convs;
         const i = convs.findIndex((c) => c.uid === uid);
         if (i === -1) {
@@ -90,47 +90,47 @@ export default function Conversations() {
     if (instanceOfPrivateMessageData(data)) {
       if (data.DATA.uid !== currentUser?.ID) {
         cacheUserData(data.DATA.uid);
-        setConversations((conversations) => {
-          let newConversations = conversations;
-          const conversationIndex = conversations.findIndex(
+        setInbox((inbox) => {
+          let newInbox = inbox;
+          const conversationIndex = inbox.findIndex(
             (c) => c.uid === data.DATA.uid
           );
           if (conversationIndex === -1) {
-            newConversations.push({
+            newInbox.push({
               uid: data.DATA.uid,
               messages: [data.DATA],
             });
           } else {
-            newConversations[conversationIndex].messages = [
-              ...newConversations[conversationIndex].messages,
+            newInbox[conversationIndex].messages = [
+              ...newInbox[conversationIndex].messages,
               data.DATA,
             ];
           }
-          return [...newConversations];
+          return [...newInbox];
         });
       } else {
         // If recieving own message and an attachment was selected, upload it
         if (selectedConversationRef.current === data.DATA.recipient_id) {
           // If receiving own messages then put the
           // message inside the current conversation
-          setConversations((conversations) => {
-            let newConversations = conversations;
-            newConversations[selectedConversationIndexRef.current].messages = [
-              ...newConversations[selectedConversationIndexRef.current]
+          setInbox((inbox) => {
+            let newInbox = inbox;
+            newInbox[selectedConversationIndexRef.current].messages = [
+              ...newInbox[selectedConversationIndexRef.current]
                 .messages,
               data.DATA,
             ];
-            return [...newConversations];
+            return [...newInbox];
           });
         } else {
           // If there's no current conversation create one
-          setConversations((conversations) => {
-            let newConversations = conversations;
-            newConversations.push({
+          setInbox((inbox) => {
+            let newInbox = inbox;
+            newInbox.push({
               uid: data.DATA.recipient_id,
               messages: [data.DATA],
             });
-            return [...newConversations];
+            return [...newInbox];
           });
         }
         if (fileRef.current) {
@@ -147,42 +147,42 @@ export default function Conversations() {
     }
     if (instanceOfAttachmentProgressData(data)) {
       if (selectedConversationIndexRef.current !== -1) {
-        setConversations((conversations) => {
-          let newConversations = conversations;
-          const i = conversations[
+        setInbox((inbox) => {
+          let newInbox = inbox;
+          const i = inbox[
             selectedConversationIndexRef.current
           ].messages.findIndex((msg) => msg.ID === data.DATA.ID);
           if (i !== -1) {
-            newConversations[selectedConversationIndexRef.current].messages[
+            newInbox[selectedConversationIndexRef.current].messages[
               i
             ].attachment_progress = {
               failed: data.DATA.failed,
               pending: data.DATA.pending,
               ratio: data.DATA.ratio,
             };
-            return [...newConversations];
+            return [...newInbox];
           } else {
-            return conversations;
+            return inbox;
           }
         });
       }
     }
     if (instanceOfAttachmentCompleteData(data)) {
       if (selectedConversationIndexRef.current !== -1) {
-        setConversations((conversations) => {
-          let newConversations = conversations;
-          const i = conversations[
+        setInbox((inbox) => {
+          let newInbox = inbox;
+          const i = inbox[
             selectedConversationIndexRef.current
           ].messages.findIndex((msg) => msg.ID === data.DATA.ID);
           if (i !== -1) {
-            newConversations[selectedConversationIndexRef.current].messages[
+            newInbox[selectedConversationIndexRef.current].messages[
               i
             ].attachment_progress = {
               failed: false,
               pending: false,
               ratio: 1,
             };
-            newConversations[selectedConversationIndexRef.current].messages[
+            newInbox[selectedConversationIndexRef.current].messages[
               i
             ].attachment_metadata = {
               size: data.DATA.size,
@@ -190,9 +190,9 @@ export default function Conversations() {
               name: data.DATA.name,
               length: data.DATA.length,
             };
-            return [...newConversations];
+            return [...newInbox];
           } else {
-            return conversations;
+            return inbox;
           }
         });
       }
@@ -249,7 +249,7 @@ export default function Conversations() {
   return (
     <>
       <div data-testid="Users list" className={classes.users}>
-        {conversations.map((c) => (
+        {inbox.map((c) => (
           <button
             key={c.uid}
             onClick={() => {
@@ -285,7 +285,7 @@ export default function Conversations() {
           )}
           <div className={classes.messages}>
             {selectedConversation &&
-              conversations[selectedConversationIndex].messages.map((msg) => (
+              inbox[selectedConversationIndex].messages.map((msg) => (
                 <PrivateMessage
                   key={msg.ID}
                   reverse={msg.uid !== currentUser?.ID}

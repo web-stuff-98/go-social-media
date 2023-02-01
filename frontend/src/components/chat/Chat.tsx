@@ -1,5 +1,5 @@
 import classes from "../../styles/components/chat/Chat.module.scss";
-import Conversations from "./Conversations";
+import Inbox from "./Inbox";
 import { useState, createContext, useContext, useRef, useEffect } from "react";
 import Menu from "./Menu";
 import RoomEditor from "./RoomEditor";
@@ -37,7 +37,7 @@ import ChatTopTray from "./ChatTopTray";
 
 export enum ChatSection {
   "MENU" = "Menu",
-  "CONVS" = "Conversations",
+  "CONVS" = "Inbox",
   "ROOMS" = "Rooms",
   "ROOM" = "Room",
   "EDITOR" = "Editor",
@@ -354,7 +354,7 @@ export default function Chat() {
             <div className={classes.inner}>
               {
                 {
-                  Conversations: <Conversations />,
+                  Inbox: <Inbox />,
                   Rooms: <Rooms />,
                   Room: <Room />,
                   Editor: <RoomEditor />,

@@ -1,6 +1,6 @@
 @font-face {
   font-family: "Gidole";
-  src: url(../public/glacial-indifference.regular.otf);
+  src: url(../public/raleway.regular.ttf);
 }
 
 body {
@@ -90,7 +90,7 @@ button,
 
   /* Component & layout colours */
   --foreground: white;
-  --background: #f0f1f3;
+  --background: #f4f4f4;
   --button: rgb(24, 24, 24);
   --nav: rgb(14, 14, 14);
   --header: linear-gradient(
@@ -106,9 +106,9 @@ button,
 
   /* Colours - transparent varients for borders, et */
   --base-heavy: rgba(0, 0, 0, 0.666);
-  --base-medium: rgba(0, 0, 0, 0.5);
-  --base-light: rgba(0, 0, 0, 0.3);
-  --base-pale: rgba(0, 0, 0, 0.2);
+  --base-medium: rgba(0, 0, 0, 0.2);
+  --base-light: rgba(0, 0, 0, 0.2);
+  --base-pale: rgba(0, 0, 0, 0.166);
   --base-heavy-contrast: rgba(255, 255, 255, 0.66);
   --base-medium-contrast: rgba(255, 255, 255, 0.33);
   --base-light-contrast: rgba(255, 255, 255, 0.166);
@@ -148,7 +148,7 @@ button,
   --text-color-contrast: black;
 
   --base-heavy: rgba(255, 255, 255, 0.666);
-  --base-medium: rgba(255, 255, 255, 0.1);
+  --base-medium: rgba(255, 255, 255, 0.08);
   --base-light: rgba(255, 255, 255, 0.05);
   --base-pale: rgba(255, 255, 255, 0.0166);
   --base-heavy-contrast: rgba(0, 0, 0, 0.66);

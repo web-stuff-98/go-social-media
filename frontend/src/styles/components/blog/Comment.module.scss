@@ -51,18 +51,15 @@
     }
   }
 
-  .top:hover {
-    background: var(--background);
-  }
-
   .childComments {
     display: flex;
     flex-direction: column;
-    padding-left: 4rem;
+    padding-left: 3rem;
     position: relative;
     .repliesBar {
       padding: 0;
-      width: 16px;
+      width: 24px;
+      padding-top: 0.5rem;
       background: none;
       height: 100%;
       top: 0;
@@ -94,15 +91,23 @@
     margin: var(--padding) 0;
   }
 
-  .showRepliesButton {
-    width: fit-content;
-    background: none;
-    border: none;
-    font-style: italic;
-    padding: 0;
-    margin-top: var(--padding);
-    color: var(--base-heavy);
-    font-weight: 600;
-    line-height: 1;
+  .hor {
+    display: flex;
+    gap:1rem;
+    .showRepliesButtonAndReplyToCommentButton {
+      width: fit-content;
+      background: none;
+      border: none;
+      padding: 0;
+      margin-top: var(--padding);
+      filter: opacity(0.5);
+      transition: filter 100ms ease;
+      color: var(--text-color);
+      line-height: 1;
+      font-size: var(--font-xs);
+    }
+    .showRepliesButtonAndReplyToCommentButton:hover {
+      filter: opacity(1);
+    }
   }
 }

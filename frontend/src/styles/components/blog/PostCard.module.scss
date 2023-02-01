@@ -127,6 +127,8 @@
           padding: 0px 4px;
           background: var(--foreground);
           color: var(--text-color);
+          border: 1px solid var(--text-color);
+          font-weight: 600;
         }
         .tagSelected {
           color: white;

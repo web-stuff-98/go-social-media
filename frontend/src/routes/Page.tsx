@@ -42,9 +42,9 @@ export default function Page() {
     });
     return group;
   }, [comments]);
-  const [parentComment, setParentComment] = useState<string | null>("");
+  const [parentComment, setParentComment] = useState<string>("");
   const getReplies = (parentId: string): IComment[] =>
-    commentsByParentId[parentId as keyof typeof commentsByParentId];
+    commentsByParentId[parentId as keyof typeof commentsByParentId] || [];
 
   const loadPost = async () => {
     if (!slug) return;
@@ -197,6 +197,7 @@ export default function Page() {
     <div className={classes.container}>
       {post && <PageContent post={post} imgURL={imgURL} setPost={setPost} />}
       <div className={classes.comments}>
+        <div className={classes.count}>{comments.length} Comments</div>
         <CommentForm
           loading={false}
           error={cmtErr}

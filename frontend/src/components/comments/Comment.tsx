@@ -11,7 +11,6 @@ import {
   voteOnPostComment,
 } from "../../services/posts";
 import { useState } from "react";
-import { FaReply } from "react-icons/fa";
 import ErrorTip from "../shared/forms/ErrorTip";
 import { CommentForm } from "./CommentForm";
 import { useModal } from "../../context/ModalContext";
@@ -26,6 +25,7 @@ export default function Comment({
   setReplyingTo,
   getReplies,
   updateMyVoteOnComment,
+  getCountOfAllChildren,
 }: {
   comment: IComment;
   postId: string;
@@ -33,6 +33,7 @@ export default function Comment({
   setReplyingTo: (to: string) => void;
   getReplies: (parentId: string) => IComment[];
   updateMyVoteOnComment: (id: string, isUpvote: boolean) => void;
+  getCountOfAllChildren: (id: string) => number;
 }) {
   const { getUserData } = useUsers();
   const { openModal } = useModal();
@@ -176,24 +177,26 @@ export default function Comment({
           )}
           {err && <ErrorTip message={err} />}
         </div>
-        {user && (
-          <div className={classes.icons}>
-            <IconBtn
+        <div className={classes.hor}>
+          {user && (
+            <button
+              name="Reply to comment"
+              aria-label="Reply to comment"
               onClick={() => setReplyingTo(comment.ID)}
-              Icon={FaReply}
-              name="Reply to comment..."
-              ariaLabel="Reply to comment..."
-            />
-          </div>
-        )}
-        {!repliesOpen && childComments && childComments.length > 0 && (
-          <button
-            onClick={() => setRepliesOpen(true)}
-            className={classes.showRepliesButton}
-          >
-            Show replies
-          </button>
-        )}
+              className={classes.showRepliesButtonAndReplyToCommentButton}
+            >
+              Reply to comment
+            </button>
+          )}
+          {!repliesOpen && childComments && childComments.length > 0 && (
+            <button
+              onClick={() => setRepliesOpen(true)}
+              className={classes.showRepliesButtonAndReplyToCommentButton}
+            >
+              Show replies ({getCountOfAllChildren(comment.ID)})
+            </button>
+          )}
+        </div>
       </div>
       {replyingTo === comment.ID && (
         <div className={classes.commentForm}>
@@ -216,6 +219,7 @@ export default function Comment({
               replyingTo={replyingTo}
               postId={postId}
               comment={cmt}
+              getCountOfAllChildren={() => getCountOfAllChildren(cmt.ID)}
             />
           ))}
           {childComments && repliesOpen && (

@@ -1,6 +1,6 @@
 import { render, screen, act, fireEvent } from "@testing-library/react";
 import { unmountComponentAtNode } from "react-dom";
-import Conversations from "./Conversations";
+import Inbox from "./Inbox";
 import * as chatServices from "../../services/chat";
 import { AuthContext } from "../../context/AuthContext";
 import { UsersContext } from "../../context/UsersContext";
@@ -52,7 +52,7 @@ async function RenderComponent() {
           <UsersContext.Provider
             value={{ cacheUserData: jest.fn(), getUserData: jest.fn() }}
           >
-            <Conversations />
+            <Inbox />
           </UsersContext.Provider>
         </AuthContext.Provider>
       </SocketContext.Provider>,
