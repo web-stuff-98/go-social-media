@@ -294,15 +294,13 @@ func main() {
 		Message:       "Too many requests",
 		RouteName:     "download_attachment",
 	}, *redisClient, *Collections)).Methods(http.MethodGet)
-	/*
-		BROKEN
-		router.HandleFunc("/api/attachment/video/{id}", middleware.BasicRateLimiter(h.GetVideoPartialContent, middleware.SimpleLimiterOpts{
-			Window:        time.Second * 20,
-			MaxReqs:       20,
-			BlockDuration: time.Second * 3000,
-			Message:       "Too many requests",
-			RouteName:     "get_video_chunk",
-		}, *redisClient, *Collections)).Methods(http.MethodGet)*/
+	/*router.HandleFunc("/api/attachment/video/{id}", middleware.BasicRateLimiter(h.GetVideoPartialContent, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 20,
+		MaxReqs:       20,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "get_video_chunk",
+	}, *redisClient, *Collections)).Methods(http.MethodGet)*/
 	router.HandleFunc("/api/attachment/chunk/{msgId}", middleware.BasicRateLimiter(h.UploadAttachmentChunk, middleware.SimpleLimiterOpts{
 		Window:        time.Second * 60,
 		MaxReqs:       60,
@@ -313,7 +311,7 @@ func main() {
 
 	router.HandleFunc("/api/ws", h.WebSocketEndpoint)
 
-	log.Println("Creating changestreams")
+	log.Println("Watching changestreams")
 	changestreams.WatchCollections(DB, SocketServer, AttachmentServer)
 
 	//DB.Drop(context.TODO())

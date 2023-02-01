@@ -1,6 +1,6 @@
 @font-face {
   font-family: "Gidole";
-  src: url(../public/didact-gothic.regular.ttf);
+  src: url(../public/glacial-indifference.regular.otf);
 }
 
 body {
@@ -106,9 +106,9 @@ button,
 
   /* Colours - transparent varients for borders, et */
   --base-heavy: rgba(0, 0, 0, 0.666);
-  --base-medium: rgba(0, 0, 0, 0.4);
-  --base-light: rgba(0, 0, 0, 0.2);
-  --base-pale: rgba(0, 0, 0, 0.166);
+  --base-medium: rgba(0, 0, 0, 0.5);
+  --base-light: rgba(0, 0, 0, 0.3);
+  --base-pale: rgba(0, 0, 0, 0.2);
   --base-heavy-contrast: rgba(255, 255, 255, 0.66);
   --base-medium-contrast: rgba(255, 255, 255, 0.33);
   --base-light-contrast: rgba(255, 255, 255, 0.166);

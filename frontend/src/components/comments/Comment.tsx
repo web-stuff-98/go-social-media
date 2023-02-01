@@ -16,7 +16,7 @@ import ErrorTip from "../shared/forms/ErrorTip";
 import { CommentForm } from "./CommentForm";
 import { useModal } from "../../context/ModalContext";
 import { useAuth } from "../../context/AuthContext";
-import { TiArrowSortedUp, TiArrowSortedDown } from "react-icons/ti";
+import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import { IComment } from "../../interfaces/PostInterfaces";
 
 export default function Comment({
@@ -46,7 +46,7 @@ export default function Comment({
     <div className={classes.container}>
       <div className={classes.top}>
         <User
-        testid="author"
+          testid="author"
           AdditionalStuff={
             <div className={classes.userIcons}>
               <div className={classes.vert}>
@@ -60,10 +60,11 @@ export default function Comment({
                         ? { stroke: "1px" }
                         : { filter: "opacity(0.5)" }),
                     }}
-                    Icon={TiArrowSortedUp}
+                    Icon={FaChevronUp}
                     onClick={async () => {
-                      if (!user) return;
                       try {
+                        if (!user)
+                          throw new Error("You must be logged in to vote");
                         await voteOnPostComment(postId, comment.ID, true);
                         updateMyVoteOnComment(comment.ID, true);
                       } catch (e) {
@@ -97,10 +98,11 @@ export default function Comment({
                         ? { stroke: "1px" }
                         : { filter: "opacity(0.5)" }),
                     }}
-                    Icon={TiArrowSortedDown}
+                    Icon={FaChevronDown}
                     onClick={async () => {
-                      if (!user) return;
                       try {
+                        if (!user)
+                          throw new Error("You must be logged in to vote");
                         await voteOnPostComment(postId, comment.ID, false);
                         updateMyVoteOnComment(comment.ID, false);
                       } catch (e) {
@@ -184,6 +186,14 @@ export default function Comment({
             />
           </div>
         )}
+        {!repliesOpen && childComments && childComments.length > 0 && (
+          <button
+            onClick={() => setRepliesOpen(true)}
+            className={classes.showRepliesButton}
+          >
+            Show replies
+          </button>
+        )}
       </div>
       {replyingTo === comment.ID && (
         <div className={classes.commentForm}>
@@ -217,14 +227,6 @@ export default function Comment({
             </button>
           )}
         </div>
-      )}
-      {!repliesOpen && childComments && childComments.length > 0 && (
-        <button
-          onClick={() => setRepliesOpen(true)}
-          className={classes.showRepliesButton}
-        >
-          Show replies
-        </button>
       )}
     </div>
   );

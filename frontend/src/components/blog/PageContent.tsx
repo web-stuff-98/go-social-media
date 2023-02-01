@@ -2,7 +2,7 @@ import { useUsers } from "../../context/UsersContext";
 import classes from "../../styles/pages/Page.module.scss";
 import IconBtn from "../shared/IconBtn";
 import User from "../shared/User";
-import { TiArrowSortedUp, TiArrowSortedDown } from "react-icons/ti";
+import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import { voteOnPost } from "../../services/posts";
 import { useModal } from "../../context/ModalContext";
 import { useAuth } from "../../context/AuthContext";
@@ -58,10 +58,12 @@ export default function PageContent({
                   svgStyle={{
                     transform: "scale(1.166)",
                   }}
-                  Icon={TiArrowSortedUp}
+                  Icon={FaChevronUp}
                   type="button"
                   onClick={async () => {
                     try {
+                      if (!user)
+                        throw new Error("You must be logged in to vote");
                       await voteOnPost(post.ID, true);
                       setPost({
                         ...post,
@@ -97,10 +99,12 @@ export default function PageContent({
                   svgStyle={{
                     transform: "scale(1.166)",
                   }}
-                  Icon={TiArrowSortedDown}
+                  Icon={FaChevronDown}
                   type="button"
                   onClick={async () => {
                     try {
+                      if (!user)
+                        throw new Error("You must be logged in to vote");
                       await voteOnPost(post.ID, false);
                       setPost({
                         ...post,

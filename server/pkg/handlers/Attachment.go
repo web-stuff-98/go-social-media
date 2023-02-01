@@ -8,6 +8,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -301,10 +302,10 @@ func recursivelyWriteAttachmentChunksToResponse(w http.ResponseWriter, NextChunk
 }
 
 // BROKEN - CLIENT CANT PLAY BACK VIDEO FOR SOME REASON, I GIVE UP AFTER WASTING 5 DAYS
-/*func (h handler) GetVideoPartialContent(w http.ResponseWriter, r *http.Request) {
+func (h handler) GetVideoPartialContent(w http.ResponseWriter, r *http.Request) {
 	rawId := mux.Vars(r)["id"]
 	id, err := primitive.ObjectIDFromHex(rawId)
-	if err != nil {s
+	if err != nil {
 		responseMessage(w, http.StatusBadRequest, "Invalid ID")
 		return
 	}
@@ -353,9 +354,6 @@ func recursivelyWriteAttachmentChunksToResponse(w http.ResponseWriter, NextChunk
 	startChunkIndex := int(start / (1 * 1024 * 1024))
 	endChunkIndex := startChunkIndex + 1
 
-	log.Println("START CHUNK INDEX:", startChunkIndex)
-	log.Println("END CHUNK INDEX:", endChunkIndex)
-
 	// Retrieve the chunks
 	chunkBytes := []byte{}
 	cursor, err := h.Collections.AttachmentChunksCollection.Find(r.Context(), bson.M{"_id": bson.M{"$in": metaData.ChunkIDs[startChunkIndex:endChunkIndex]}})
@@ -382,15 +380,13 @@ func recursivelyWriteAttachmentChunksToResponse(w http.ResponseWriter, NextChunk
 		i++
 	}
 
-	log.Println(len(chunkBytes))
-
 	w.Header().Add("Accept-Ranges", "bytes")
 	w.Header().Add("Content-Length", fmt.Sprint(maxLength))
 	w.Header().Add("Content-Range", fmt.Sprint(start)+"-"+fmt.Sprint(end)+"/"+fmt.Sprint(metaData.Size))
 	w.Header().Add("Content-Type", "video/mp4")
 
 	w.Write(chunkBytes[:maxLength])
-}*/
+}
 
 func getProgressString(upload attachmentserver.Upload) string {
 	return fmt.Sprintf("%v", float32(upload.ChunksDone+1)/float32(upload.TotalChunks))

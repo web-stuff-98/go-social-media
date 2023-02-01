@@ -6,9 +6,12 @@
   .top {
     width: 100%;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    box-sizing: border-box;
+    align-items: flex-start;
     z-index: 98;
-    padding: var(--padding) 0;
+    padding: var(--padding);
+    border-radius: var(--border-radius-medium);
 
     .userIcons {
       display: flex;
@@ -36,7 +39,6 @@
       display: flex;
       align-items: center;
       gap: var(--padding);
-      padding-left: var(--padding);
       font-size: var(--font-xs);
       input {
         width: 100%;
@@ -48,6 +50,11 @@
       gap: var(--padding);
     }
   }
+
+  .top:hover {
+    background: var(--background);
+  }
+
   .childComments {
     display: flex;
     flex-direction: column;
@@ -93,8 +100,8 @@
     border: none;
     font-style: italic;
     padding: 0;
-    color: var(--base-heavy);
     margin-top: var(--padding);
+    color: var(--base-heavy);
     font-weight: 600;
     line-height: 1;
   }

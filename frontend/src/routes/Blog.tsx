@@ -12,6 +12,7 @@ import { useInterface } from "../context/InterfaceContext";
 import usePosts from "../context/PostsContext";
 import useSocket from "../context/SocketContext";
 import classes from "../styles/pages/Blog.module.scss";
+import SearchFormDropdowns from "../components/blog/SearchFormDropdowns";
 
 export default function Blog() {
   const { openSubscription, closeSubscription } = useSocket();
@@ -29,10 +30,6 @@ export default function Blog() {
     prevPage,
     addOrRemoveTagInParams,
     setTermInParams,
-    getSortModeFromParams,
-    getSortOrderFromParams,
-    setSortModeInParams,
-    setSortOrderInParams,
   } = usePosts();
   const { page } = useParams();
 
@@ -46,7 +43,7 @@ export default function Blog() {
 
   return (
     <div className={classes.container}>
-      <div className={classes.feed}>
+      <div data-testid="Feed container" className={classes.feed}>
         {!resMsg.pen && (
           <>
             {posts.map((p, i) => (
@@ -56,40 +53,20 @@ export default function Blog() {
                 post={p}
               />
             ))}
-            <div className={classes.endFix} />
+            <div aria-hidden={true} className={classes.endFix} />
           </>
         )}
         <div style={{ margin: "auto" }}>
           <ResMsg large resMsg={resMsg} />
         </div>
       </div>
-      <aside>
+      <aside data-testid="Aside container">
         <div className={classes.inner}>
-          <form className={classes.searchForm}>
-            <div className={classes.dropdownsContainer}>
-              <Dropdown
-                light
-                index={getSortOrderFromParams === "DESC" ? 0 : 1}
-                setIndex={setSortOrderInParams}
-                items={[
-                  { name: "DESC", node: "Desc" },
-                  { name: "ASC", node: "Asc" },
-                ]}
-              />
-              <div className={classes.sortMode}>
-                <Dropdown
-                  light
-                  index={getSortModeFromParams === "DATE" ? 0 : 1}
-                  setIndex={setSortModeInParams}
-                  items={[
-                    { name: "DATE", node: "Date" },
-                    { name: "POPULARITY", node: "Popularity" },
-                  ]}
-                />
-              </div>
-            </div>
+          <form data-testid="Search form" className={classes.searchForm}>
+            <SearchFormDropdowns />
             <div className={classes.search}>
               <input
+                data-testid="Search input"
                 name="Search input"
                 id="Search input"
                 aria-label="Search"
@@ -98,14 +75,25 @@ export default function Blog() {
                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setTermInParams(e.target.value)
                 }
-                required
               />
-              <IconBtn name="Search" ariaLabel="Search" Icon={FaSearch} />
+              <IconBtn
+                type="submit"
+                name="Search"
+                ariaLabel="Search"
+                Icon={FaSearch}
+              />
             </div>
           </form>
           <div className={classes.searchTags}>
             {getTagsFromParams.map((t) => (
-              <button onClick={() => addOrRemoveTagInParams(t)}>{t}</button>
+              <button
+                aria-label={"Tag:" + t}
+                name={"Tag:" + t}
+                key={t}
+                onClick={() => addOrRemoveTagInParams(t)}
+              >
+                {t}
+              </button>
             ))}
           </div>
           <>
@@ -118,8 +106,15 @@ export default function Blog() {
           </>
         </div>
       </aside>
-      <div className={classes.paginationControls}>
-        <button name="Previous page" aria-label="Previous page" onClick={() => prevPage()}>
+      <div
+        data-testid="Pagination controls container"
+        className={classes.paginationControls}
+      >
+        <button
+          name="Previous page"
+          aria-label="Previous page"
+          onClick={() => prevPage()}
+        >
           <BsChevronLeft />
         </button>
         <div className={classes.text}>
@@ -130,7 +125,11 @@ export default function Blog() {
             {posts?.length}/{postsCount}
           </span>
         </div>
-        <button name="Next page" aria-label="Next page" onClick={() => nextPage()}>
+        <button
+          name="Next page"
+          aria-label="Next page"
+          onClick={() => nextPage()}
+        >
           <BsChevronRight />
         </button>
       </div>

@@ -48,8 +48,10 @@ export default function PostCard({
   const observer = new IntersectionObserver(([entry]) => {
     if (entry.isIntersecting) {
       setVisible(true);
+      postEnteredView(post.ID);
     } else {
       setVisible(false);
+      postLeftView(post.ID);
       if (imgCancelSource.current) {
         imgCancelSource.current.cancel();
       }
@@ -62,14 +64,6 @@ export default function PostCard({
     };
     // eslint-disable-next-line
   }, [containerRef.current]);
-
-  useEffect(() => {
-    postEnteredView(post.ID);
-    return () => {
-      postLeftView(post.ID);
-    };
-    // eslint-disable-next-line
-  }, []);
 
   //Rerender of image is triggered when img_url query param v=1 increments
   useEffect(() => {

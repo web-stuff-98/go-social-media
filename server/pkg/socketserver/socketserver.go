@@ -217,7 +217,9 @@ func RunServer(socketServer *SocketServer) {
 				}
 			}()
 			connData := <-socketServer.UnregisterSubscriptionConn
-			delete(socketServer.Subscriptions[connData.Name], connData.Conn)
+			if _, ok := socketServer.Subscriptions[connData.Name]; ok {
+				delete(socketServer.Subscriptions[connData.Name], connData.Conn)
+			}
 			delete(socketServer.VidChatStatus, connData.Conn)
 			if _, ok := socketServer.ConnectionSubscriptionCount[connData.Conn]; ok {
 				socketServer.ConnectionSubscriptionCount[connData.Conn]--

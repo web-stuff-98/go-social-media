@@ -18,6 +18,7 @@ export default function ResMsg({
         >
           {resMsg.pen && (
             <ImSpinner8
+              data-testid="Loading spinner"
               style={large ? { width: "2rem", height: "2rem" } : {}}
               className={formClasses.loadingSpinner}
             />

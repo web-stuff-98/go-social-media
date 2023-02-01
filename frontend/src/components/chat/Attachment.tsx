@@ -4,9 +4,10 @@ import { useMemo, useRef } from "react";
 import { BiError } from "react-icons/bi";
 import { AiOutlineDownload } from "react-icons/ai";
 import { baseURL } from "../../services/makeRequest";
-import { IAttachmentData, IMsgAttachmentProgress } from "../../interfaces/ChatInterfaces";
-
-
+import {
+  IAttachmentData,
+  IMsgAttachmentProgress,
+} from "../../interfaces/ChatInterfaces";
 
 export default function Attachment({
   progressData: { failed, ratio, pending },
@@ -62,22 +63,27 @@ export default function Attachment({
                   file: (
                     <>
                       <a
+                        aria-label="Download attachment"
+                        className={classes.download}
+                        style={reverse ? { flexDirection: "row-reverse" } : {}}
                         download
                         href={`${baseURL}/api/attachment/download/${msgId}`}
                         ref={hiddenDownloadLink}
-                      />
-                      <button
-                        aria-label="Download attachment"
-                        name="Download attachment"
-                        onClick={() => hiddenDownloadLink.current?.click()}
-                        style={reverse ? { flexDirection: "row-reverse" } : {}}
-                        className={classes.download}
                       >
                         <AiOutlineDownload />
                         Attachment
-                      </button>
+                      </a>
                     </>
                   ),
+                  /*video: (
+                    <div className={classes.videoPlayerContainer}>
+                      <ReactPlayer
+                        width="100%"
+                        height="auto"
+                        url={`${baseURL}/api/attachment/video/${msgId}`}
+                      />
+                    </div>
+                  ),*/
                   incomplete: <h1>this should never be visible</h1>,
                 }[type]
               }

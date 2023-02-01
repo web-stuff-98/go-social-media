@@ -36,6 +36,7 @@ export default function RoomEditor() {
       });
       formik.setFieldValue("image", b);
       setImgURL(URL.createObjectURL(b));
+      setResMsg({ msg: "", err: false, pen: false });
     } catch (e) {
       //If its a room image error that means the room has no image, so its
       //just a not found error
@@ -143,6 +144,7 @@ export default function RoomEditor() {
           data-testid="ResMsg container"
           style={{
             width: `${imgRef.current ? `${imgRef.current.width}px` : "12rem"}`,
+            marginBottom: "var(--padding)",
           }}
         >
           <ResMsg resMsg={resMsg} />

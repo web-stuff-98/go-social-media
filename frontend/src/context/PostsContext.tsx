@@ -30,7 +30,7 @@ import debounce from "lodash/debounce";
 import { IPostCard } from "../interfaces/PostInterfaces";
 import { IResMsg } from "../interfaces/GeneralInterfaces";
 
-const PostsContext = createContext<{
+export const PostsContext = createContext<{
   posts: IPostCard[];
   postsCount: number;
   newPosts: IPostCard[];

@@ -50,6 +50,8 @@
   }
 
   .videoPlayerContainer {
+    max-width: 6rem;
+    max-height: 5rem;
     border: 1px solid var(--base-medium);
     border-radius: var(--border-radius-medium);
   }
