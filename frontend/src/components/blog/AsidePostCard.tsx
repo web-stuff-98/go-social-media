@@ -1,7 +1,8 @@
 import { IPostCard } from "../../interfaces/PostInterfaces";
+import { memo } from "react";
 import classes from "../../styles/components/blog/AsidePostCard.module.scss";
 
-export default function AsidePostCard({ post }: { post?: IPostCard }) {
+const AsidePostCard = ({ post }: { post?: IPostCard }) => {
   return (
     <article className={classes.container}>
       {post && (
@@ -13,4 +14,6 @@ export default function AsidePostCard({ post }: { post?: IPostCard }) {
       )}
     </article>
   );
-}
+};
+
+export default memo(AsidePostCard);
