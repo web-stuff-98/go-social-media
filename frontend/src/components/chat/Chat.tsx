@@ -324,6 +324,7 @@ export default function Chat() {
     peersRef.current.forEach((p) => p.peer.destroy());
     setPeers([]);
     peersRef.current = [];
+    userStream.current?.getTracks().forEach((track) => track.stop());
   };
 
   useEffect(() => {

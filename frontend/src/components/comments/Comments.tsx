@@ -1,6 +1,7 @@
 import { IComment } from "../../interfaces/PostInterfaces";
 import classes from "../../styles/components/blog/Comments.module.scss";
 import Comment from "./Comment";
+import { useCallback } from "react";
 
 /*
  This doesn't really need a test
@@ -21,16 +22,20 @@ export default function Comments({
   setReplyingTo: (to: string) => void;
   updateMyVoteOnComment: (id: string, isUpvote: boolean) => void;
 }) {
-  const getCountOfAllChildren = (id: string) => {
-    let count = 0;
-    const replies = getReplies(id);
-    if (replies)
-      replies.forEach((reply) => {
-        count++;
-        count += getReplies(reply.ID).length;
-      });
-    return count;
-  };
+  const getCountOfAllChildren = useCallback(
+    (id: string) => {
+      let count = 0;
+      const replies = getReplies(id);
+      if (replies)
+        replies.forEach((reply) => {
+          count++;
+          count += getReplies(reply.ID).length;
+        });
+      return count;
+    },
+    // eslint-disable-next-line
+    [comments]
+  );
 
   return (
     <div data-testid="Comments container" className={classes.container}>

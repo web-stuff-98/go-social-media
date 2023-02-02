@@ -5,7 +5,6 @@ import { useState } from "react";
 import { useInterface } from "../../context/InterfaceContext";
 import { MdMenu } from "react-icons/md";
 import User from "../shared/User";
-import { BsChevronCompactUp } from "react-icons/bs";
 
 export default function Nav() {
   const { user, logout } = useAuth();

@@ -85,6 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(undefined);
         reconnectSocket();
       });
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -117,6 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       socket?.removeEventListener("open", handleSocketOnOpen);
     };
+    // eslint-disable-next-line
   }, [socket, user]);
 
   const updateUserState = (user: Partial<IUser>) =>
