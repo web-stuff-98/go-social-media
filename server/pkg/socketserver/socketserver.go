@@ -17,7 +17,7 @@ import (
 	Uid can always be left as primitive.NilObjectID, users are not required
 	to be authenticated to connect or open subscriptions, but there is an auth
 	check for users down below, to make sure users cannot subscribe to other users
-	inboxes or subscribe to rooms without being authenticated.
+	inboxes/notifications or subscribe to rooms without being authenticated.
 */
 
 type ConnectionInfo struct {

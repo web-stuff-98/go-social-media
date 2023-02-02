@@ -186,10 +186,15 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
           getPageWithParams();
         }
       }, 300),
+    // eslint-disable-next-line
     [searchParams, page]
   );
 
-  useEffect(() => handleSearch(), [page, searchParams]);
+  useEffect(
+    () => handleSearch(),
+    // eslint-disable-next-line
+    [page, searchParams]
+  );
 
   const getPageWithParams = () => {
     setResMsg({ msg: "", err: false, pen: true });
@@ -214,9 +219,9 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
             }))
           );
           setPostsCount(p.count);
-          posts.forEach((p: IPostCard) => cacheUserData(p.author_id));
-          setResMsg({ msg: "", err: false, pen: false });
         });
+        posts.forEach((p: IPostCard) => cacheUserData(p.author_id));
+        setResMsg({ msg: "", err: false, pen: false });
       })
       .catch((e) => {
         setResMsg({ msg: `${e}`, err: true, pen: false });
@@ -228,55 +233,73 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const updatePostCard = (data: Partial<IPostCard>) =>
-    setPosts((o) => {
-      let newPosts = o;
-      const i = o.findIndex((p) => p.ID === data.ID);
-      if (i === -1) return o;
-      newPosts[i] = { ...newPosts[i], ...data };
-      return [...newPosts];
+  const updatePostCard = (data: Partial<IPostCard>) => {
+    startTransition(() => {
+      setPosts((o) => {
+        let newPosts = o;
+        const i = o.findIndex((p) => p.ID === data.ID);
+        if (i === -1) return o;
+        newPosts[i] = { ...newPosts[i], ...data };
+        return [...newPosts];
+      });
     });
-
-  const updatePostCardImage = (data: { ID: string }) =>
-    setPosts((o) => {
-      let newPosts = o;
-      const i = o.findIndex((p) => p.ID === data.ID);
-      if (i === -1) return o;
-      const v = Number(newPosts[i].img_url.split("?v=")[1]);
-      newPosts[i] = {
-        ...newPosts[i],
-        ...data,
-        img_url: `${newPosts[i].img_url.split("?v=")[0] + (v + 1)}`,
-      };
-      return [...newPosts];
-    });
-
-  const removePostCard = (id: string) =>
-    setPosts((o) => [...o.filter((p) => p.ID !== id)]);
-
-  const createPostCard = (data: IPostCard, addToStart?: boolean) => {
-    if (addToStart) setPosts((o) => [data, ...o].slice(0, 20));
-    else setPosts((o) => [...o, data].slice(0, 20));
   };
 
-  const createPostCardOnNewest = (data: IPostCard) =>
-    setNewPosts((p) => [data, ...p].slice(0, 15));
-
-  const removePostCardFromNewest = (id: string) =>
-    setNewPosts((p) => [...p.filter((p) => p.ID !== id)]);
-
-  const updatePostCardOnNewest = (data: IPostCard) =>
-    setNewPosts((p) => {
-      let newPosts = p;
-      const i = p.findIndex((p) => p.ID === data.ID);
-      if (i === -1) return p;
-      newPosts[i] = { ...newPosts[i], ...data };
-      return [...newPosts];
+  const updatePostCardImage = (data: { ID: string }) => {
+    startTransition(() => {
+      setPosts((o) => {
+        let newPosts = o;
+        const i = o.findIndex((p) => p.ID === data.ID);
+        if (i === -1) return o;
+        const v = Number(newPosts[i].img_url.split("?v=")[1]);
+        newPosts[i] = {
+          ...newPosts[i],
+          ...data,
+          img_url: `${newPosts[i].img_url.split("?v=")[0] + (v + 1)}`,
+        };
+        return [...newPosts];
+      });
     });
+  };
+  const removePostCard = (id: string) => {
+    startTransition(() => {
+      setPosts((o) => [...o.filter((p) => p.ID !== id)]);
+    });
+  };
+
+  const createPostCard = (data: IPostCard, addToStart?: boolean) => {
+    startTransition(() => {
+      if (addToStart) setPosts((o) => [data, ...o].slice(0, 20));
+      else setPosts((o) => [...o, data].slice(0, 20));
+    });
+  };
+
+  const createPostCardOnNewest = (data: IPostCard) => {
+    startTransition(() => {
+      setNewPosts((p) => [data, ...p].slice(0, 15));
+    });
+  };
+
+  const removePostCardFromNewest = (id: string) => {
+    startTransition(() => {
+      setNewPosts((p) => [...p.filter((p) => p.ID !== id)]);
+    });
+  };
+
+  const updatePostCardOnNewest = (data: IPostCard) => {
+    startTransition(() => {
+      setNewPosts((p) => {
+        let newPosts = p;
+        const i = p.findIndex((p) => p.ID === data.ID);
+        if (i === -1) return p;
+        newPosts[i] = { ...newPosts[i], ...data };
+        return [...newPosts];
+      });
+    });
+  };
 
   const isPostOnPage = (id: string) =>
     Boolean(posts.findIndex((p) => p.ID === id));
-
   const isPostOnNewestFeed = (id: string) =>
     Boolean(newPosts.findIndex((p) => p.ID === id));
 
@@ -338,19 +361,23 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     if (instanceOfPostVoteData(data)) {
-      if (isPostOnPage(data.DATA.ID))
-        setPosts((p) => {
-          let newPosts = p;
-          const i = p.findIndex((p) => p.ID === data.DATA.ID);
-          if (i === -1) return p;
-          if (data.DATA.is_upvote) {
-            newPosts[i].vote_pos_count += data.DATA.remove ? -1 : 1;
-          } else {
-            newPosts[i].vote_neg_count += data.DATA.remove ? -1 : 1;
-          }
-          return [...newPosts];
+      if (isPostOnPage(data.DATA.ID)) {
+        startTransition(() => {
+          setPosts((p) => {
+            let newPosts = p;
+            const i = p.findIndex((p) => p.ID === data.DATA.ID);
+            if (i === -1) return p;
+            if (data.DATA.is_upvote) {
+              newPosts[i].vote_pos_count += data.DATA.remove ? -1 : 1;
+            } else {
+              newPosts[i].vote_neg_count += data.DATA.remove ? -1 : 1;
+            }
+            return [...newPosts];
+          });
         });
+      }
     }
+    // eslint-disable-next-line
   }, []);
 
   const nextPage = () =>
@@ -368,6 +395,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       if (socket) socket?.removeEventListener("message", handleMessage);
     };
+    // eslint-disable-next-line
   }, [socket]);
 
   return (

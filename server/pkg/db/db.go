@@ -49,12 +49,11 @@ func Init() (*mongo.Database, *Collections) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	err = client.Connect(ctx)
+	err = client.Connect(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = client.Ping(ctx, readpref.Primary())
+	err = client.Ping(context.Background(), readpref.Primary())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -121,7 +120,7 @@ func getChildrenOfOrphanedComment(orphanId string, cmts map[string]string) map[s
 			childIds[commentId] = struct{}{}
 		}
 	}
-	for childId, _ := range childIds {
+	for childId := range childIds {
 		childChildren := getChildrenOfOrphanedComment(childId, cmts)
 		maps.Copy(childChildren, childIds)
 	}
@@ -154,7 +153,7 @@ func cleanUpPosts(colls *Collections) {
 			maps.Copy(children, orphanedCmts)
 		}
 		deleteIds := []primitive.ObjectID{}
-		for id, _ := range orphanedCmts {
+		for id := range orphanedCmts {
 			oid, err := primitive.ObjectIDFromHex(id)
 			if err != nil {
 				log.Fatal("Invalid ID : ", err)

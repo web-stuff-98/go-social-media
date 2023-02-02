@@ -80,10 +80,12 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
         }
       }
     },
+    // eslint-disable-next-line
     [clickPos]
   );
   useEffect(() => {
     if (containerRef.current) adjust();
+    // eslint-disable-next-line
   }, [uid]);
 
   const clickedWhileOutside = useCallback((e: MouseEvent) => {
@@ -96,6 +98,7 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (uid) adjust(true);
+    // eslint-disable-next-line
   }, [section]);
 
   useEffect(() => {
@@ -103,6 +106,7 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
       window.addEventListener("mousedown", clickedWhileOutside);
     else window.removeEventListener("mousedown", clickedWhileOutside);
     return () => window.removeEventListener("mousedown", clickedWhileOutside);
+    // eslint-disable-next-line
   }, [cursorInside]);
 
   return (

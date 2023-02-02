@@ -52,6 +52,7 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
       if (currentUser && uid === currentUser.ID) return currentUser;
       return users.find((u) => u.ID === uid) as IUser;
     },
+    // eslint-disable-next-line
     [users]
   );
 
@@ -157,6 +158,7 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       clearInterval(i);
     };
+    // eslint-disable-next-line
   }, [disappearedUsers]);
 
   const handleMessage = useCallback((e: MessageEvent) => {
@@ -170,6 +172,7 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     }
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -179,6 +182,7 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
       if (!socket) return;
       socket.removeEventListener("message", handleMessage);
     };
+    // eslint-disable-next-line
   }, [socket]);
 
   return (

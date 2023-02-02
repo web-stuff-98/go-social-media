@@ -49,7 +49,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
   const sendIfPossible = (data: string) => {
     if (socket) {
-      if (socket.CONNECTING === 1) {
+      if (socket.CONNECTING) {
         queueSocketMessage(data);
       }
       if (socket.CLOSED) {
