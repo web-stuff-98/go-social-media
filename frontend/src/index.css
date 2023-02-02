@@ -128,10 +128,10 @@ button,
   --horizontal-whitespace: 27.5vw;
 
   /* Font sizes */
-  --font-lg: min(6vw, 1.866rem);
-  --font-md: min(5vw, 1.066rem);
-  --font-sm: min(4.25vw, 0.95rem);
-  --font-xs: min(3.6vw, 0.866rem);
+  --font-lg: min(7vw, 1.866rem);
+  --font-md: min(5.78vw, 1.066rem);
+  --font-sm: min(4.65vw, 0.95rem);
+  --font-xs: min(4vw, 0.866rem);
 
   --cross-background: url(../public/crossbackground.png);
 }
