@@ -4,7 +4,6 @@ import {
   useContext,
   createContext,
   useCallback,
-  startTransition,
 } from "react";
 import type { ReactNode } from "react";
 import { useModal } from "./ModalContext";
@@ -49,24 +48,22 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const queueSocketMessage = (msg: string) => setSendQueue((o) => [...o, msg]);
 
   const sendIfPossible = (data: string) => {
-    startTransition(() => {
-      if (socket) {
-        if (socket.CONNECTING === 1) {
-          queueSocketMessage(data);
-        }
-        if (socket.CLOSED) {
-          queueSocketMessage(data);
-        }
-        if (socket.CLOSING) {
-          queueSocketMessage(data);
-        }
-        if (socket.OPEN) {
-          socket.send(data);
-        }
-      } else {
+    if (socket) {
+      if (socket.CONNECTING === 1) {
         queueSocketMessage(data);
       }
-    });
+      if (socket.CLOSED) {
+        queueSocketMessage(data);
+      }
+      if (socket.CLOSING) {
+        queueSocketMessage(data);
+      }
+      if (socket.OPEN) {
+        socket.send(data);
+      }
+    } else {
+      queueSocketMessage(data);
+    }
   };
 
   const onOpen = () => {
