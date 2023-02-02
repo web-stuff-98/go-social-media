@@ -88,7 +88,8 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
   const connectSocket = () => {
     const socket = new WebSocket(
-      process.env.NODE_ENV === "development"
+      process.env.NODE_ENV === "development" ||
+      window.location.origin === "http://localhost:8080"
         ? "ws://localhost:8080/api/ws"
         : "wss://go-social-media-js.herokuapp.com/api/ws"
     );

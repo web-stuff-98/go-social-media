@@ -47,15 +47,15 @@ func main() {
 	router := mux.NewRouter()
 	redisClient := rdb.Init()
 
-	var origin string
+	var origins []string
 	if os.Getenv("PRODUCTION") == "true" {
-		origin = "https://go-social-media-js.herokuapp.com"
+		origins = []string{"https://go-social-media-js.herokuapp.com"}
 	} else {
-		origin = "http://localhost:3000"
+		origins = []string{"http://localhost:3000", "http://localhost:8080"}
 	}
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{origin},
+		AllowedOrigins:   origins,
 		AllowedMethods:   []string{"GET", "HEAD", "POST", "PATCH", "DELETE"},
 		AllowCredentials: true,
 	})
@@ -312,6 +312,14 @@ func main() {
 
 	router.HandleFunc("/api/ws", h.WebSocketEndpoint)
 
+	// Serve static files
+	fs := http.FileServer(http.Dir("build"))
+	router.PathPrefix("/").Handler(fs)
+	// Serve all other routes with the React app.
+	router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "build/index.html")
+	})
+
 	log.Println("Watching changestreams")
 	changestreams.WatchCollections(DB, SocketServer, AttachmentServer)
 
@@ -339,10 +347,6 @@ func main() {
 			}
 		}
 	}()
-
-	// Serve static files
-	fs := http.FileServer(http.Dir("./build"))
-	http.Handle("/", fs)
 
 	log.Println("API open on port", os.Getenv("PORT"))
 	log.Fatal(http.ListenAndServe(fmt.Sprint(":", os.Getenv("PORT")), c.Handler(router)))
