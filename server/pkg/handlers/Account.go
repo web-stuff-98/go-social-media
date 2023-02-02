@@ -217,6 +217,11 @@ func (h handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, isProtected := h.ProtectedIDs.Uids[session.UID]; isProtected {
+		responseMessage(w, http.StatusUnauthorized, "You cannot delete example accounts")
+		return
+	}
+
 	if h.Collections.UserCollection.DeleteOne(r.Context(), bson.M{"_id": session.UID}); err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
@@ -257,6 +262,11 @@ func (h handler) UploadPfp(w http.ResponseWriter, r *http.Request) {
 	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	if err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	if _, isProtected := h.ProtectedIDs.Uids[user.ID]; isProtected {
+		responseMessage(w, http.StatusUnauthorized, "You cannot modify example users")
 		return
 	}
 

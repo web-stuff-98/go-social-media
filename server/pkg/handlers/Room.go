@@ -227,6 +227,11 @@ func (h handler) UpdateRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, isProtected := h.ProtectedIDs.Rids[roomId]; isProtected {
+		responseMessage(w, http.StatusUnauthorized, "You cannot modify example rooms")
+		return
+	}
+
 	if room.Author != user.ID {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -323,6 +328,11 @@ func (h handler) DeleteRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, isProtected := h.ProtectedIDs.Rids[roomId]; isProtected {
+		responseMessage(w, http.StatusUnauthorized, "You cannot delete example rooms")
+		return
+	}
+
 	if room.Author != user.ID {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -386,6 +396,11 @@ func (h handler) UploadRoomImage(w http.ResponseWriter, r *http.Request) {
 		} else {
 			responseMessage(w, http.StatusNotFound, "Not found")
 		}
+		return
+	}
+
+	if _, isProtected := h.ProtectedIDs.Rids[roomId]; isProtected {
+		responseMessage(w, http.StatusUnauthorized, "You cannot modify example rooms")
 		return
 	}
 

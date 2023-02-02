@@ -865,6 +865,11 @@ func (h handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, isProtected := h.ProtectedIDs.Pids[post.ID]; isProtected {
+		responseMessage(w, http.StatusUnauthorized, "You cannot modify example posts")
+		return
+	}
+
 	if post.Author != user.ID {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -1021,6 +1026,11 @@ func (h handler) DeletePost(w http.ResponseWriter, r *http.Request) {
 		} else {
 			responseMessage(w, http.StatusNotFound, "Post not found")
 		}
+		return
+	}
+
+	if _, isProtected := h.ProtectedIDs.Pids[post.ID]; isProtected {
+		responseMessage(w, http.StatusUnauthorized, "You cannot delete example posts")
 		return
 	}
 

@@ -46,7 +46,11 @@ func main() {
 		log.Fatal("Failed to set up attachment server ", err)
 	}
 
-	h := handlers.New(DB, Collections, SocketServer, AttachmentServer)
+	h := handlers.New(DB, Collections, SocketServer, AttachmentServer, &handlers.ProtectedIDs{
+		Uids: protectedUids,
+		Pids: protectedPids,
+		Rids: protectedRids,
+	})
 
 	router := mux.NewRouter()
 	redisClient := rdb.Init()
@@ -329,7 +333,7 @@ func main() {
 
 	if os.Getenv("PRODUCTION") == "true" {
 		DB.Drop(context.Background())
-		go seed.SeedDB(Collections, 50, 1000, 200, protectedUids, protectedPids, protectedRids)
+		go seed.SeedDB(Collections, 5, 5, 5, protectedUids, protectedPids, protectedRids)
 	} else {
 		DB.Drop(context.Background())
 		go seed.SeedDB(Collections, 5, 5, 5, protectedUids, protectedPids, protectedRids)
