@@ -222,17 +222,18 @@ export default function Page() {
 
   // Go back +3 comments
   const goBackInComments = () => {
-    let numParents = 0;
+    let parentCount = 0;
     const c = comments.find((c) => c.ID === parentComment);
     if (c?.parent_id !== "") {
-      numParents++;
+      parentCount++;
       const countParent = (parentId: string) => {
         const parent = comments.find((c) => c.ID === parentId);
         if (parent) {
-          if (numParents !== 0 && numParents % 3 === 0) {
-            setParentComment("");
+          if (parentCount % 3 === 0) {
+            setParentComment(parentId);
+            return
           }
-          numParents++;
+          parentCount++;
           countParent(parent?.parent_id);
         } else {
           setParentComment("");
