@@ -37,7 +37,7 @@ const defaultModalData = {
   cancellationCallback: () => {},
 };
 
-const ModalContext = createContext<{
+export const ModalContext = createContext<{
   openModal: (modalType: "Message" | "Confirm", modalData: IModalData) => void;
   closeModal: () => void;
   setData: (data: Partial<IModalData>) => void;

@@ -14,7 +14,7 @@ const FormikFileButtonInput = ({
   buttonTestId,
   name,
   id,
-  ariaLabel,
+  ariaControls,
   touched,
   accept,
   validationErrs,
@@ -26,7 +26,7 @@ const FormikFileButtonInput = ({
   buttonTestId: string;
   name: string;
   id: string;
-  ariaLabel: string;
+  ariaControls: string;
   touched?: boolean;
   accept: string;
   validationErrs: ValidationErr[];
@@ -57,11 +57,11 @@ const FormikFileButtonInput = ({
         name={name}
         id={id}
         type="file"
-        aria-label={ariaLabel}
         accept={accept}
         ref={inputRef}
       />
       <button
+        aria-controls={ariaControls}
         data-testid={buttonTestId}
         name={name}
         onClick={() => inputRef.current?.click()}

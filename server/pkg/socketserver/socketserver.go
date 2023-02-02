@@ -53,9 +53,6 @@ type UserDataMessage struct {
 	Data interface{}
 	Type string
 }
-type VidChatStatus struct {
-	Id primitive.ObjectID // Can be either another user or a room
-}
 type VidChatOpenData struct {
 	Conn *websocket.Conn
 	Id   primitive.ObjectID

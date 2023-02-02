@@ -158,7 +158,7 @@ export default function Editor() {
               buttonTestId="Image file button"
               name="Image file"
               id="file"
-              ariaLabel="Select a cover image"
+              ariaControls="Select room image"
               touched={formik.touched.file}
               accept=".jpeg,.jpg,.png"
               validationErrs={validationErrs}

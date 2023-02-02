@@ -100,7 +100,7 @@ export default function RoomEditor() {
             buttonTestId="Image file button"
             name="Select room image"
             id="image"
-            ariaLabel="Select room image"
+            ariaControls="Select room image"
             accept=".jpeg,.jpeg,.png"
             touched={formik.touched.image}
             validationErrs={validationErrs}

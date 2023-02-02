@@ -36,6 +36,7 @@ export default function Nav() {
 
   return (
     <nav
+      aria-expanded={!isMobile || mobileOpen}
       style={{
         ...(isMobile
           ? {
@@ -55,8 +56,8 @@ export default function Nav() {
     >
       {isMobile && (
         <button
+          aria-controls="Toggle navigation menu"
           onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label={mobileOpen ? "Close nav links" : "Open nav links"}
           className={classes.menuIcon}
         >
           <MdMenu style={darkMode ? {} : { fill: "black" }} />

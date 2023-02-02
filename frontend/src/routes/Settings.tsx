@@ -77,10 +77,10 @@ export default function Settings() {
     <ProtectedRoute user={user}>
       <form className={classes.container}>
         <div className={classes.heading}>
-          <BsGearWide />
+          <BsGearWide aria-hidden={true} />
           <h1>Settings</h1>
         </div>
-        <hr />
+        <hr aria-hidden={true} />
         <input
           onChange={handlePfpInput}
           type="file"
@@ -88,15 +88,19 @@ export default function Settings() {
           accept=".jpeg,.jpg,.png"
         />
         <User
+          testid="User"
           uid={user?.ID!}
           user={user}
           onClick={() => hiddenPfpInputRef.current?.click()}
         />
         <p>
-          You can click on your profile picture to select a new image. It will
-          update for other users automatically.
+          You can click on your profile picture above to select a new image. It
+          will update for other users automatically after confirming your
+          selection.
         </p>
         <button
+          aria-label="Delete account"
+          name="Delete account"
           onClick={() =>
             openModal("Confirm", {
               err: false,
