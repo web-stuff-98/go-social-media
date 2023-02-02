@@ -58,17 +58,27 @@ func WatchCollections(DB *mongo.Database, ss *socketserver.SocketServer, as *att
 }
 
 func watchUserDeletes(db *mongo.Database, ss *socketserver.SocketServer, as *attachmentserver.AttachmentServer) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("Recovered from panic watching user deletes :", r)
+		}
+	}()
 	cs, err := db.Collection("users").Watch(context.Background(), mongo.Pipeline{deletePipeline}, options.ChangeStream().SetFullDocument(options.UpdateLookup))
 	if err != nil {
 		log.Panicln("CS ERR : ", err.Error())
 	}
 	for cs.Next(context.Background()) {
-		var changeEv bson.M
+		var changeEv struct {
+			DocumentKey struct {
+				ID primitive.ObjectID `bson:"_id"`
+			} `bson:"documentKey"`
+		}
 		err := cs.Decode(&changeEv)
 		if err != nil {
-			log.Fatal(err)
+			log.Println("CS DECODE ERROR : ", err)
+			return
 		}
-		uid := changeEv["documentKey"].(bson.M)["_id"].(primitive.ObjectID)
+		uid := changeEv.DocumentKey.ID
 		db.Collection("posts").DeleteMany(context.Background(), bson.M{"author_id": uid})
 		db.Collection("rooms").DeleteMany(context.Background(), bson.M{"author_id": uid})
 		db.Collection("pfps").DeleteOne(context.Background(), bson.M{"_id": uid})
@@ -76,7 +86,7 @@ func watchUserDeletes(db *mongo.Database, ss *socketserver.SocketServer, as *att
 		db.Collection("notifications").DeleteOne(context.Background(), bson.M{"_id": uid})
 		inbox := &models.Inbox{}
 		res := db.Collection("inboxes").FindOneAndDelete(context.Background(), bson.M{"_id": uid}).Decode(&inbox)
-		if res.Error() == "" {
+		if res == nil {
 			for _, m := range inbox.Messages {
 				if m.HasAttachment {
 					as.DeleteChunksChan <- m.ID
@@ -96,7 +106,7 @@ func watchUserDeletes(db *mongo.Database, ss *socketserver.SocketServer, as *att
 				db.Collection("inboxes").UpdateByID(context.Background(), recipient, bson.M{"$pull": bson.M{"messages": bson.M{"uid": uid}, "messages_sent_to": uid}})
 			}
 		}
-		for _, roomId := range changeEv["fullDocument"].(bson.M)["rooms_in"].([]primitive.ObjectID) {
+		for _, roomId := range changeEv.DocumentKey.ID {
 			var roomMsgs models.RoomMessages
 			if err := db.Collection("room_messages").FindOneAndUpdate(context.Background(), roomId, bson.M{"$pull": bson.M{"messages": bson.M{"uid": uid}}}).Decode(&roomMsgs); err == nil {
 				for _, rm := range roomMsgs.Messages {

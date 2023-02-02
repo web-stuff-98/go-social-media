@@ -152,6 +152,17 @@
         width: 3.33rem;
         height: 3.33rem;
       }
+
+      .text {
+        display: flex;
+        flex-direction: column;
+        text-align: left;
+        h2,h1 {
+          margin: 0;
+          line-height: 1;
+          color:white;
+        }
+      }
     }
 
     .right {

@@ -320,7 +320,7 @@ func main() {
 		http.ServeFile(w, r, "./build/index.html")
 	})
 
-	log.Println("Watching changestreams")
+	log.Println("Watching changestreams...")
 	changestreams.WatchCollections(DB, SocketServer, AttachmentServer)
 
 	protectedUids := make(map[primitive.ObjectID]struct{})
@@ -329,6 +329,11 @@ func main() {
 	if os.Getenv("PRODUCTION") == "true" {
 		DB.Drop(context.Background())
 		if protectedUids, _, _, err = seed.SeedDB(Collections, 50, 1000, 200); err != nil {
+			log.Fatalln("Error generating seed:", err)
+		}
+	} else {
+		DB.Drop(context.Background())
+		if protectedUids, _, _, err = seed.SeedDB(Collections, 5, 5, 5); err != nil {
 			log.Fatalln("Error generating seed:", err)
 		}
 	}

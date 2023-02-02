@@ -9,9 +9,12 @@ export default function Header() {
       <div className={classes.logoImg}>
         <img
           alt="Go gopher - by Renee French. reneefrench.blogspot.com"
-          src="go-mascot-wiki-colour.png"
+          src="/go-mascot-wiki-colour.png"
         />
-        Go-Social-Media
+        <div className={classes.text}>
+          <h1>Go-Social-Media</h1>
+          <h2>By Jason</h2>
+        </div>
       </div>
       <div className={classes.right}>
         <button

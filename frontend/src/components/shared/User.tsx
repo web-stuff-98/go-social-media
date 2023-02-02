@@ -54,6 +54,7 @@ export default function User({
     return () => {
       observer.disconnect();
     };
+    // eslint-disable-next-line
   }, []);
 
   const getDateString = (date: Date) => dateFormatter.format(date);

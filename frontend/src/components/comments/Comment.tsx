@@ -25,7 +25,6 @@ export default function Comment({
   setReplyingTo,
   getReplies,
   updateMyVoteOnComment,
-  getCountOfAllChildren,
 }: {
   comment: IComment;
   postId: string;
@@ -33,7 +32,6 @@ export default function Comment({
   setReplyingTo: (to: string) => void;
   getReplies: (parentId: string) => IComment[];
   updateMyVoteOnComment: (id: string, isUpvote: boolean) => void;
-  getCountOfAllChildren: (id: string) => number;
 }) {
   const { getUserData } = useUsers();
   const { openModal } = useModal();
@@ -178,7 +176,7 @@ export default function Comment({
           {err && <ErrorTip message={err} />}
         </div>
         <div className={classes.hor}>
-          {user && (
+          {user && replyingTo !== comment.ID && (
             <button
               name="Reply to comment"
               aria-label="Reply to comment"
@@ -193,7 +191,7 @@ export default function Comment({
               onClick={() => setRepliesOpen(true)}
               className={classes.showRepliesButtonAndReplyToCommentButton}
             >
-              Show replies ({getCountOfAllChildren(comment.ID)})
+              Show replies
             </button>
           )}
         </div>
@@ -219,7 +217,6 @@ export default function Comment({
               replyingTo={replyingTo}
               postId={postId}
               comment={cmt}
-              getCountOfAllChildren={() => getCountOfAllChildren(cmt.ID)}
             />
           ))}
           {childComments && repliesOpen && (

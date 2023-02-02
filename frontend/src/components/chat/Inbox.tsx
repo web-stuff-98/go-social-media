@@ -68,6 +68,7 @@ export default function Inbox() {
           })
         );
     };
+    // eslint-disable-next-line
   }, []);
 
   const openConversation = async (uid: string) => {

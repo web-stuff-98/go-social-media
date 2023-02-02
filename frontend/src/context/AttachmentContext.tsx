@@ -25,7 +25,7 @@ const AttachmentContext = createContext<{
 
 type FileUploadChunks = {
   ID: string;
-  Chunks: Promise<ArrayBuffer>[]; //2mb chunks
+  Chunks: Promise<ArrayBuffer>[]; //1mb chunks
 };
 
 export const AttachmentProvider = ({ children }: { children: ReactNode }) => {
