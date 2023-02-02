@@ -59,7 +59,7 @@ export default function Nav() {
           aria-label={mobileOpen ? "Close nav links" : "Open nav links"}
           className={classes.menuIcon}
         >
-          <MdMenu />
+          <MdMenu style={darkMode ? {} : { fill: "black" }} />
         </button>
       )}
       {(!isMobile || mobileOpen) && (
@@ -95,7 +95,7 @@ export default function Nav() {
         </div>
       )}
       {user && (
-        <User reverse light={darkMode} small uid={user.ID} user={user} />
+        <User square reverse light={darkMode} small uid={user.ID} user={user} />
       )}
     </nav>
   );

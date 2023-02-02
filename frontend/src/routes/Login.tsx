@@ -33,7 +33,7 @@ export default function Login() {
     onSubmit: async (vals) => {
       try {
         setResMsg({ msg: "Logging in", err: false, pen: true });
-        await login(vals.username, vals.password);
+        login(vals.username, vals.password);
         setResMsg({ msg: "", err: false, pen: false });
       } catch (e) {
         setResMsg({ msg: `${e}`, err: true, pen: false });

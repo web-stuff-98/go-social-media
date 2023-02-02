@@ -58,6 +58,18 @@ export default function Inbox() {
     // eslint-disable-next-line
   }, [currentUser]);
 
+  useEffect(() => {
+    return () => {
+      if (selectedConversationRef.current)
+        sendIfPossible(
+          JSON.stringify({
+            event_type: "EXIT_CONV",
+            uid: selectedConversationRef.current,
+          })
+        );
+    };
+  }, []);
+
   const openConversation = async (uid: string) => {
     try {
       const messages = await getConversation(uid);
@@ -71,7 +83,10 @@ export default function Inbox() {
         }
         return [...newConvs];
       });
-      if (selectedConversationRef.current) {
+      if (
+        selectedConversationRef.current &&
+        selectedConversationRef.current !== uid
+      ) {
         sendIfPossible(
           JSON.stringify({
             event_type: "EXIT_CONV",
@@ -287,9 +302,12 @@ export default function Inbox() {
               uid={c.uid}
               user={getUserData(c.uid)}
             />
-            {notifications && notifications.map((n) => n.type.includes(c.uid)).length > 0 && <div className={classes.notifications}>
-              +{notifications.map((n) => n.type.includes(c.uid)).length}
-            </div>}
+            {notifications &&
+              notifications.map((n) => n.type.includes(c.uid)).length > 0 && (
+                <div className={classes.notifications}>
+                  +{notifications.map((n) => n.type.includes(c.uid)).length}
+                </div>
+              )}
           </button>
         ))}
       </div>

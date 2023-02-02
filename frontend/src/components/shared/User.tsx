@@ -22,6 +22,7 @@ export default function User({
   AdditionalStuff,
   small,
   testid,
+  square,
 }: {
   user?: IUser;
   uid: string;
@@ -32,6 +33,7 @@ export default function User({
   AdditionalStuff?: ReactElement;
   small?: boolean;
   testid?: string;
+  square?: boolean;
 }) {
   const { userEnteredView, cacheUserData, userLeftView } = useUsers();
   const { openUserdropdown } = useUserdropdown();
@@ -95,6 +97,11 @@ export default function User({
                     height: "1.866rem",
                     minWidth: "1.866rem",
                     minHeight: "1.866rem",
+                  }
+                : {}),
+              ...(square
+                ? {
+                    borderRadius: "var(--border-radius-medium)",
                   }
                 : {}),
             }}

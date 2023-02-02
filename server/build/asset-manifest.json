@@ -1,0 +1,14 @@
+{
+  "files": {
+    "main.css": "/static/css/main.b7ca7a09.css",
+    "main.js": "/static/js/main.0b2d2cb6.js",
+    "static/media/arcon.regular.otf": "/static/media/arcon.regular.89801b90a0dc72ede613.otf",
+    "index.html": "/index.html",
+    "main.b7ca7a09.css.map": "/static/css/main.b7ca7a09.css.map",
+    "main.0b2d2cb6.js.map": "/static/js/main.0b2d2cb6.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.b7ca7a09.css",
+    "static/js/main.0b2d2cb6.js"
+  ]
+}

@@ -67,7 +67,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						if strings.Contains(inMsg.Name, "post_page=") {
 							colls.NotificationsCollection.UpdateByID(context.Background(), *uid, bson.M{
 								"$pull": bson.M{
-									"notifications": "REPLY:" + strings.ReplaceAll(inMsg.Name, "post_page=", ""),
+									"notifications": bson.M{"type": "REPLY:" + strings.ReplaceAll(inMsg.Name, "post_page=", "")},
 								},
 							})
 						}
@@ -95,7 +95,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						if strings.Contains(name, "post_page=") {
 							colls.NotificationsCollection.UpdateByID(context.Background(), *uid, bson.M{
 								"$pull": bson.M{
-									"notifications": "REPLY:" + strings.ReplaceAll(name, "post_page=", ""),
+									"notifications": bson.M{"type": "REPLY:" + strings.ReplaceAll(name, "post_page=", "")},
 								},
 							})
 						}
@@ -120,7 +120,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						// Conversation was opened, remove notifications
 						colls.NotificationsCollection.UpdateByID(context.Background(), *uid, bson.M{
 							"$pull": bson.M{
-								"notifications": "MSG:" + inMsg.Uid,
+								"notifications": bson.M{"type": "MSG:" + inMsg.Uid},
 							},
 						})
 					}
@@ -140,91 +140,95 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 				}
 			} else if eventType == "PRIVATE_MESSAGE" {
 				var inMsg socketmodels.PrivateMessage
-				if err := json.Unmarshal(p, &inMsg); err != nil {
+				if *uid == primitive.NilObjectID {
 					sendErrorMessageThroughSocket(conn)
 				} else {
-					inBytes, err := json.Marshal(inMsg)
-					socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-						Name: "inbox=" + inMsg.RecipientId,
-						Data: inBytes,
-					}
-					recipientId, err := primitive.ObjectIDFromHex(inMsg.RecipientId)
-					if err != nil {
+					if err := json.Unmarshal(p, &inMsg); err != nil {
 						sendErrorMessageThroughSocket(conn)
 					} else {
-						msg := &models.PrivateMessage{
-							ID:            primitive.NewObjectIDFromTimestamp(time.Now()),
-							Content:       inMsg.Content,
-							HasAttachment: false,
-							Uid:           *uid,
-							CreatedAt:     primitive.NewDateTimeFromTime(time.Now()),
-							UpdatedAt:     primitive.NewDateTimeFromTime(time.Now()),
-							RecipientId:   recipientId,
+						inBytes, err := json.Marshal(inMsg)
+						socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+							Name: "inbox=" + inMsg.RecipientId,
+							Data: inBytes,
 						}
-						if inMsg.HasAttachment {
-							msg.AttachmentProgress = models.AttachmentProgress{
-								Failed:  false,
-								Pending: true,
-								Ratio:   0,
-							}
-							msg.HasAttachment = true
-						}
-						if _, err := colls.InboxCollection.UpdateByID(context.TODO(), uid, bson.M{
-							"$addToSet": bson.M{
-								"messages_sent_to": recipientId,
-							},
-						}); err != nil {
+						recipientId, err := primitive.ObjectIDFromHex(inMsg.RecipientId)
+						if err != nil {
 							sendErrorMessageThroughSocket(conn)
 						} else {
-							addNotification := true
-							if openConvs, ok := socketServer.OpenConversations[recipientId]; ok {
-								for oi := range openConvs {
-									if oi == *uid {
-										// Recipient has conversation open. don't create the notification
-										addNotification = false
-										break
-									}
-								}
+							msg := &models.PrivateMessage{
+								ID:            primitive.NewObjectIDFromTimestamp(time.Now()),
+								Content:       inMsg.Content,
+								HasAttachment: false,
+								Uid:           *uid,
+								CreatedAt:     primitive.NewDateTimeFromTime(time.Now()),
+								UpdatedAt:     primitive.NewDateTimeFromTime(time.Now()),
+								RecipientId:   recipientId,
 							}
-							if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, bson.M{
-								"$push": bson.M{
-									"messages": msg,
+							if inMsg.HasAttachment {
+								msg.AttachmentProgress = models.AttachmentProgress{
+									Failed:  false,
+									Pending: true,
+									Ratio:   0,
+								}
+								msg.HasAttachment = true
+							}
+							if _, err := colls.InboxCollection.UpdateByID(context.TODO(), uid, bson.M{
+								"$addToSet": bson.M{
+									"messages_sent_to": recipientId,
 								},
 							}); err != nil {
 								sendErrorMessageThroughSocket(conn)
 							} else {
-								update := bson.M{}
-								if addNotification {
-									update = bson.M{
-										"$push": bson.M{
-											"notifications": models.Notification{
-												Type: "MSG:" + uid.Hex(),
-											},
-										},
+								addNotification := true
+								if openConvs, ok := socketServer.OpenConversations[recipientId]; ok {
+									for oi := range openConvs {
+										if oi == *uid {
+											// Recipient has conversation open. don't create the notification
+											addNotification = false
+											break
+										}
 									}
 								}
-								if _, err := colls.NotificationsCollection.UpdateByID(context.TODO(), recipientId, update); err != nil {
+								if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, bson.M{
+									"$push": bson.M{
+										"messages": msg,
+									},
+								}); err != nil {
 									sendErrorMessageThroughSocket(conn)
 								} else {
-									data, err := json.Marshal(msg)
-									if err != nil {
+									update := bson.M{}
+									if addNotification {
+										update = bson.M{
+											"$push": bson.M{
+												"notifications": models.Notification{
+													Type: "MSG:" + uid.Hex(),
+												},
+											},
+										}
+									}
+									if _, err := colls.NotificationsCollection.UpdateByID(context.TODO(), recipientId, update); err != nil {
 										sendErrorMessageThroughSocket(conn)
 									} else {
-										outBytes, err := json.Marshal(socketmodels.OutMessage{
-											Type: "PRIVATE_MESSAGE",
-											Data: string(data),
-										})
+										data, err := json.Marshal(msg)
 										if err != nil {
 											sendErrorMessageThroughSocket(conn)
 										} else {
-											socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-												Name: "inbox=" + recipientId.Hex(),
-												Data: outBytes,
-											}
-											// Also send the message to the sender because they need to be able to see their own message
-											socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-												Name: "inbox=" + uid.Hex(),
-												Data: outBytes,
+											outBytes, err := json.Marshal(socketmodels.OutMessage{
+												Type: "PRIVATE_MESSAGE",
+												Data: string(data),
+											})
+											if err != nil {
+												sendErrorMessageThroughSocket(conn)
+											} else {
+												socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+													Name: "inbox=" + recipientId.Hex(),
+													Data: outBytes,
+												}
+												// Also send the message to the sender because they need to be able to see their own message
+												socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+													Name: "inbox=" + uid.Hex(),
+													Data: outBytes,
+												}
 											}
 										}
 									}
