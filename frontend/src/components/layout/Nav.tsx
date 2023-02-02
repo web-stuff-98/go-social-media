@@ -9,7 +9,7 @@ import User from "../shared/User";
 export default function Nav() {
   const { user, logout } = useAuth();
   const {
-    state: { isMobile },
+    state: { isMobile, darkMode },
   } = useInterface();
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -57,23 +57,23 @@ export default function Nav() {
           className={classes.navLinks}
         >
           <Link to="/">
-            <span>Home</span>
+            <span style={darkMode ? {} : { color: "black" }}>Home</span>
           </Link>
           <Link to="/blog/1">
-            <span>Blog</span>
+            <span style={darkMode ? {} : { color: "black" }}>Blog</span>
           </Link>
           {!user && (
             <>
               <Link to="/login">
-                <span>Login</span>
+                <span style={darkMode ? {} : { color: "black" }}>Login</span>
               </Link>
               <Link to="/register">
-                <span>Register</span>
+                <span style={darkMode ? {} : { color: "black" }}>Register</span>
               </Link>
             </>
           )}
           <Link to="/policy">
-            <span>Policy</span>
+            <span style={darkMode ? {} : { color: "black" }}>Policy</span>
           </Link>
           {user && (
             <>
@@ -86,19 +86,21 @@ export default function Nav() {
                   padding: "none",
                 }}
               >
-                <span>Logout</span>
+                <span style={darkMode ? {} : { color: "black" }}>Logout</span>
               </button>
               <Link to="/editor">
-                <span>Editor</span>
+                <span style={darkMode ? {} : { color: "black" }}>Editor</span>
               </Link>
               <Link to="/settings">
-                <span>Settings</span>
+                <span style={darkMode ? {} : { color: "black" }}>Settings</span>
               </Link>
             </>
           )}
         </div>
       )}
-      {user && <User reverse light small uid={user.ID} user={user} />}
+      {user && (
+        <User reverse light={darkMode} small uid={user.ID} user={user} />
+      )}
     </nav>
   );
 }

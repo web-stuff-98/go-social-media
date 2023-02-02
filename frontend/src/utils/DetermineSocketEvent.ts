@@ -40,6 +40,10 @@ export type AttachmentCompleteData = {
     length: number;
   };
 };
+export type NotificationsData = {
+  TYPE: "NOTIFICATIONS";
+  DATA: string;
+};
 
 export type SocketEventChangeMethod =
   | "UPDATE"
@@ -95,6 +99,12 @@ export function instanceOfAttachmentCompleteData(
   object: any
 ): object is AttachmentCompleteData {
   return object.TYPE === "ATTACHMENT_COMPLETE";
+}
+
+export function instanceOfNotificationsData(
+  object: any
+): object is NotificationsData {
+  return object.TYPE === "NOTIFICATIONS";
 }
 
 /*

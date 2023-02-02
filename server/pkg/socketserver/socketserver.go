@@ -2,6 +2,7 @@ package socketserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -188,6 +189,17 @@ func RunServer(socketServer *SocketServer) {
 						allow = false
 					}
 				}
+				// Make sure users cannot subscribe to other users notifications
+				if strings.Contains(connData.Name, "notifications=") {
+					rawUid := strings.ReplaceAll(connData.Name, "notifications=", "")
+					uid, err := primitive.ObjectIDFromHex(rawUid)
+					if err != nil {
+						allow = false
+					}
+					if uid != connData.Uid {
+						allow = false
+					}
+				}
 				// Make sure users cannot subscribe to rooms without being logged in
 				if strings.Contains(connData.Name, "room=") {
 					if connData.Uid == primitive.NilObjectID {
@@ -224,12 +236,18 @@ func RunServer(socketServer *SocketServer) {
 				}
 			}()
 			connData := <-socketServer.UnregisterSubscriptionConn
-			if _, ok := socketServer.Subscriptions[connData.Name]; ok {
-				delete(socketServer.Subscriptions[connData.Name], connData.Conn)
+			var err error
+			if connData.Conn == nil {
+				err = fmt.Errorf("Connection was nil")
 			}
-			delete(socketServer.VidChatStatus, connData.Conn)
-			if _, ok := socketServer.ConnectionSubscriptionCount[connData.Conn]; ok {
-				socketServer.ConnectionSubscriptionCount[connData.Conn]--
+			if err != nil {
+				if _, ok := socketServer.Subscriptions[connData.Name]; ok {
+					delete(socketServer.Subscriptions[connData.Name], connData.Conn)
+				}
+				delete(socketServer.VidChatStatus, connData.Conn)
+				if _, ok := socketServer.ConnectionSubscriptionCount[connData.Conn]; ok {
+					socketServer.ConnectionSubscriptionCount[connData.Conn]--
+				}
 			}
 		}
 	}()

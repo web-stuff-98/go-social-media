@@ -8,6 +8,7 @@ import { useLocation } from "react-router-dom";
 import Room from "./Room";
 import Peer from "simple-peer";
 import {
+  instanceOfNotificationsData,
   instanceOfReceivingReturnedSignal,
   instanceOfVidAllUsers,
   instanceOfVidUserJoined,
@@ -65,6 +66,8 @@ export const ChatContext = createContext<{
     originalImageChanged: boolean,
     numErrs: number
   ) => void;
+
+  notifications: { type: string }[];
 }>({
   section: ChatSection.MENU,
   setSection: () => {},
@@ -83,6 +86,8 @@ export const ChatContext = createContext<{
   leftVidChat: () => {},
 
   handleCreateUpdateRoom: () => {},
+
+  notifications: [],
 });
 
 export type PeerWithID = {
@@ -101,6 +106,7 @@ export default function Chat() {
   const [roomId, setRoomId] = useState("");
   const [editRoomId, setEditRoomId] = useState("");
   const [chatOpen, setChatOpen] = useState(false);
+  const [notifications, setNotifications] = useState<{ type: string }[]>([]);
 
   const openRoom = (id: string) => {
     setRoomId(id);
@@ -235,6 +241,11 @@ export default function Chat() {
     peersRef.current = peersRef.current.filter((p) => p.UID !== id);
   };
 
+  const handleNotifications = (notifications: { type: string }[] | null) => {
+    console.log(JSON.stringify(notifications));
+    setNotifications(notifications || []);
+  };
+
   const createPeer = (id: string) => {
     const peer = new Peer({
       initiator: true,
@@ -278,6 +289,7 @@ export default function Chat() {
 
   const handleMessage = (e: MessageEvent) => {
     const data = JSON.parse(e.data);
+    console.log(data);
     if (instanceOfReceivingReturnedSignal(data)) {
       handleVidChatReceivingReturningSignal(
         JSON.parse(data.signal_json) as Peer.SignalData,
@@ -295,6 +307,9 @@ export default function Chat() {
     }
     if (instanceOfVidUserLeft(data)) {
       handleVidChatUserLeft(data.uid);
+    }
+    if (instanceOfNotificationsData(data)) {
+      handleNotifications(JSON.parse(data.DATA));
     }
   };
 
@@ -319,6 +334,7 @@ export default function Chat() {
     // eslint-disable-next-line
   }, [socket]);
 
+  const notificationsContainerRef = useRef<HTMLDivElement>(null);
   return (
     <div
       style={{
@@ -348,6 +364,7 @@ export default function Chat() {
               peers,
               userStream: userStream.current,
               handleCreateUpdateRoom,
+              notifications,
             }}
           >
             <ChatTopTray closeChat={() => setChatOpen(false)} />
@@ -371,6 +388,23 @@ export default function Chat() {
           onClick={() => setChatOpen(true)}
           className={classes.chatIconButton}
         >
+          {notifications && notifications.length !== 0 && (
+            <div
+              ref={notificationsContainerRef}
+              className={classes.notifications}
+              style={{
+                height: `${notificationsContainerRef.current?.clientWidth}px`,
+                top: `-${
+                  (notificationsContainerRef.current?.clientWidth || 0) * 0.33
+                }px`,
+                left: `-${
+                  (notificationsContainerRef.current?.clientWidth || 0) * 0.33
+                }px`,
+              }}
+            >
+              +{notifications.length}
+            </div>
+          )}
           <BsFillChatRightFill />
         </button>
       )}

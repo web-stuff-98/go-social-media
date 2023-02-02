@@ -106,7 +106,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   const handleSocketOnOpen = () => {
-    if (user) openSubscription(`inbox=${user.ID}`);
+    if (user) {
+      openSubscription(`inbox=${user.ID}`);
+      openSubscription(`notifications=${user.ID}`);
+    }
   };
 
   useEffect(() => {

@@ -20,6 +20,7 @@ import useAttachment from "../../context/AttachmentContext";
 import VideoChat from "./VideoChat";
 import { RiWebcamLine } from "react-icons/ri";
 import { IConversation } from "../../interfaces/ChatInterfaces";
+import { useChat } from "./Chat";
 
 export default function Inbox() {
   const { getUserData, cacheUserData } = useUsers();
@@ -27,6 +28,7 @@ export default function Inbox() {
   const { uploadAttachment } = useAttachment();
   const { user: currentUser } = useAuth();
   const { openModal } = useModal();
+  const { notifications } = useChat();
 
   const [vidChatOpen, setVidChatOpen] = useState(false);
   const [inbox, setInbox] = useState<IConversation[]>([]);
@@ -285,6 +287,9 @@ export default function Inbox() {
               uid={c.uid}
               user={getUserData(c.uid)}
             />
+            {notifications && notifications.map((n) => n.type.includes(c.uid)).length > 0 && <div className={classes.notifications}>
+              +{notifications.map((n) => n.type.includes(c.uid)).length}
+            </div>}
           </button>
         ))}
       </div>

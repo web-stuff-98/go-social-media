@@ -1,6 +1,6 @@
 @font-face {
   font-family: "Gidole";
-  src: url(../public/raleway.regular.ttf);
+  src: url(../public/arcon.regular.otf);
 }
 
 body {
@@ -92,7 +92,7 @@ button,
   --foreground: white;
   --background: #f4f4f4;
   --button: rgb(24, 24, 24);
-  --nav: rgb(14, 14, 14);
+  --nav: rgb(250, 250, 250);
   --header: linear-gradient(
     to bottom,
     rgb(12, 12, 74) 0%,
@@ -143,6 +143,7 @@ button,
   --foreground: rgb(14, 14, 14);
   --background: #0d0d0d;
   --cross-background: url(../public/crossbackground_dark.png);
+  --nav: rgb(14, 14, 14);
 
   --text-color: white;
   --text-color-contrast: black;

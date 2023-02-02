@@ -42,6 +42,7 @@ var insertPipeline = bson.D{
 func WatchCollections(DB *mongo.Database, ss *socketserver.SocketServer, as *attachmentserver.AttachmentServer) {
 	go watchUserDeletes(DB, ss, as)
 	go watchUserPfpUpdates(DB, ss)
+	go watchNotificationUpdates(DB, ss)
 
 	go watchPostImageInserts(DB, ss) //Watch for inserts in images collection instead of posts collection because post images are required
 	go watchPostImageUpdates(DB, ss)
@@ -155,6 +156,37 @@ func watchUserPfpUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
 
 		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "user=" + uid.Hex(),
+			Data: outBytes,
+		}
+	}
+}
+
+func watchNotificationUpdates(db *mongo.Database, ss *socketserver.SocketServer) {
+	cs, err := db.Collection("notifications").Watch(context.Background(), mongo.Pipeline{updatePipeline}, options.ChangeStream().SetFullDocument(options.UpdateLookup))
+	if err != nil {
+		log.Panicln("CS ERR : ", err.Error())
+	}
+	for cs.Next(context.Background()) {
+		var changeEv struct {
+			DocumentKey struct {
+				ID primitive.ObjectID `bson:"_id"`
+			} `bson:"documentKey"`
+			FullDocument models.Notifications `bson:"fullDocument"`
+		}
+		err := cs.Decode(&changeEv)
+		if err != nil {
+			log.Println("CS DECODE ERROR : ", err)
+			return
+		}
+		outNotificationBytes, err := json.Marshal(changeEv.FullDocument.Notifications)
+		outBytes, err := json.Marshal(
+			socketmodels.OutMessage{
+				Type: "NOTIFICATIONS",
+				Data: string(outNotificationBytes),
+			},
+		)
+		ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+			Name: "notifications=" + changeEv.DocumentKey.ID.Hex(),
 			Data: outBytes,
 		}
 	}

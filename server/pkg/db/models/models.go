@@ -24,15 +24,16 @@ type Inbox struct {
 	MessagesSentTo []primitive.ObjectID `bson:"messages_sent_to" json:"-"` // list of all the people the user has messaged, needed to join both users messages together for display
 }
 
+// Notifications kept in seperate collection so that changestreams can be used to easily update the client, not the most efficient way but it doesn't really matter
 type Notifications struct {
 	ID            primitive.ObjectID `bson:"_id,omitempty"`
-	Notifications []Notification     `bson:"notifications"`
+	Notifications []Notification     `bson:"notifications" json:"notifications"`
 }
 
 // Notification will not be created if the user already has the conversation open, or is already on the page in the case of replies
 type Notification struct {
 	//Notification type can be MSG:UID, REPLY:POSTID. Where msg is a private message, and reply is a reply to a comment on a post
-	Type string `bson:"type"`
+	Type string `bson:"type" json:"type"`
 }
 
 type Pfp struct {
