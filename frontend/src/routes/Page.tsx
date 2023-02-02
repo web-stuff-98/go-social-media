@@ -107,7 +107,10 @@ export default function Page() {
         if (data.METHOD === "INSERT") {
           //@ts-ignore
           cacheUserData(data.DATA.author_id);
-          setComments((o) => [...o, data.DATA as IComment]);
+          setComments((o) => [
+            ...o,
+            { ...(data.DATA as IComment), my_vote: null },
+          ]);
           return;
         }
         if (data.METHOD === "DELETE") {

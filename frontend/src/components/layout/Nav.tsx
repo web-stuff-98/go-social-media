@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useInterface } from "../../context/InterfaceContext";
 import { MdMenu } from "react-icons/md";
 import User from "../shared/User";
+import { BsChevronCompactUp } from "react-icons/bs";
 
 export default function Nav() {
   const { user, logout } = useAuth();
@@ -13,6 +14,26 @@ export default function Nav() {
   } = useInterface();
 
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const NavLink = ({ to, name }: { to: string; name: string }) => (
+    <Link to={to}>
+      <span style={darkMode ? {} : { color: "black" }}>{name}</span>
+    </Link>
+  );
+  const NavBtn = ({ name, onClick }: { name: string; onClick: Function }) => (
+    <button
+      onClick={() => onClick()}
+      aria-label={name}
+      name={name}
+      style={{
+        background: "none",
+        border: "none",
+        padding: "none",
+      }}
+    >
+      <span style={darkMode ? {} : { color: "black" }}>Logout</span>
+    </button>
+  );
 
   return (
     <nav
@@ -56,44 +77,20 @@ export default function Nav() {
           }
           className={classes.navLinks}
         >
-          <Link to="/">
-            <span style={darkMode ? {} : { color: "black" }}>Home</span>
-          </Link>
-          <Link to="/blog/1">
-            <span style={darkMode ? {} : { color: "black" }}>Blog</span>
-          </Link>
+          <NavLink to="/" name="Home" />
+          <NavLink to="/blog/1" name="Blog" />
           {!user && (
             <>
-              <Link to="/login">
-                <span style={darkMode ? {} : { color: "black" }}>Login</span>
-              </Link>
-              <Link to="/register">
-                <span style={darkMode ? {} : { color: "black" }}>Register</span>
-              </Link>
+              <NavLink to="/login" name="Login" />
+              <NavLink to="/register" name="Register" />
             </>
           )}
-          <Link to="/policy">
-            <span style={darkMode ? {} : { color: "black" }}>Policy</span>
-          </Link>
+          <NavLink to="/policy" name="Policy" />
           {user && (
             <>
-              <button
-                onClick={() => logout()}
-                aria-label="Logout"
-                style={{
-                  background: "none",
-                  border: "none",
-                  padding: "none",
-                }}
-              >
-                <span style={darkMode ? {} : { color: "black" }}>Logout</span>
-              </button>
-              <Link to="/editor">
-                <span style={darkMode ? {} : { color: "black" }}>Editor</span>
-              </Link>
-              <Link to="/settings">
-                <span style={darkMode ? {} : { color: "black" }}>Settings</span>
-              </Link>
+              <NavBtn name="Logout" onClick={logout} />
+              <NavLink to="/editor" name="Editor" />
+              <NavLink to="/settings" name="Settings" />
             </>
           )}
         </div>
