@@ -27,18 +27,14 @@ import (
 	"gopkg.in/loremipsum.v1"
 )
 
-func SeedDB(colls *db.Collections, numUsers int, numPosts int, numRooms int) (uids map[primitive.ObjectID]struct{}, pids map[primitive.ObjectID]struct{}, rids map[primitive.ObjectID]struct{}, err error) {
-	uids = make(map[primitive.ObjectID]struct{})
-	pids = make(map[primitive.ObjectID]struct{})
-	rids = make(map[primitive.ObjectID]struct{})
-
+func SeedDB(colls *db.Collections, numUsers int, numPosts int, numRooms int, uids map[primitive.ObjectID]struct{}, pids map[primitive.ObjectID]struct{}, rids map[primitive.ObjectID]struct{}) (err error) {
 	log.Println("Generating seed...")
 
 	// Generate users
 	for i := 0; i < numUsers; i++ {
 		uid, err := generateUser(i, colls)
 		if err != nil {
-			return nil, nil, nil, err
+			log.Fatalln(err)
 		}
 		uids[uid] = struct{}{}
 	}
@@ -50,7 +46,7 @@ func SeedDB(colls *db.Collections, numUsers int, numPosts int, numRooms int) (ui
 		uid := randomKey(uids)
 		pid, err := generatePost(colls, lipsum, uid)
 		if err != nil {
-			return nil, nil, nil, err
+			log.Fatalln(err)
 		}
 		pids[pid] = struct{}{}
 	}
@@ -70,14 +66,14 @@ func SeedDB(colls *db.Collections, numUsers int, numPosts int, numRooms int) (ui
 		uid := randomKey(uids)
 		rid, err := generateRoom(colls, lipsum, uid, i)
 		if err != nil {
-			return nil, nil, nil, err
+			log.Fatalln(err)
 		}
 		rids[rid] = struct{}{}
 	}
 
 	log.Println("Seed generated...")
 
-	return uids, pids, rids, err
+	return nil
 }
 
 func generateUser(i int, colls *db.Collections) (uid primitive.ObjectID, err error) {
@@ -280,11 +276,11 @@ func generatePostVotes(colls *db.Collections, pid primitive.ObjectID, uids map[p
 
 	_, err := colls.PostVoteCollection.UpdateByID(context.TODO(), pid, bson.M{"$set": bson.M{"votes": votes.Votes}})
 	if err != nil {
-		return err
+		log.Fatalln(err)
 	}
 
 	if colls.PostCollection.UpdateByID(context.TODO(), pid, bson.M{"$set": bson.M{"sort_vote_count": positiveVotes - negativeVotes}}); err != nil {
-		return err
+		log.Fatalln(err)
 	}
 
 	return nil
@@ -412,7 +408,7 @@ func generateComments(colls *db.Collections, pid primitive.ObjectID, uids map[pr
 	}
 
 	if _, err := colls.PostCommentsCollection.UpdateByID(context.TODO(), pid, bson.M{"$set": bson.M{"comments": comments.Comments, "votes": comments.Votes}}); err != nil {
-		return err
+		log.Fatalln(err)
 	}
 
 	return nil

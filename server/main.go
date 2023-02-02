@@ -29,6 +29,10 @@ import (
 */
 
 func main() {
+	protectedUids := make(map[primitive.ObjectID]struct{})
+	protectedPids := make(map[primitive.ObjectID]struct{})
+	protectedRids := make(map[primitive.ObjectID]struct{})
+
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("DOTENV ERROR : ", err)
 	}
@@ -323,19 +327,12 @@ func main() {
 	log.Println("Watching changestreams...")
 	changestreams.WatchCollections(DB, SocketServer, AttachmentServer)
 
-	protectedUids := make(map[primitive.ObjectID]struct{})
-	//protectedPids := make(map[primitive.ObjectID]struct{})
-	//protectedRids := make(map[primitive.ObjectID]struct{})
 	if os.Getenv("PRODUCTION") == "true" {
 		DB.Drop(context.Background())
-		if protectedUids, _, _, err = seed.SeedDB(Collections, 5, 5, 5); err != nil {
-			log.Fatalln("Error generating seed:", err)
-		}
+		go seed.SeedDB(Collections, 50, 1000, 200, protectedUids, protectedPids, protectedRids)
 	} else {
 		DB.Drop(context.Background())
-		if protectedUids, _, _, err = seed.SeedDB(Collections, 5, 5, 5); err != nil {
-			log.Fatalln("Error generating seed:", err)
-		}
+		go seed.SeedDB(Collections, 5, 5, 5, protectedUids, protectedPids, protectedRids)
 	}
 
 	deleteAccountTicker := time.NewTicker(20 * time.Minute)

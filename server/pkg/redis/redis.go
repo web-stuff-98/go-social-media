@@ -14,8 +14,18 @@ func Init() *redis.Client {
 		redisURL = "localhost:6379"
 	}
 
+	var rdb *redis.Client
+
 	opt, _ := redis.ParseURL(redisURL)
-	rdb := redis.NewClient(opt)
+	if os.Getenv("PRODUCTION") == "true" {
+		rdb = redis.NewClient(opt)
+	} else {
+		rdb = redis.NewClient(&redis.Options{
+			Addr:     "localhost:6379",
+			Password: "",
+			DB:       0,
+		})
+	}
 
 	_, err := rdb.Ping(context.TODO()).Result()
 	if err != nil {
