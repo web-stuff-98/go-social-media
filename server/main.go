@@ -333,8 +333,8 @@ func main() {
 	changestreams.WatchCollections(DB, SocketServer, AttachmentServer)
 
 	if os.Getenv("PRODUCTION") == "true" {
-		DB.Drop(context.Background())
 		// Seeds already been generated, so just get everything already in the database instead
+		// DB.Drop(context.Background())
 		// go seed.SeedDB(Collections, 50, 1000, 200, protectedUids, protectedPids, protectedRids)
 		pcursor, _ := Collections.PostCollection.Find(context.Background(), bson.M{})
 		for pcursor.Next(context.Background()) {
