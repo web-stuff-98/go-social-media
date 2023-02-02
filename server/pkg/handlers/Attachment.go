@@ -57,14 +57,14 @@ func (h handler) HandleAttachmentMetadata(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	numChunks := math.Ceil(float64(metadataInput.Size) / float64(1048576)) // +1
+	numChunks := math.Ceil(float64(metadataInput.Size) / float64(1*1024*1024)) // +1
 	chunkIDs := []primitive.ObjectID{msgId}
 	for i := 1; i < int(numChunks); i++ {
 		chunkIDs = append(chunkIDs, primitive.NewObjectID())
 	}
 	chunkIDs = append(chunkIDs, primitive.NilObjectID)
 
-	totalChunks := int(math.Ceil(float64(metadataInput.Size) / 1048576))
+	totalChunks := int(math.Ceil(float64(metadataInput.Size) / 1 * 1024 * 1024))
 	if _, ok := h.AttachmentServer.Uploaders[user.ID]; !ok {
 		h.AttachmentServer.Uploaders[user.ID] = make(map[primitive.ObjectID]attachmentserver.Upload)
 	}
@@ -191,7 +191,7 @@ func (h handler) UploadAttachmentChunk(w http.ResponseWriter, r *http.Request) {
 		responseMessage(w, http.StatusBadRequest, "Bad request")
 		return
 	}
-	if r.ContentLength > 1048576 {
+	if r.ContentLength > 1*1024*1024 {
 		h.AttachmentServer.UploadFailedChan <- attachmentserver.UploadStatusInfo{
 			MsgID: msgId,
 			Uid:   user.ID,

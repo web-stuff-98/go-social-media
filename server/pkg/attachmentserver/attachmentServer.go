@@ -67,7 +67,7 @@ func RunServer(colls *db.Collections, SocketServer *socketserver.SocketServer, A
 			var metaData models.AttachmentMetadata
 			if err := colls.AttachmentMetadataCollection.FindOne(context.Background(), bson.M{"_id": msgId}).Decode(&metaData); err != nil {
 				if err == mongo.ErrNoDocuments {
-					// If message metadata could not be found, find the chunk using the message Id instead
+					// If message metadata could not be found, find the first chunk using the message Id instead
 					var firstChunk models.AttachmentChunk
 					if err := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"_id": msgId}).Decode(&firstChunk); err == nil {
 						// Found the chunk. Recursively delete chained chunks
