@@ -8,7 +8,6 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"sort"
@@ -406,14 +405,12 @@ func (h handler) GetConversation(w http.ResponseWriter, r *http.Request) {
 			msg.RecipientId = user.ID
 		}
 		if err != nil {
-			log.Println("A:", err)
 			responseMessage(w, http.StatusInternalServerError, "Internal error")
 			return
 		}
 		if msg.HasAttachment {
 			var metadata models.AttachmentMetadata
 			if err := h.Collections.AttachmentMetadataCollection.FindOne(r.Context(), bson.M{"_id": msg.ID}).Decode(&metadata); err != nil {
-				log.Println("B:", err)
 				responseMessage(w, http.StatusInternalServerError, "Internal error")
 				return
 			} else {
@@ -437,7 +434,6 @@ func (h handler) GetConversation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := cursor.Err(); err != nil {
-		log.Println("C:", err)
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
 	}

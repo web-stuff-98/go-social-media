@@ -106,7 +106,6 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 				if err := json.Unmarshal(p, &inMsg); err != nil {
 					sendErrorMessageThroughSocket(conn)
 				} else {
-					log.Println(inMsg)
 					if convUid, err := primitive.ObjectIDFromHex(inMsg.Uid); err != nil {
 						sendErrorMessageThroughSocket(conn)
 					} else {

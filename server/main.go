@@ -341,7 +341,7 @@ func main() {
 	}()
 
 	// Serve static files
-	fs := http.FileServer(http.Dir("./static"))
+	fs := http.FileServer(http.Dir("./build"))
 	http.Handle("/", fs)
 
 	log.Println("API open on port", os.Getenv("PORT"))
