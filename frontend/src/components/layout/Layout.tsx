@@ -1,6 +1,6 @@
 import classes from "../../styles/components/Layout.module.scss";
 import Nav from "./Nav";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import type { CSSProperties } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useInterface } from "../../context/InterfaceContext";
@@ -61,6 +61,10 @@ export default function Layout() {
     }
     // eslint-disable-next-line
   }, [pathname, iState.containerMode]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [pathname]);
 
   return (
     <div className={classes.container}>
