@@ -1,3 +1,5 @@
+# https://go-social-media-js.herokuapp.com
+
 This is the second version of my Go project, and it actually works. Its also the successor to Prisma-Social-Media which was quite messy and probably much slower than this.
 
 I already completed the project doing manual testing, I just wrote basic unit tests that check if things are rendering and requests are being made because I keep getting errors that don't have any solutions online when I try to write unit
