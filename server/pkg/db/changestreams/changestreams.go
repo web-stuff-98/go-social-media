@@ -72,6 +72,7 @@ func watchUserDeletes(db *mongo.Database, ss *socketserver.SocketServer, as *att
 		db.Collection("rooms").DeleteMany(context.Background(), bson.M{"author_id": uid})
 		db.Collection("pfps").DeleteOne(context.Background(), bson.M{"_id": uid})
 		db.Collection("sessions").DeleteOne(context.Background(), bson.M{"_uid": uid})
+		db.Collection("notifications").DeleteOne(context.Background(), bson.M{"_id": uid})
 		inbox := &models.Inbox{}
 		res := db.Collection("inboxes").FindOneAndDelete(context.Background(), bson.M{"_id": uid}).Decode(&inbox)
 		if res.Error() == "" {

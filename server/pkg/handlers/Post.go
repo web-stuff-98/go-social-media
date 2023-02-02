@@ -402,7 +402,7 @@ func (h handler) CommentOnPost(w http.ResponseWriter, r *http.Request) {
 						break
 					}
 					if !found {
-						h.Collections.InboxCollection.UpdateByID(r.Context(), cmt.ID, bson.M{"$push": bson.M{"notifications": models.Notification{
+						h.Collections.NotificationsCollection.UpdateByID(r.Context(), cmt.Author, bson.M{"$push": bson.M{"notifications": models.Notification{
 							Type: "REPLY:" + postId.Hex(),
 						}}})
 					}

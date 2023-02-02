@@ -102,10 +102,16 @@ func generateUser(i int, colls *db.Collections) (uid primitive.ObjectID, err err
 		return primitive.NilObjectID, err
 	}
 	var inbox models.Inbox
+	var notifications models.Notifications
 	inbox.ID = inserted.InsertedID.(primitive.ObjectID)
 	inbox.Messages = []models.PrivateMessage{}
 	inbox.MessagesSentTo = []primitive.ObjectID{}
+	notifications.ID = inserted.InsertedID.(primitive.ObjectID)
+	notifications.Notifications = []models.Notification{}
 	if _, err := colls.InboxCollection.InsertOne(context.TODO(), inbox); err != nil {
+		return primitive.NilObjectID, err
+	}
+	if _, err := colls.NotificationsCollection.InsertOne(context.TODO(), inbox); err != nil {
 		return primitive.NilObjectID, err
 	}
 	if colls.PfpCollection.InsertOne(context.TODO(), models.Pfp{

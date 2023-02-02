@@ -65,7 +65,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						}
 						// If opening a post page, remove the notifications for replies on the users comments
 						if strings.Contains(inMsg.Name, "post_page=") {
-							colls.InboxCollection.UpdateByID(context.Background(), *uid, bson.M{
+							colls.NotificationsCollection.UpdateByID(context.Background(), *uid, bson.M{
 								"$pull": bson.M{
 									"notifications": "REPLY:" + strings.ReplaceAll(inMsg.Name, "post_page=", ""),
 								},
@@ -93,7 +93,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						}
 						// If opening a post page, remove the notifications for replies on the users comments
 						if strings.Contains(name, "post_page=") {
-							colls.InboxCollection.UpdateByID(context.Background(), *uid, bson.M{
+							colls.NotificationsCollection.UpdateByID(context.Background(), *uid, bson.M{
 								"$pull": bson.M{
 									"notifications": "REPLY:" + strings.ReplaceAll(name, "post_page=", ""),
 								},
@@ -117,7 +117,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 							socketServer.OpenConversations[*uid] = convs
 						}
 						// Conversation was opened, remove notifications
-						colls.InboxCollection.UpdateByID(context.Background(), *uid, bson.M{
+						colls.NotificationsCollection.UpdateByID(context.Background(), *uid, bson.M{
 							"$pull": bson.M{
 								"notifications": "MSG:" + inMsg.Uid,
 							},
@@ -175,49 +175,56 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						}); err != nil {
 							sendErrorMessageThroughSocket(conn)
 						} else {
-							update := bson.M{
-								"$push": bson.M{
-									"messages": msg,
-									"notifications": models.Notification{
-										Type: "MSG:" + uid.Hex(),
-									},
-								},
-							}
+							addNotification := true
 							if openConvs, ok := socketServer.OpenConversations[recipientId]; ok {
 								for oi := range openConvs {
 									if oi == *uid {
 										// Recipient has conversation open. don't create the notification
-										update = bson.M{
-											"$push": bson.M{
-												"messages": msg,
-											},
-										}
+										addNotification = false
 										break
 									}
 								}
 							}
-							if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, update); err != nil {
+							if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, bson.M{
+								"$push": bson.M{
+									"messages": msg,
+								},
+							}); err != nil {
 								sendErrorMessageThroughSocket(conn)
 							} else {
-								data, err := json.Marshal(msg)
-								if err != nil {
+								update := bson.M{}
+								if addNotification {
+									update = bson.M{
+										"$push": bson.M{
+											"notifications": models.Notification{
+												Type: "MSG:" + uid.Hex(),
+											},
+										},
+									}
+								}
+								if _, err := colls.NotificationsCollection.UpdateByID(context.TODO(), recipientId, update); err != nil {
 									sendErrorMessageThroughSocket(conn)
 								} else {
-									outBytes, err := json.Marshal(socketmodels.OutMessage{
-										Type: "PRIVATE_MESSAGE",
-										Data: string(data),
-									})
+									data, err := json.Marshal(msg)
 									if err != nil {
 										sendErrorMessageThroughSocket(conn)
 									} else {
-										socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-											Name: "inbox=" + recipientId.Hex(),
-											Data: outBytes,
-										}
-										// Also send the message to the sender because they need to be able to see their own message
-										socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-											Name: "inbox=" + uid.Hex(),
-											Data: outBytes,
+										outBytes, err := json.Marshal(socketmodels.OutMessage{
+											Type: "PRIVATE_MESSAGE",
+											Data: string(data),
+										})
+										if err != nil {
+											sendErrorMessageThroughSocket(conn)
+										} else {
+											socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+												Name: "inbox=" + recipientId.Hex(),
+												Data: outBytes,
+											}
+											// Also send the message to the sender because they need to be able to see their own message
+											socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+												Name: "inbox=" + uid.Hex(),
+												Data: outBytes,
+											}
 										}
 									}
 								}

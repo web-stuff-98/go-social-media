@@ -30,6 +30,7 @@ import (
 func (h handler) Register(w http.ResponseWriter, r *http.Request) {
 	user := &models.User{}
 	inbox := &models.Inbox{}
+	notifications := &models.Notifications{}
 
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
@@ -69,6 +70,14 @@ func (h handler) Register(w http.ResponseWriter, r *http.Request) {
 	inbox.MessagesSentTo = []primitive.ObjectID{}
 
 	if _, err := h.Collections.InboxCollection.InsertOne(r.Context(), inbox); err != nil {
+		responseMessage(w, http.StatusInternalServerError, "Internal error")
+		return
+	}
+
+	notifications.ID = inserted.InsertedID.(primitive.ObjectID)
+	notifications.Notifications = []models.Notification{}
+
+	if _, err := h.Collections.NotificationsCollection.InsertOne(r.Context(), inbox); err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
 	}

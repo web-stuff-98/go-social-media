@@ -19,11 +19,14 @@ type User struct {
 }
 
 type Inbox struct {
-	ID                primitive.ObjectID   `bson:"_id,omitempty" json:"ID"`
-	Messages          []PrivateMessage     `bson:"messages" json:"messages"`
-	MessagesSentTo    []primitive.ObjectID `bson:"messages_sent_to" json:"-"` // list of all the people the user has messaged, needed to join both users messages together for display
-	Notifications     []Notification       `bson:"notifications" json:"-"`
-	NotificationCount int                  `bson:"-" json:"notification_count"`
+	ID             primitive.ObjectID   `bson:"_id,omitempty" json:"ID"`
+	Messages       []PrivateMessage     `bson:"messages" json:"messages"`
+	MessagesSentTo []primitive.ObjectID `bson:"messages_sent_to" json:"-"` // list of all the people the user has messaged, needed to join both users messages together for display
+}
+
+type Notifications struct {
+	ID            primitive.ObjectID `bson:"_id,omitempty"`
+	Notifications []Notification     `bson:"notifications"`
 }
 
 // Notification will not be created if the user already has the conversation open, or is already on the page in the case of replies
