@@ -55,15 +55,14 @@ export const InterfaceProvider = ({ children }: { children: ReactNode }) => {
       const v = lerp(
         window.innerWidth / 6 / 2,
         window.innerWidth / 1.8 / 2,
-        Math.pow(a, 0.5)
+        a
       );
       let squareness =
         window.innerWidth > window.innerHeight
           ? window.innerHeight / window.innerWidth
           : window.innerWidth / window.innerHeight;
       squareness = Math.min(Math.max(0, squareness), 1);
-      squareness = normalize(squareness, 1, 0.2);
-      squareness *= squareness *= squareness;
+      squareness = normalize(squareness, 1, 0.15);
       document.documentElement.style.setProperty(
         "--horizontal-whitespace",
         `${lerp(window.innerWidth < lo ? 0 : v, 0, squareness)}px`
