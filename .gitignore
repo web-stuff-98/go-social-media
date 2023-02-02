@@ -1,2 +1,3 @@
 /server/.env
+/server/build
 .env
