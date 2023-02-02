@@ -74,10 +74,10 @@ export default function Page() {
             : []
         );
         setResMsg({ msg: "", err: false, pen: false });
-        cacheUserData(p.author_id);
         setImgURL(`${baseURL}/api/posts/${p.ID}/image?v=1`);
-        openSubscription(`post_page=${p.ID}`);
       });
+      cacheUserData(p.author_id);
+      openSubscription(`post_page=${p.ID}`);
     } catch (e) {
       setResMsg({ msg: `${e}`, err: true, pen: false });
     }
@@ -99,9 +99,7 @@ export default function Page() {
       if (data.ENTITY === "POST") {
         if (data.DATA.ID !== post?.ID) return;
         if (data.METHOD === "DELETE") {
-          startTransition(() => {
-            navigate("/blog/1");
-          });
+          navigate("/blog/1");
           return;
         }
         if (data.METHOD === "UPDATE") {
@@ -121,9 +119,9 @@ export default function Page() {
       }
       if (data.ENTITY === "POST_COMMENT") {
         if (data.METHOD === "INSERT") {
+          //@ts-ignore
+          cacheUserData(data.DATA.author_id);
           startTransition(() => {
-            //@ts-ignore
-            cacheUserData(data.DATA.author_id);
             setComments((o) => [
               ...o,
               { ...(data.DATA as IComment), my_vote: null },

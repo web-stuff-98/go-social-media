@@ -110,12 +110,12 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     let outTerm = rawTerm ? `&term=${rawTerm}` : "";
     let outOrder = rawOrder ? `&order=${rawOrder}` : "";
     let outMode = rawMode ? `&mode=${rawMode}` : "";
-      navigate(
-        `/blog/1${outTags}${outTerm}${outOrder.toLowerCase()}${outMode.toLowerCase()}`.replace(
-          "/blog/1&",
-          "/blog/1?"
-        )
-      );
+    navigate(
+      `/blog/1${outTags}${outTerm}${outOrder.toLowerCase()}${outMode.toLowerCase()}`.replace(
+        "/blog/1&",
+        "/blog/1?"
+      )
+    );
   };
 
   const getSortOrderFromParams = useMemo(
