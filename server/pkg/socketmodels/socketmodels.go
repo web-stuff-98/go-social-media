@@ -9,6 +9,11 @@ package socketmodels
 	the client.
 */
 
+// TYPE: OPEN_CONV & EXIT_CONV
+type OpenExitConv struct {
+	Uid string `json:"uid"`
+}
+
 // TYPE: PRIVATE_MESSAGE (type needs to be TYPE, not event_type, because this goes OUT not in)
 type PrivateMessage struct {
 	Type          string `json:"TYPE"`

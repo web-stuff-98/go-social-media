@@ -57,11 +57,6 @@ export default function Inbox() {
   }, [currentUser]);
 
   const openConversation = async (uid: string) => {
-    selectedConversationRef.current = uid;
-    const i = inbox.findIndex((c) => c.uid === uid);
-    selectedConversationIndexRef.current = i;
-    setSelectedConversationIndex(i);
-    setSelectedConversation(uid);
     try {
       const messages = await getConversation(uid);
       setInbox((convs) => {
@@ -74,6 +69,25 @@ export default function Inbox() {
         }
         return [...newConvs];
       });
+      if (selectedConversationRef.current) {
+        sendIfPossible(
+          JSON.stringify({
+            event_type: "EXIT_CONV",
+            uid: selectedConversationRef.current,
+          })
+        );
+      }
+      selectedConversationRef.current = uid;
+      const i = inbox.findIndex((c) => c.uid === uid);
+      selectedConversationIndexRef.current = i;
+      setSelectedConversationIndex(i);
+      setSelectedConversation(uid);
+      sendIfPossible(
+        JSON.stringify({
+          event_type: "OPEN_CONV",
+          uid,
+        })
+      );
     } catch (e) {
       openModal("Message", {
         msg: `${e}`,
@@ -116,8 +130,7 @@ export default function Inbox() {
           setInbox((inbox) => {
             let newInbox = inbox;
             newInbox[selectedConversationIndexRef.current].messages = [
-              ...newInbox[selectedConversationIndexRef.current]
-                .messages,
+              ...newInbox[selectedConversationIndexRef.current].messages,
               data.DATA,
             ];
             return [...newInbox];

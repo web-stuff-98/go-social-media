@@ -80,6 +80,8 @@ type SocketServer struct {
 	VidChatCloseChan chan *websocket.Conn
 	VidChatStatus    map[*websocket.Conn]VidChatOpenData
 
+	OpenConversations map[primitive.ObjectID]map[primitive.ObjectID]struct{}
+
 	SendDataToUser chan UserDataMessage
 
 	DestroySubscription chan string
@@ -105,6 +107,8 @@ func Init() (*SocketServer, error) {
 		VidChatOpenChan:  make(chan VidChatOpenData),
 		VidChatCloseChan: make(chan *websocket.Conn),
 		VidChatStatus:    make(map[*websocket.Conn]VidChatOpenData),
+
+		OpenConversations: make(map[primitive.ObjectID]map[primitive.ObjectID]struct{}),
 
 		SendDataToUser: make(chan UserDataMessage),
 
@@ -145,6 +149,9 @@ func RunServer(socketServer *SocketServer) {
 					delete(socketServer.Connections, conn)
 					delete(socketServer.VidChatStatus, conn)
 					delete(socketServer.ConnectionSubscriptionCount, conn)
+					if connData.Uid != primitive.NilObjectID {
+						delete(socketServer.OpenConversations, connData.Uid)
+					}
 					for _, r := range socketServer.Subscriptions {
 						for c := range r {
 							if c == connData.Conn {

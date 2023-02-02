@@ -63,6 +63,14 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 							Uid:  *uid,
 							Conn: conn,
 						}
+						// If opening a post page, remove the notifications for replies on the users comments
+						if strings.Contains(inMsg.Name, "post_page=") {
+							colls.InboxCollection.UpdateByID(context.Background(), *uid, bson.M{
+								"$pull": bson.M{
+									"notifications": "REPLY:" + strings.ReplaceAll(inMsg.Name, "post_page=", ""),
+								},
+							})
+						}
 					}
 					if eventType == "CLOSE_SUBSCRIPTION" {
 						socketServer.UnregisterSubscriptionConn <- socketserver.SubscriptionConnectionInfo{
@@ -82,6 +90,50 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 							Name: name,
 							Uid:  *uid,
 							Conn: conn,
+						}
+						// If opening a post page, remove the notifications for replies on the users comments
+						if strings.Contains(name, "post_page=") {
+							colls.InboxCollection.UpdateByID(context.Background(), *uid, bson.M{
+								"$pull": bson.M{
+									"notifications": "REPLY:" + strings.ReplaceAll(name, "post_page=", ""),
+								},
+							})
+						}
+					}
+				}
+			} else if eventType == "OPEN_CONV" {
+				var inMsg socketmodels.OpenExitConv
+				if err := json.Unmarshal(p, &inMsg); err != nil {
+					sendErrorMessageThroughSocket(conn)
+				} else {
+					if convUid, err := primitive.ObjectIDFromHex(inMsg.Uid); err != nil {
+						sendErrorMessageThroughSocket(conn)
+					} else {
+						if _, ok := socketServer.OpenConversations[*uid]; ok {
+							socketServer.OpenConversations[*uid][convUid] = struct{}{}
+						} else {
+							convs := make(map[primitive.ObjectID]struct{})
+							convs[convUid] = struct{}{}
+							socketServer.OpenConversations[*uid] = convs
+						}
+						// Conversation was opened, remove notifications
+						colls.InboxCollection.UpdateByID(context.Background(), *uid, bson.M{
+							"$pull": bson.M{
+								"notifications": "MSG:" + inMsg.Uid,
+							},
+						})
+					}
+				}
+			} else if eventType == "EXIT_CONV" {
+				var inMsg socketmodels.OpenExitConv
+				if err := json.Unmarshal(p, &inMsg); err != nil {
+					sendErrorMessageThroughSocket(conn)
+				} else {
+					if convUid, err := primitive.ObjectIDFromHex(inMsg.Uid); err != nil {
+						sendErrorMessageThroughSocket(conn)
+					} else {
+						if _, ok := socketServer.OpenConversations[*uid]; ok {
+							delete(socketServer.OpenConversations[*uid], convUid)
 						}
 					}
 				}
@@ -123,11 +175,28 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 						}); err != nil {
 							sendErrorMessageThroughSocket(conn)
 						} else {
-							if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, bson.M{
+							update := bson.M{
 								"$push": bson.M{
 									"messages": msg,
+									"notifications": models.Notification{
+										Type: "MSG:" + uid.Hex(),
+									},
 								},
-							}); err != nil {
+							}
+							if openConvs, ok := socketServer.OpenConversations[recipientId]; ok {
+								for oi := range openConvs {
+									if oi == *uid {
+										// Recipient has conversation open. don't create the notification
+										update = bson.M{
+											"$push": bson.M{
+												"messages": msg,
+											},
+										}
+										break
+									}
+								}
+							}
+							if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, update); err != nil {
 								sendErrorMessageThroughSocket(conn)
 							} else {
 								data, err := json.Marshal(msg)
