@@ -10,7 +10,7 @@
     box-sizing: border-box;
     align-items: flex-start;
     z-index: 98;
-    padding: var(--padding);
+    padding: var(--padding) var(--padding-small);
     border-radius: var(--border-radius-medium);
 
     .userIcons {
@@ -58,7 +58,7 @@
     position: relative;
     .repliesBar {
       padding: 0;
-      width: 24px;
+      width: 18px;
       padding-top: 0.5rem;
       background: none;
       height: 100%;
@@ -93,7 +93,7 @@
 
   .hor {
     display: flex;
-    gap:1rem;
+    gap: 1rem;
     .showRepliesButtonAndReplyToCommentButton {
       width: fit-content;
       background: none;

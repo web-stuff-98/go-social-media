@@ -6,7 +6,7 @@ import { IDimensions } from "../interfaces/GeneralInterfaces";
 type LayoutContainerMode = "Modal" | "Feed" | "Full";
 
 const initialState: State = {
-  darkMode: true,
+  darkMode: false,
   dimensions: { width: 0, height: 0 },
   containerMode: "Full",
   isMobile: false,

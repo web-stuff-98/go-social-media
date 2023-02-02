@@ -1,14 +1,14 @@
 {
   "files": {
-    "main.css": "/static/css/main.3829dc91.css",
+    "main.css": "/static/css/main.5eef27b1.css",
     "main.js": "/static/js/main.7513b815.js",
     "static/media/coolvetica.rg-regular.otf": "/static/media/coolvetica.rg-regular.3d81d0e1fdbd5f69b232.otf",
     "index.html": "/index.html",
-    "main.3829dc91.css.map": "/static/css/main.3829dc91.css.map",
+    "main.5eef27b1.css.map": "/static/css/main.5eef27b1.css.map",
     "main.7513b815.js.map": "/static/js/main.7513b815.js.map"
   },
   "entrypoints": [
-    "static/css/main.3829dc91.css",
+    "static/css/main.5eef27b1.css",
     "static/js/main.7513b815.js"
   ]
 }

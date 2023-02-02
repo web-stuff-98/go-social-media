@@ -120,9 +120,9 @@ button,
   --border-radius-small: 2px;
 
   /* Padding/Margin */
-  --padding: 4px;
-  --padding-medium: 3px;
-  --padding-small: 2px;
+  --padding: 3px;
+  --padding-medium: 2px;
+  --padding-small: 1px;
 
   /* Whitespace & Dimensions */
   --horizontal-whitespace: 27.5vw;

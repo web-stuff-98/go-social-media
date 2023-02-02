@@ -328,7 +328,7 @@ func main() {
 	//protectedRids := make(map[primitive.ObjectID]struct{})
 	if os.Getenv("PRODUCTION") == "true" {
 		DB.Drop(context.Background())
-		if protectedUids, _, _, err = seed.SeedDB(Collections, 50, 1000, 200); err != nil {
+		if protectedUids, _, _, err = seed.SeedDB(Collections, 5, 5, 5); err != nil {
 			log.Fatalln("Error generating seed:", err)
 		}
 	} else {
