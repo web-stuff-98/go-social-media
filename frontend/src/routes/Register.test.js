@@ -6,6 +6,11 @@ import Register from "./Register";
 
 let container = null;
 
+jest.mock("react-router-dom", () => ({
+  ...jest.requireActual("react-router-dom"),
+  useNavigate: jest.fn(),
+}));
+
 beforeEach(() => {
   container = document.createElement("div");
   document.body.appendChild(container);

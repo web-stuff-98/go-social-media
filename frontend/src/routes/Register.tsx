@@ -7,9 +7,11 @@ import { useFormik } from "formik";
 import FormikInputAndLabel from "../components/shared/forms/FormikInputLabel";
 import useFormikValidate from "../hooks/useFormikValidate";
 import { IResMsg } from "../interfaces/GeneralInterfaces";
+import { useNavigate } from "react-router-dom";
 
 export default function Register() {
   const { register } = useAuth();
+  const navigate = useNavigate();
 
   const [resMsg, setResMsg] = useState<IResMsg>({
     msg: "",
@@ -34,8 +36,9 @@ export default function Register() {
       if (validationErrs.length > 0) return;
       try {
         setResMsg({ msg: "Creating account...", err: false, pen: true });
-        await register(vals.username, vals.password);
+        register(vals.username, vals.password);
         setResMsg({ msg: "", err: false, pen: false });
+        navigate("/blog/1");
       } catch (e) {
         setResMsg({ msg: `${e}`, err: true, pen: false });
       }

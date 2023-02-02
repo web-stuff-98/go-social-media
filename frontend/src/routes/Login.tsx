@@ -7,9 +7,11 @@ import { useFormik } from "formik";
 import useFormikValidate from "../hooks/useFormikValidate";
 import FormikInputAndLabel from "../components/shared/forms/FormikInputLabel";
 import { IResMsg } from "../interfaces/GeneralInterfaces";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const [resMsg, setResMsg] = useState<IResMsg>({
     msg: "",
@@ -35,6 +37,7 @@ export default function Login() {
         setResMsg({ msg: "Logging in", err: false, pen: true });
         login(vals.username, vals.password);
         setResMsg({ msg: "", err: false, pen: false });
+        navigate("/blog/1")
       } catch (e) {
         setResMsg({ msg: `${e}`, err: true, pen: false });
       }

@@ -6,6 +6,11 @@ import Login from "./Login";
 
 let container = null;
 
+jest.mock("react-router-dom", () => ({
+  ...jest.requireActual("react-router-dom"),
+  useNavigate: jest.fn(),
+}));
+
 beforeEach(() => {
   container = document.createElement("div");
   document.body.appendChild(container);
@@ -20,10 +25,7 @@ afterEach(() => {
 describe("login page", () => {
   test("should render a login form with a username and password input and a submit button", async () => {
     await act(async () => {
-      render(
-          <Login />,
-        container
-      );
+      render(<Login />, container);
     });
 
     const usernameInput = screen.getByTestId("username");
