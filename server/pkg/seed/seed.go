@@ -8,7 +8,6 @@ import (
 	"image"
 	"image/jpeg"
 	"log"
-	"math"
 	"math/rand"
 	"regexp"
 	"strconv"
@@ -38,7 +37,7 @@ func SeedDB(colls *db.Collections, numUsers int, numPosts int, numRooms int, uid
 		uids[uid] = struct{}{}
 	}
 
-	lipsum := loremipsum.New()
+	lipsum := loremipsum.NewWithSeed(rand.Int63())
 
 	// Generate posts
 	for i := 0; i < numPosts; i++ {
@@ -120,34 +119,33 @@ func generateUser(i int, colls *db.Collections) (uid primitive.ObjectID, err err
 }
 
 func generatePost(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid primitive.ObjectID) (primitive.ObjectID, error) {
-	minWordsInTitle := 5
-	minWordsInDescription := 8
-	maxWordsInTitle := int(math.Max(float64(minWordsInTitle+1), float64(rand.Intn(20))))
-	maxWordsInDescription := int(math.Max(float64(minWordsInDescription+1), float64(rand.Intn(20))))
-
-	wordsInTitle := rand.Intn(maxWordsInTitle-minWordsInTitle) + minWordsInTitle
-	wordsInDescription := rand.Intn(maxWordsInDescription-minWordsInDescription) + minWordsInDescription
-
-	title := strings.Title(strings.ReplaceAll(lipsum.Words(wordsInTitle+8), "Lorem Ipsum Dolor Sit Amet Consectetur Adipiscing Elit", ""))
-	description := strings.Title(strings.ReplaceAll(lipsum.Words(wordsInDescription+8), "Lorem Ipsum Dolor Sit Amet Consectetur Adipiscing Elit", ""))
+	title := strings.Title(sentence(9, 15))
+	description := strings.Title(sentence(9, 15))
 	tags := []string{}
 
 	/*rb := helpers.DownloadURL("https://loripsum.net/api/link/ul/ol/dl/bq/code/headers/decorate/long")
 	bodyBytes, err := ioutil.ReadAll(rb)*/
 	bodyTags := []string{}
-	bodyTags = append(bodyTags, encapsulateIntoHTMLTag("h1", sentence(5, 15, lipsum)))
-	bodyTags = append(bodyTags, encapsulateIntoHTMLTag("h2", sentence(5, 15, lipsum)))
+	bodyTags = append(bodyTags, encapsulateIntoHTMLTag("h1", strings.Title(sentence(8, 22))))
+	bodyTags = append(bodyTags, encapsulateIntoHTMLTag("h2", strings.Title(sentence(8, 22))))
 	bodyTags = append(bodyTags, paragraphs(lipsum))
 	if rand.Float32() > 0.5 {
-		bodyTags = append(bodyTags, encapsulateIntoHTMLTag("h3", sentence(5, 15, lipsum)))
+		bodyTags = append(bodyTags, encapsulateIntoHTMLTag("h3", strings.Title(sentence(5, 15))))
 	}
 	if rand.Float32() > 0.5 {
-		bodyTags = append(bodyTags, list(lipsum))
+		bodyTags = append(bodyTags, list())
 	}
 	bodyTags = append(bodyTags, paragraphs(lipsum))
 	if rand.Float32() > 0.5 {
-		bodyTags = append(bodyTags, list(lipsum))
-		bodyTags = append(bodyTags, encapsulateIntoHTMLTag("p", sentence(10, 35, lipsum)))
+		bodyTags = append(bodyTags, encapsulateIntoHTMLTag("h3", strings.Title(sentence(5, 15))))
+	}
+	if rand.Float32() > 0.5 {
+		bodyTags = append(bodyTags, list())
+	}
+	bodyTags = append(bodyTags, paragraphs(lipsum))
+	if rand.Float32() > 0.5 {
+		bodyTags = append(bodyTags, list())
+		bodyTags = append(bodyTags, encapsulateIntoHTMLTag("p", sentence(10, 35)))
 	}
 	var body string
 	for _, v := range bodyTags {
@@ -391,8 +389,7 @@ func generateComments(colls *db.Collections, pid primitive.ObjectID, uids map[pr
 				parentId = comments.Comments[rand.Intn(randIndex)].ID.Hex()
 			}
 		}
-		lipsum := loremipsum.NewWithSeed(int64(rand.Intn(1000)))
-		content := sentence(3, 60, lipsum)
+		content := sentence(3, 60)
 		if len(content) > 200 {
 			content = content[:200]
 		}
@@ -433,16 +430,17 @@ func generateComments(colls *db.Collections, pid primitive.ObjectID, uids map[pr
 	return nil
 }
 
-func sentence(minWords int, maxWords int, lipsum *loremipsum.LoremIpsum) string {
-	wordCount := rand.Intn(maxWords-minWords) + minWords
-	return lipsum.Words(wordCount)
+func sentence(minWords int, maxWords int) string {
+	wordCount := (rand.Intn(maxWords-minWords) + minWords) + 8
+	lipsum := loremipsum.NewWithSeed(int64(rand.Intn(1000)))
+	return strings.ReplaceAll(strings.ToLower(lipsum.Words(wordCount)), "lorem ipsum dolor sit amet consectetur adipiscing elit", "")
 }
 
-func list(lipsum *loremipsum.LoremIpsum) string {
+func list() string {
 	items := []string{}
-	numItems := rand.Intn(4) + 1
+	numItems := rand.Intn(4) + 3
 	for i := 0; i < numItems; i++ {
-		items = append(items, encapsulateIntoHTMLTag("li", sentence(5, 30, lipsum)))
+		items = append(items, encapsulateIntoHTMLTag("li", sentence(5, 30)))
 	}
 	listType := "ol"
 	if rand.Float32() > 0.5 {
@@ -455,18 +453,20 @@ func paragraphs(lipsum *loremipsum.LoremIpsum) string {
 	numParagraphs := rand.Intn(4-1) + 1
 	paragraphs := []string{}
 	i := 0
+	lastWasSpecialTag := false
 	for {
 		i++
-		paragraph := lipsum.Paragraph()
-		if rand.Float32() > 0.5 {
+		if rand.Float32() > 0.5 && !lastWasSpecialTag {
+			lastWasSpecialTag = true
 			tagType := "b"
-			if rand.Float32() > 0.5 {
+			if rand.Float32() > 0.75 {
 				tagType = "mark"
 			}
-			paragraphs = append(paragraphs, encapsulateIntoHTMLTag("p", paragraph+encapsulateIntoHTMLTag(tagType, sentence(5, 25, lipsum))))
+			paragraphs = append(paragraphs, encapsulateIntoHTMLTag("p", sentence(8, 22)+encapsulateIntoHTMLTag(tagType, sentence(5, 10)+sentence(8, 22))))
 		} else {
-			paragraphs = append(paragraphs, "<br/>")
+			paragraphs = append(paragraphs, lipsum.Paragraph())
 		}
+		lastWasSpecialTag = false
 		if i == numParagraphs {
 			break
 		}
