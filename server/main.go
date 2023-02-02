@@ -333,7 +333,7 @@ func main() {
 
 	if os.Getenv("PRODUCTION") == "true" {
 		DB.Drop(context.Background())
-		go seed.SeedDB(Collections, 5, 5, 5, protectedUids, protectedPids, protectedRids)
+		go seed.SeedDB(Collections, 50, 1000, 100, protectedUids, protectedPids, protectedRids)
 	} else {
 		DB.Drop(context.Background())
 		go seed.SeedDB(Collections, 5, 5, 5, protectedUids, protectedPids, protectedRids)
