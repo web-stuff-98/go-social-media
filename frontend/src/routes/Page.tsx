@@ -269,7 +269,7 @@ export default function Page() {
             aria-label="Go back in comments"
             className={classes.viewingReplies}
           >
-            Viewing replies to
+            Viewing replies to{" "}
             {getUserName(
               getUserData(
                 comments.find((c) => c.ID === parentComment)?.author_id!
