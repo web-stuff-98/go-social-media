@@ -47,7 +47,7 @@ export const InterfaceProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const handleResize = () => {
-      //Fine control over horizontal whitespace...
+      // Fine control over horizontal whitespace...
       const lo = 820;
       const hi = 1280;
       const a =

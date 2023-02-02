@@ -66,11 +66,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deleteAccount = async () => {
-    await makeRequest("/api/account/delete", {
-      withCredentials: true,
-      method: "POST",
-    });
-    setUser(undefined);
+    try {
+      await makeRequest("/api/account/delete", {
+        withCredentials: true,
+        method: "POST",
+      });
+      setUser(undefined);
+    } catch (e) {
+      throw new Error(`${e}`);
+    }
   };
 
   useEffect(() => {

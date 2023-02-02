@@ -11,6 +11,7 @@ import (
 	"github.com/web-stuff-98/go-social-media/pkg/attachmentserver"
 	"github.com/web-stuff-98/go-social-media/pkg/db"
 	"github.com/web-stuff-98/go-social-media/pkg/db/changestreams"
+	"github.com/web-stuff-98/go-social-media/pkg/db/models"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers/middleware"
 	rdb "github.com/web-stuff-98/go-social-media/pkg/redis"
@@ -333,7 +334,26 @@ func main() {
 
 	if os.Getenv("PRODUCTION") == "true" {
 		DB.Drop(context.Background())
-		go seed.SeedDB(Collections, 5, 5, 5, protectedUids, protectedPids, protectedRids)
+		// Seeds already been generated, so just get everything already in the database instead
+		// go seed.SeedDB(Collections, 50, 1000, 200, protectedUids, protectedPids, protectedRids)
+		pcursor, _ := Collections.PostCollection.Find(context.Background(), bson.M{})
+		for pcursor.Next(context.Background()) {
+			post := &models.Post{}
+			pcursor.Decode(&post)
+			protectedPids[post.ID] = struct{}{}
+		}
+		rcursor, _ := Collections.RoomCollection.Find(context.Background(), bson.M{})
+		for rcursor.Next(context.Background()) {
+			room := &models.Room{}
+			rcursor.Decode(&room)
+			protectedPids[room.ID] = struct{}{}
+		}
+		ucursor, _ := Collections.UserCollection.Find(context.Background(), bson.M{})
+		for ucursor.Next(context.Background()) {
+			user := &models.User{}
+			ucursor.Decode(&user)
+			protectedPids[user.ID] = struct{}{}
+		}
 	} else {
 		DB.Drop(context.Background())
 		go seed.SeedDB(Collections, 5, 5, 5, protectedUids, protectedPids, protectedRids)

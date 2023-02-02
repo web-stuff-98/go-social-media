@@ -361,6 +361,19 @@ func (h handler) GetConversations(w http.ResponseWriter, r *http.Request) {
 		uids = append(uids, v)
 	}
 
+	for _, v := range inbox.Messages {
+		found := false
+		for _, oi := range uids {
+			if oi == v.Uid {
+				found = true
+				break
+			}
+		}
+		if !found {
+			uids = append(uids, v.Uid)
+		}
+	}
+
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(uids)
