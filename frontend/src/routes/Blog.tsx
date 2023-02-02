@@ -4,7 +4,6 @@ import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import { FaSearch } from "react-icons/fa";
 import { useParams } from "react-router-dom";
 import AsidePostCard from "../components/blog/AsidePostCard";
-import Dropdown from "../components/shared/Dropdown";
 import IconBtn from "../components/shared/IconBtn";
 import PostCard from "../components/blog/PostCard";
 import ResMsg from "../components/shared/ResMsg";

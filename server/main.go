@@ -11,6 +11,7 @@ import (
 	"github.com/web-stuff-98/go-social-media/pkg/attachmentserver"
 	"github.com/web-stuff-98/go-social-media/pkg/db"
 	"github.com/web-stuff-98/go-social-media/pkg/db/changestreams"
+	"github.com/web-stuff-98/go-social-media/pkg/db/models"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers/middleware"
 	rdb "github.com/web-stuff-98/go-social-media/pkg/redis"
@@ -332,10 +333,10 @@ func main() {
 	changestreams.WatchCollections(DB, SocketServer, AttachmentServer)
 
 	if os.Getenv("PRODUCTION") == "true" {
+		//DB.Drop(context.Background())
+		//go seed.SeedDB(Collections, 20, 300, 20, protectedUids, protectedPids, protectedRids)
 		// Seeds already been generated, so just get everything already in the database instead
-		DB.Drop(context.Background())
-		go seed.SeedDB(Collections, 5, 5, 5, protectedUids, protectedPids, protectedRids)
-		/*pcursor, _ := Collections.PostCollection.Find(context.Background(), bson.M{})
+		pcursor, _ := Collections.PostCollection.Find(context.Background(), bson.M{})
 		for pcursor.Next(context.Background()) {
 			post := &models.Post{}
 			pcursor.Decode(&post)
@@ -352,7 +353,7 @@ func main() {
 			user := &models.User{}
 			ucursor.Decode(&user)
 			protectedPids[user.ID] = struct{}{}
-		}*/
+		}
 	} else {
 		DB.Drop(context.Background())
 		go seed.SeedDB(Collections, 5, 5, 5, protectedUids, protectedPids, protectedRids)

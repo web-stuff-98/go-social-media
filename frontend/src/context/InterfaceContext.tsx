@@ -62,7 +62,7 @@ export const InterfaceProvider = ({ children }: { children: ReactNode }) => {
           ? window.innerHeight / window.innerWidth
           : window.innerWidth / window.innerHeight;
       squareness = Math.min(Math.max(0, squareness), 1);
-      squareness = normalize(squareness, 1, 0.15);
+      squareness = normalize(squareness, 1, 0.45);
       document.documentElement.style.setProperty(
         "--horizontal-whitespace",
         `${lerp(window.innerWidth < lo ? 0 : v, 0, squareness)}px`

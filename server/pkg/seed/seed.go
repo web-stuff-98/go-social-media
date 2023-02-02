@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
-	"io/ioutil"
 	"log"
 	"math"
 	"math/rand"
@@ -133,8 +132,27 @@ func generatePost(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid prim
 	description := strings.Title(strings.ReplaceAll(lipsum.Words(wordsInDescription+8), "Lorem Ipsum Dolor Sit Amet Consectetur Adipiscing Elit", ""))
 	tags := []string{}
 
-	rb := helpers.DownloadURL("https://loripsum.net/api/link/ul/ol/dl/bq/code/headers/decorate/long")
-	bodyBytes, err := ioutil.ReadAll(rb)
+	/*rb := helpers.DownloadURL("https://loripsum.net/api/link/ul/ol/dl/bq/code/headers/decorate/long")
+	bodyBytes, err := ioutil.ReadAll(rb)*/
+	bodyTags := []string{}
+	bodyTags = append(bodyTags, encapsulateIntoHTMLTag("h1", sentence(5, 15, lipsum)))
+	bodyTags = append(bodyTags, encapsulateIntoHTMLTag("h2", sentence(5, 15, lipsum)))
+	bodyTags = append(bodyTags, paragraphs(lipsum))
+	if rand.Float32() > 0.5 {
+		bodyTags = append(bodyTags, encapsulateIntoHTMLTag("h3", sentence(5, 15, lipsum)))
+	}
+	if rand.Float32() > 0.5 {
+		bodyTags = append(bodyTags, list(lipsum))
+	}
+	bodyTags = append(bodyTags, paragraphs(lipsum))
+	if rand.Float32() > 0.5 {
+		bodyTags = append(bodyTags, list(lipsum))
+		bodyTags = append(bodyTags, encapsulateIntoHTMLTag("p", sentence(10, 35, lipsum)))
+	}
+	var body string
+	for _, v := range bodyTags {
+		body += v
+	}
 
 	// Add 5 - 8 tags
 	i := 0
@@ -195,9 +213,10 @@ func generatePost(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid prim
 	}
 
 	post := models.Post{
-		Title:         title,
-		Description:   description,
-		Body:          string(bodyBytes),
+		Title:       title,
+		Description: description,
+		//Body:          string(bodyBytes),
+		Body:          body,
 		Tags:          tags,
 		Author:        uid,
 		ImagePending:  false,
@@ -438,8 +457,16 @@ func paragraphs(lipsum *loremipsum.LoremIpsum) string {
 	i := 0
 	for {
 		i++
-		paragraphs = append(paragraphs, encapsulateIntoHTMLTag("p", lipsum.Paragraph()))
-		paragraphs = append(paragraphs, "<br/>")
+		paragraph := lipsum.Paragraph()
+		if rand.Float32() > 0.5 {
+			tagType := "b"
+			if rand.Float32() > 0.5 {
+				tagType = "mark"
+			}
+			paragraphs = append(paragraphs, encapsulateIntoHTMLTag("p", paragraph+encapsulateIntoHTMLTag(tagType, sentence(5, 25, lipsum))))
+		} else {
+			paragraphs = append(paragraphs, "<br/>")
+		}
 		if i == numParagraphs {
 			break
 		}

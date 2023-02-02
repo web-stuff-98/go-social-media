@@ -218,7 +218,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
                   : p.my_vote,
             }))
           );
-          setPostsCount(p.count);
+          setPostsCount(Number(p.count));
         });
         posts.forEach((p: IPostCard) => cacheUserData(p.author_id));
         setResMsg({ msg: "", err: false, pen: false });
