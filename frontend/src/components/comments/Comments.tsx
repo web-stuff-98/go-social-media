@@ -1,6 +1,7 @@
 import { IComment } from "../../interfaces/PostInterfaces";
 import classes from "../../styles/components/blog/Comments.module.scss";
 import Comment from "./Comment";
+import { useDeferredValue } from "react";
 
 /*
  This doesn't really need a test
@@ -41,10 +42,12 @@ export default function Comments({
     [comments]
   );*/
 
+  const deferredComments = useDeferredValue(comments);
+
   return (
     <div data-testid="Comments container" className={classes.container}>
-      {comments &&
-        comments.map((cmt) => (
+      {deferredComments &&
+        deferredComments.map((cmt) => (
           <Comment
             commentOpened={commentOpened}
             key={cmt.ID}

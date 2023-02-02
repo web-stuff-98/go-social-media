@@ -182,7 +182,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 								if openConvs, ok := socketServer.OpenConversations[recipientId]; ok {
 									for oi := range openConvs {
 										if oi == *uid {
-											// Recipient has conversation open. don't create the notification
+											// Recipient has conversation open. Don't create the notification
 											addNotification = false
 											break
 										}

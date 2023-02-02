@@ -1,5 +1,11 @@
 import classes from "../styles/pages/Page.module.scss";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  startTransition,
+} from "react";
 import { getPost, submitComment } from "../services/posts";
 import { useNavigate, useParams } from "react-router-dom";
 import ResMsg from "../components/shared/ResMsg";
@@ -51,25 +57,27 @@ export default function Page() {
     setResMsg({ msg: "", err: false, pen: true });
     try {
       const p = await getPost(slug);
-      setPost({
-        ...(p as Omit<IPost, "comments">),
-        my_vote:
-          p.my_vote?.uid === "000000000000000000000000" ? null : p.my_vote,
+      startTransition(() => {
+        setPost({
+          ...(p as Omit<IPost, "comments">),
+          my_vote:
+            p.my_vote?.uid === "000000000000000000000000" ? null : p.my_vote,
+        });
+        setComments(
+          p.comments
+            ? p.comments.map((cmt: IComment) => {
+                let outCmt = cmt;
+                if (cmt.my_vote?.uid === "000000000000000000000000")
+                  outCmt.my_vote = null;
+                return outCmt;
+              })
+            : []
+        );
+        setResMsg({ msg: "", err: false, pen: false });
+        cacheUserData(p.author_id);
+        setImgURL(`${baseURL}/api/posts/${p.ID}/image?v=1`);
+        openSubscription(`post_page=${p.ID}`);
       });
-      setComments(
-        p.comments
-          ? p.comments.map((cmt: IComment) => {
-              let outCmt = cmt;
-              if (cmt.my_vote?.uid === "000000000000000000000000")
-                outCmt.my_vote = null;
-              return outCmt;
-            })
-          : []
-      );
-      setResMsg({ msg: "", err: false, pen: false });
-      cacheUserData(p.author_id);
-      setImgURL(`${baseURL}/api/posts/${p.ID}/image?v=1`);
-      openSubscription(`post_page=${p.ID}`);
     } catch (e) {
       setResMsg({ msg: `${e}`, err: true, pen: false });
     }
@@ -91,80 +99,101 @@ export default function Page() {
       if (data.ENTITY === "POST") {
         if (data.DATA.ID !== post?.ID) return;
         if (data.METHOD === "DELETE") {
-          navigate("/blog/1");
+          startTransition(() => {
+            navigate("/blog/1");
+          });
           return;
         }
         if (data.METHOD === "UPDATE") {
-          setPost((o) => ({ ...o, ...data.DATA } as IPost));
+          startTransition(() => {
+            setPost((o) => ({ ...o, ...data.DATA } as IPost));
+          });
           return;
         }
         if (data.METHOD === "UPDATE_IMAGE") {
-          setImgURL(`${baseURL}/api/posts/${post.ID}/image?v=${Math.random()}`);
+          startTransition(() => {
+            setImgURL(
+              `${baseURL}/api/posts/${post.ID}/image?v=${Math.random()}`
+            );
+          });
           return;
         }
       }
       if (data.ENTITY === "POST_COMMENT") {
         if (data.METHOD === "INSERT") {
-          //@ts-ignore
-          cacheUserData(data.DATA.author_id);
-          setComments((o) => [
-            ...o,
-            { ...(data.DATA as IComment), my_vote: null },
-          ]);
+          startTransition(() => {
+            //@ts-ignore
+            cacheUserData(data.DATA.author_id);
+            setComments((o) => [
+              ...o,
+              { ...(data.DATA as IComment), my_vote: null },
+            ]);
+          });
           return;
         }
         if (data.METHOD === "DELETE") {
-          setComments((o) => [
-            ...o.filter(
-              (c) => c.ID !== data.DATA.ID || c.parent_id === data.DATA.ID
-            ),
-          ]);
+          startTransition(() => {
+            setComments((o) => [
+              ...o.filter(
+                (c) => c.ID !== data.DATA.ID || c.parent_id === data.DATA.ID
+              ),
+            ]);
+          });
           return;
         }
         if (data.METHOD === "UPDATE") {
-          setComments((o) => {
-            let newCmts = o;
-            const i = o.findIndex((c) => c.ID === data.DATA.ID);
-            if (i === -1) return o;
-            newCmts[i] = { ...newCmts[i], ...(data.DATA as Partial<IComment>) };
-            return newCmts;
+          startTransition(() => {
+            setComments((o) => {
+              let newCmts = o;
+              const i = o.findIndex((c) => c.ID === data.DATA.ID);
+              if (i === -1) return o;
+              newCmts[i] = {
+                ...newCmts[i],
+                ...(data.DATA as Partial<IComment>),
+              };
+              return newCmts;
+            });
           });
           return;
         }
       }
     }
     if (instanceOfPostVoteData(data)) {
-      setPost((p) => {
-        let newPost = p;
-        if (!newPost) return;
-        if (data.DATA.is_upvote) {
-          newPost.vote_pos_count += data.DATA.remove ? -1 : 1;
-        } else {
-          newPost.vote_neg_count += data.DATA.remove ? -1 : 1;
-        }
-        return { ...newPost };
+      startTransition(() => {
+        setPost((p) => {
+          let newPost = p;
+          if (!newPost) return;
+          if (data.DATA.is_upvote) {
+            newPost.vote_pos_count += data.DATA.remove ? -1 : 1;
+          } else {
+            newPost.vote_neg_count += data.DATA.remove ? -1 : 1;
+          }
+          return { ...newPost };
+        });
       });
       return;
     }
     if (instanceOfPostCommentVoteData(data)) {
-      setComments((cmts) => {
-        let newCmts = cmts;
-        const i = cmts.findIndex((c) => c.ID === data.DATA.ID);
-        if (i === -1) return cmts;
-        if (data.DATA.remove) {
-          if (data.DATA.is_upvote) {
-            newCmts[i].vote_pos_count--;
+      startTransition(() => {
+        setComments((cmts) => {
+          let newCmts = cmts;
+          const i = cmts.findIndex((c) => c.ID === data.DATA.ID);
+          if (i === -1) return cmts;
+          if (data.DATA.remove) {
+            if (data.DATA.is_upvote) {
+              newCmts[i].vote_pos_count--;
+            } else {
+              newCmts[i].vote_neg_count--;
+            }
           } else {
-            newCmts[i].vote_neg_count--;
+            if (data.DATA.is_upvote) {
+              newCmts[i].vote_pos_count++;
+            } else {
+              newCmts[i].vote_neg_count++;
+            }
           }
-        } else {
-          if (data.DATA.is_upvote) {
-            newCmts[i].vote_pos_count++;
-          } else {
-            newCmts[i].vote_neg_count++;
-          }
-        }
-        return [...newCmts];
+          return [...newCmts];
+        });
       });
       return;
     }
@@ -182,17 +211,19 @@ export default function Page() {
   const [cmtErr, setCmtErr] = useState("");
 
   const updateMyVoteOnComment = (id: string, isUpvote: boolean) => {
-    setComments((cmts) => {
-      let newCmts = cmts;
-      const i = cmts.findIndex((cmt) => cmt.ID === id);
-      if (i === -1) return cmts;
-      newCmts[i].my_vote = newCmts[i].my_vote
-        ? null
-        : {
-            uid: user?.ID as string,
-            is_upvote: isUpvote,
-          };
-      return [...newCmts];
+    startTransition(() => {
+      setComments((cmts) => {
+        let newCmts = cmts;
+        const i = cmts.findIndex((cmt) => cmt.ID === id);
+        if (i === -1) return cmts;
+        newCmts[i].my_vote = newCmts[i].my_vote
+          ? null
+          : {
+              uid: user?.ID as string,
+              is_upvote: isUpvote,
+            };
+        return [...newCmts];
+      });
     });
   };
 
@@ -231,7 +262,7 @@ export default function Page() {
         if (parent) {
           if (parentCount % 3 === 0) {
             setParentComment(parentId);
-            return
+            return;
           }
           parentCount++;
           countParent(parent?.parent_id);

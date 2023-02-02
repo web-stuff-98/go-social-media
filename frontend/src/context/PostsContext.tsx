@@ -5,6 +5,7 @@ import {
   useEffect,
   useCallback,
   useMemo,
+  startTransition,
 } from "react";
 import type { ReactNode } from "react";
 import {
@@ -109,12 +110,14 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     let outTerm = rawTerm ? `&term=${rawTerm}` : "";
     let outOrder = rawOrder ? `&order=${rawOrder}` : "";
     let outMode = rawMode ? `&mode=${rawMode}` : "";
-    navigate(
-      `/blog/1${outTags}${outTerm}${outOrder.toLowerCase()}${outMode.toLowerCase()}`.replace(
-        "/blog/1&",
-        "/blog/1?"
-      )
-    );
+    startTransition(() => {
+      navigate(
+        `/blog/1${outTags}${outTerm}${outOrder.toLowerCase()}${outMode.toLowerCase()}`.replace(
+          "/blog/1&",
+          "/blog/1?"
+        )
+      );
+    });
   };
 
   const getSortOrderFromParams = useMemo(
@@ -201,22 +204,30 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     )
       .then((p: any) => {
         const posts = JSON.parse(p.posts) || [];
-        setPosts(
-          posts.map((p: IPostCard) => ({
-            ...p,
-            img_url: `${baseURL}/api/posts/${p.ID}/image?v=1`,
-            my_vote:
-              p.my_vote?.uid === "000000000000000000000000" ? null : p.my_vote,
-          }))
-        );
-        setPostsCount(p.count);
-        posts.forEach((p: IPostCard) => cacheUserData(p.author_id));
-        setResMsg({ msg: "", err: false, pen: false });
+        startTransition(() => {
+          setPosts(
+            posts.map((p: IPostCard) => ({
+              ...p,
+              img_url: `${baseURL}/api/posts/${p.ID}/image?v=1`,
+              my_vote:
+                p.my_vote?.uid === "000000000000000000000000"
+                  ? null
+                  : p.my_vote,
+            }))
+          );
+          setPostsCount(p.count);
+          posts.forEach((p: IPostCard) => cacheUserData(p.author_id));
+          setResMsg({ msg: "", err: false, pen: false });
+        });
       })
       .catch((e) => {
         setResMsg({ msg: `${e}`, err: true, pen: false });
       });
-    getNewestPosts().then((p: IPostCard[] | null) => setNewPosts(p || []));
+    getNewestPosts().then((p: IPostCard[] | null) => {
+      startTransition(() => {
+        setNewPosts(p || []);
+      });
+    });
   };
 
   const updatePostCard = (data: Partial<IPostCard>) =>

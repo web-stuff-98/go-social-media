@@ -11,7 +11,7 @@ import {
   updatePost,
   uploadPostImage,
 } from "../services/posts";
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 import ResMsg from "../components/shared/ResMsg";
 import { useParams } from "react-router-dom";
 import { z } from "zod";
@@ -36,16 +36,20 @@ export default function Editor() {
     setResMsg({ msg: "Loading post...", err: false, pen: true });
     try {
       const p = await getPost(slug);
-      formik.setFieldValue("title", p.title);
-      formik.setFieldValue("description", p.description);
-      formik.setFieldValue("body", p.body);
-      formik.setFieldValue(
-        "tags",
-        "#" + p.tags.map((t: string) => t.trim()).join("#")
-      );
+      startTransition(() => {
+        formik.setFieldValue("title", p.title);
+        formik.setFieldValue("description", p.description);
+        formik.setFieldValue("body", p.body);
+        formik.setFieldValue(
+          "tags",
+          "#" + p.tags.map((t: string) => t.trim()).join("#")
+        );
+      });
       const file = await getPostImageFile(p.ID);
-      formik.setFieldValue("file", file);
-      setResMsg({ msg: "", err: false, pen: false });
+      startTransition(() => {
+        formik.setFieldValue("file", file);
+        setResMsg({ msg: "", err: false, pen: false });
+      });
     } catch (e) {
       setResMsg({ msg: `${e}`, err: true, pen: false });
       setOriginalImageModified(false);
