@@ -13,6 +13,7 @@ export default function Comments({
   setReplyingTo,
   getReplies,
   updateMyVoteOnComment,
+  commentOpened,
 }: {
   comments: IComment[] | null;
   getReplies: (parentId: string) => IComment[];
@@ -20,6 +21,7 @@ export default function Comments({
   replyingTo: string;
   setReplyingTo: (to: string) => void;
   updateMyVoteOnComment: (id: string, isUpvote: boolean) => void;
+  commentOpened: (to: string) => void;
 }) {
   /*
   Broken somehow... doesn't give the correct
@@ -31,7 +33,7 @@ export default function Comments({
       if (replies)
         replies.forEach((reply) => {
           count++;
-          count += getReplies(reply.ID).length;
+          count += getCountOfAllChildren(reply.ID);
         });
       return count;
     },
@@ -44,6 +46,7 @@ export default function Comments({
       {comments &&
         comments.map((cmt) => (
           <Comment
+            commentOpened={commentOpened}
             key={cmt.ID}
             updateMyVoteOnComment={updateMyVoteOnComment}
             getReplies={getReplies}

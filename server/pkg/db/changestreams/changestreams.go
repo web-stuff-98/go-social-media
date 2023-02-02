@@ -85,8 +85,8 @@ func watchUserDeletes(db *mongo.Database, ss *socketserver.SocketServer, as *att
 		db.Collection("sessions").DeleteOne(context.Background(), bson.M{"_uid": uid})
 		db.Collection("notifications").DeleteOne(context.Background(), bson.M{"_id": uid})
 		inbox := &models.Inbox{}
-		res := db.Collection("inboxes").FindOneAndDelete(context.Background(), bson.M{"_id": uid}).Decode(&inbox)
-		if res == nil {
+		res := db.Collection("inboxes").FindOne(context.Background(), bson.M{"_id": uid}).Decode(&inbox)
+		if res.Error() == "" {
 			for _, m := range inbox.Messages {
 				if m.HasAttachment {
 					as.DeleteChunksChan <- m.ID

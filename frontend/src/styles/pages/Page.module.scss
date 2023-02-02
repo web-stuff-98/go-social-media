@@ -22,7 +22,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      color:white;
+      color: white;
       font-weight: 600;
       line-height: 0.75;
     }
@@ -76,14 +76,14 @@
     padding: calc(2 * var(--padding));
     width: 100%;
     box-sizing: border-box;
-    gap:1rem;
+    gap: 1rem;
     display: flex;
     flex-direction: column;
     * {
       margin: 0;
     }
     mark {
-      color:black;
+      color: black;
     }
 
     h2 {
@@ -100,6 +100,17 @@
     width: 100%;
     .count {
       text-align: center;
+    }
+
+    .viewingReplies {
+      text-align: center;
+      font-size: calc(var(--font-md) * 1.25);
+      font-weight: 600;
+      border: none;
+      outline: none;
+      background: none;
+      justify-content: center;
+      width: 100%;
     }
   }
 }

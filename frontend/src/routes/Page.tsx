@@ -16,12 +16,12 @@ import { useUsers } from "../context/UsersContext";
 import { useAuth } from "../context/AuthContext";
 import PageContent from "../components/blog/PageContent";
 import { IComment, IPost } from "../interfaces/PostInterfaces";
-import { IResMsg } from "../interfaces/GeneralInterfaces";
+import { IResMsg, IUser } from "../interfaces/GeneralInterfaces";
 
 export default function Page() {
   const { openSubscription, closeSubscription, socket } = useSocket();
   const { slug } = useParams();
-  const { cacheUserData } = useUsers();
+  const { cacheUserData, getUserData } = useUsers();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -196,6 +196,52 @@ export default function Page() {
     });
   };
 
+  // For when a comment replies are opened... when its +3 deep then set it to the parent comment
+  // That way the comments aren't squished up to the side on smaller screens
+  const commentOpened = (id: string) => {
+    // Find out how deep the comment is... if its a division of 3 deep then set it to the parent
+    let numParents = 0;
+    const c = comments.find((c) => c.ID === id);
+    if (c?.parent_id !== "") {
+      numParents++;
+      const countParent = (parentId: string) => {
+        const parent = comments.find((c) => c.ID === parentId);
+        if (parent) {
+          numParents++;
+          countParent(parent?.parent_id);
+        }
+      };
+      countParent(c?.parent_id!);
+    }
+    if (numParents !== 0 && numParents % 3 === 0) {
+      setParentComment(id);
+    }
+  };
+
+  const getUserName = (user?: IUser) => (user ? user.username : "user");
+
+  // Go back +3 comments
+  const goBackInComments = () => {
+    let numParents = 0;
+    const c = comments.find((c) => c.ID === parentComment);
+    if (c?.parent_id !== "") {
+      numParents++;
+      const countParent = (parentId: string) => {
+        const parent = comments.find((c) => c.ID === parentId);
+        if (parent) {
+          if (numParents !== 0 && numParents % 3 === 0) {
+            setParentComment("");
+          }
+          numParents++;
+          countParent(parent?.parent_id);
+        } else {
+          setParentComment("");
+        }
+      };
+      countParent(c?.parent_id!);
+    }
+  };
+
   return (
     <div className={classes.container}>
       {post && <PageContent post={post} imgURL={imgURL} setPost={setPost} />}
@@ -213,12 +259,31 @@ export default function Page() {
           }}
           placeholder="Add a comment..."
         />
+        {parentComment && (
+          <button
+            onClick={() => {
+              goBackInComments();
+            }}
+            name="Go back in comments"
+            aria-label="Go back in comments"
+            className={classes.viewingReplies}
+          >
+            Viewing replies to
+            {getUserName(
+              getUserData(
+                comments.find((c) => c.ID === parentComment)?.author_id!
+              )
+            )}
+            &apos;s comment... click to go back
+          </button>
+        )}
         <Comments
           setReplyingTo={setReplyingTo}
           replyingTo={replyingTo}
           getReplies={getReplies}
           postId={post?.ID as string}
           comments={commentsByParentId[parentComment as string]}
+          commentOpened={commentOpened}
           updateMyVoteOnComment={updateMyVoteOnComment}
         />
       </div>

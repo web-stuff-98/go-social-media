@@ -25,6 +25,7 @@ export default function Comment({
   setReplyingTo,
   getReplies,
   updateMyVoteOnComment,
+  commentOpened,
 }: {
   comment: IComment;
   postId: string;
@@ -32,6 +33,7 @@ export default function Comment({
   setReplyingTo: (to: string) => void;
   getReplies: (parentId: string) => IComment[];
   updateMyVoteOnComment: (id: string, isUpvote: boolean) => void;
+  commentOpened: (to: string) => void;
 }) {
   const { getUserData } = useUsers();
   const { openModal } = useModal();
@@ -188,7 +190,10 @@ export default function Comment({
           )}
           {!repliesOpen && childComments && childComments.length > 0 && (
             <button
-              onClick={() => setRepliesOpen(true)}
+              onClick={() => {
+                setRepliesOpen(true);
+                commentOpened(comment.ID);
+              }}
               className={classes.showRepliesButtonAndReplyToCommentButton}
             >
               Show replies
@@ -217,6 +222,7 @@ export default function Comment({
               replyingTo={replyingTo}
               postId={postId}
               comment={cmt}
+              commentOpened={commentOpened}
             />
           ))}
           {childComments && repliesOpen && (
