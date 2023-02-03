@@ -221,7 +221,9 @@ export default function Chat() {
         userStream.current = stream;
         setIsStreaming(true);
         peersRef.current.forEach((data) => {
-          data.peer.addStream(stream);
+          userStream.current?.getTracks().forEach((track) => {
+            data.peer.addTrack(track, userStream.current!);
+          });
         });
       } catch (e) {
         openModal("Message", {
