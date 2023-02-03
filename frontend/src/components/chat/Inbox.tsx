@@ -28,9 +28,8 @@ export default function Inbox() {
   const { uploadAttachment } = useAttachment();
   const { user: currentUser } = useAuth();
   const { openModal } = useModal();
-  const { notifications } = useChat();
+  const { notifications, toggleStream } = useChat();
 
-  const [vidChatOpen, setVidChatOpen] = useState(false);
   const [inbox, setInbox] = useState<IConversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState("");
   const [selectedConversationIndex, setSelectedConversationIndex] =
@@ -317,9 +316,7 @@ export default function Inbox() {
           data-testid="Messages and video chat"
           className={classes.messagesAndVideoChat}
         >
-          {selectedConversation && vidChatOpen && (
-            <VideoChat id={selectedConversation} />
-          )}
+          {selectedConversation && <VideoChat id={selectedConversation} />}
           <div className={classes.messages}>
             {selectedConversation &&
               inbox[selectedConversationIndex].messages.map((msg) => (
@@ -341,7 +338,7 @@ export default function Inbox() {
             name="Video chat"
             ariaLabel="Open video chat"
             type="button"
-            onClick={() => setVidChatOpen(!vidChatOpen)}
+            onClick={() => toggleStream()}
             Icon={RiWebcamLine}
           />
           <IconBtn

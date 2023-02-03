@@ -6,7 +6,6 @@ import { useAuth } from "../../context/AuthContext";
 import { PeerWithID, useChat } from "./Chat";
 import { useUsers } from "../../context/UsersContext";
 import useSocket from "../../context/SocketContext";
-import { useModal } from "../../context/ModalContext";
 
 export default function VideoChat({
   isRoom,
@@ -18,30 +17,16 @@ export default function VideoChat({
 }) {
   const { user } = useAuth();
   const { sendIfPossible } = useSocket();
-  const { openModal } = useModal();
-  const { userStream, isStreaming, peers, initVideo, leftVidChat } = useChat();
-
-  const setupVideo = async () => {
-    try {
-      await initVideo();
-      sendIfPossible(
-        JSON.stringify({
-          event_type: "VID_JOIN",
-          join_id: id,
-          is_room: Boolean(isRoom),
-        })
-      );
-    } catch (e) {
-      openModal("Message", {
-        msg: `Failed to open video chat: ${e}`,
-        err: true,
-        pen: false,
-      });
-    }
-  };
+  const { userStream, isStreaming, peers, leftVidChat } = useChat();
 
   useEffect(() => {
-    setupVideo();
+    sendIfPossible(
+      JSON.stringify({
+        event_type: "VID_JOIN",
+        join_id: id,
+        is_room: Boolean(isRoom),
+      })
+    );
     return () => {
       leftVidChat(Boolean(isRoom), id);
     };
@@ -76,17 +61,21 @@ function PeerVideoWindow({ peerWithID }: { peerWithID: PeerWithID }) {
     // eslint-disable-next-line
   }, []);
 
-  return <VideoWindow uid={peerWithID.UID} stream={stream} />;
+  return (
+    <VideoWindow hide={!Boolean(stream)} uid={peerWithID.UID} stream={stream} />
+  );
 }
 
 function VideoWindow({
   uid,
   stream,
   ownVideo,
+  hide,
 }: {
   uid: string;
   stream?: MediaStream;
   ownVideo?: boolean;
+  hide?: boolean;
 }) {
   const { user } = useAuth();
   const { getUserData } = useUsers();
@@ -108,6 +97,7 @@ function VideoWindow({
 
   return (
     <div
+      style={hide ? { display: "none" } : {}}
       data-testid={
         ownVideo ? "Users video chat window" : `Uid ${uid}s video chat window`
       }

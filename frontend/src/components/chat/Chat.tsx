@@ -1,6 +1,13 @@
 import classes from "../../styles/components/chat/Chat.module.scss";
 import Inbox from "./Inbox";
-import { useState, createContext, useContext, useRef, useEffect } from "react";
+import {
+  useState,
+  createContext,
+  useContext,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
 import Menu from "./Menu";
 import RoomEditor from "./RoomEditor";
 import Rooms from "./Rooms";
@@ -26,6 +33,7 @@ import { useModal } from "../../context/ModalContext";
 
 import * as process from "process";
 import ChatTopTray from "./ChatTopTray";
+import { useAuth } from "../../context/AuthContext";
 (window as any).process = process;
 
 /*
@@ -55,11 +63,11 @@ export const ChatContext = createContext<{
   roomId: string;
   editRoomId: string;
 
-  initVideo: () => Promise<void>;
   userStream?: MediaStream;
   isStreaming: boolean;
   peers: PeerWithID[];
   leftVidChat: (isRoom: boolean, id: string) => void;
+  toggleStream: () => void;
 
   handleCreateUpdateRoom: (
     vals: { name: string; image?: File },
@@ -79,11 +87,11 @@ export const ChatContext = createContext<{
   roomId: "",
   editRoomId: "",
 
-  initVideo: () => new Promise((r) => r()),
   userStream: undefined,
   isStreaming: false,
   peers: [],
   leftVidChat: () => {},
+  toggleStream: () => {},
 
   handleCreateUpdateRoom: () => {},
 
@@ -100,6 +108,7 @@ export const useChat = () => useContext(ChatContext);
 export default function Chat() {
   const { pathname } = useLocation();
   const { socket, sendIfPossible } = useSocket();
+  const { user } = useAuth();
   const { openModal } = useModal();
 
   const [section, setSection] = useState<ChatSection>(ChatSection.MENU);
@@ -174,14 +183,30 @@ export default function Chat() {
 
   /////////////////////////////////////////////////////
   //////////////// VIDEO CHAT STUFF ///////////////////
+  // The user is joined to the WebRTC network        //
+  // automatically when they enter a conversation or //
+  // a chatroom. The video/audio stream is added     //
+  // later when they click the webcam icon.          //
+  //                                                 //
   // The socket event handler functions were wrapped //
   // in useCallback but I got rid of that because it //
   // was breaking video chat for some reason.        //
   /////////////////////////////////////////////////////
   const userStream = useRef<MediaStream | undefined>(undefined);
   const [isStreaming, setIsStreaming] = useState(false);
-  const initVideo = () =>
-    new Promise<void>((resolve, reject) => {
+
+  const peersRef = useRef<PeerWithID[]>([]);
+  const [peers, setPeers] = useState<PeerWithID[]>([]);
+
+  const toggleStream = useCallback(() => {
+    if (userStream.current) {
+      peersRef.current.forEach((data) => {
+        data.peer.removeStream(userStream.current!);
+      });
+      userStream.current?.getTracks().forEach((track) => track.stop());
+      userStream.current = undefined;
+      setIsStreaming(false);
+    } else {
       navigator.mediaDevices
         .getUserMedia({
           audio: true,
@@ -190,13 +215,19 @@ export default function Chat() {
         .then((stream) => {
           userStream.current = stream;
           setIsStreaming(true);
-          resolve();
+          peersRef.current.forEach((data) => {
+            data.peer.addStream(stream);
+          });
         })
-        .catch((e) => reject(e));
-    });
-
-  const peersRef = useRef<PeerWithID[]>([]);
-  const [peers, setPeers] = useState<PeerWithID[]>([]);
+        .catch((e) => {
+          openModal("Message", {
+            msg: `Error creating stream: ${e}`,
+            err: true,
+            pen: false,
+          });
+        });
+    }
+  }, [peersRef.current]);
 
   const handleVidChatAllUsers = (uids: string[]) => {
     const peers: PeerWithID[] = [];
@@ -250,8 +281,8 @@ export default function Chat() {
     const peer = new Peer({
       initiator: true,
       trickle: false,
-      stream: userStream.current,
       config: ICE_Config,
+      ...(userStream.current ? { stream: userStream.current } : {}),
     });
     peer.on("signal", (signal) =>
       sendIfPossible(
@@ -269,8 +300,8 @@ export default function Chat() {
     const peer = new Peer({
       initiator: false,
       trickle: false,
-      stream: userStream.current,
       config: ICE_Config,
+      ...(userStream.current ? { stream: userStream.current } : {}),
     });
     peer.on("signal", (signal) =>
       sendIfPossible(
@@ -325,6 +356,8 @@ export default function Chat() {
     setPeers([]);
     peersRef.current = [];
     userStream.current?.getTracks().forEach((track) => track.stop());
+    setIsStreaming(false);
+    userStream.current = undefined;
   };
 
   useEffect(() => {
@@ -356,8 +389,8 @@ export default function Chat() {
               openRoom,
               openRoomEditor,
               deleteRoom,
-              initVideo,
               leftVidChat,
+              toggleStream,
               section,
               roomId,
               editRoomId,

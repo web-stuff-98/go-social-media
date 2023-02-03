@@ -1,4 +1,5 @@
 # https://go-social-media-js.herokuapp.com
+# Currently broken because I am working on stuff still
 
 This is the second version of my Go project, and it actually works. Its also the successor to Prisma-Social-Media which was quite messy and probably much slower than this.
 
