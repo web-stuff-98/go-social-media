@@ -23,15 +23,15 @@ SocketServer, AttachmentServer, and database collections are injected into all o
 
 # Frontend
 
-The frontend is built around React, Reacts Context API using Reducers, SCSS modules, flex containers, Formik, Axios and Zod. I use my IResMsg interface (response message : {error, message, pending}) with useEffect & setState inplace of React Query or similar.
+The frontend is built around React, Reacts Context API using Reducers, SCSS modules, flex containers, Formik, Axios and Zod. I use a response message interface (IResMsg : {error, message, pending}) and useEffect for handling errors, messages and pending status for fetch requests.
 
 ### Context
 
 - SocketContext controls opening and closing subscriptions, and opens an error modal when the server socket handler sends back an internal error. When the socket connection is lost, all the previous subscriptions will be opened back up again automatically.
-- UsersContext stores all the data for users. cacheUserData is used by other components to cache a users data after receiving data from a request (if the users data is not stored already, it will be queried for). The User component works with UsersContext to make sure that User data is present only when needed, based on visibility.
-- ChatContext contains the code for video chat, which is shared by the Conversations component and the Room component. It also handles navigating through sections, opening the room editor and opening chatrooms. ChatContext is created from the Chat component, it's not stored in the context folder.
-- InterfaceContext measures the dimensions of the display, adjusts the horizontal whitespace, and controls dark mode. It also shares a boolean called "isMobile" which is used by components.
+- UsersContext stores all the data for users. cacheUserData is used by other components to cache a users data after receiving data from a request (if the users data is not stored already, it will be queried for). The User component works with UsersContext to make sure that User data is present when the user should be visible.
+- ChatContext contains the code for video chat using simple-peer, which is used by the Inbox component and the Room component. It also handles navigating through sections, opening the room editor and opening chatrooms.
+- InterfaceContext measures the dimensions of the display, adjusts the horizontal whitespace, and controls dark mode.
 - ModalContext can be used to open up a confirmation modal, which can be passed a callback, display a message with an error, a loading spinner, or just a plain text message.
-- PostsContext controls post card data, blog navigation, pagination, sorting, and filtering by getting and setting the URL params. It also watches for changes on the post_feed subscription, and opens/closes subscriptions on post_cards (where post_card=thepostid). Debouncing is also handled here, everything to do with blog posts.
+- PostsContext controls post card data, blog navigation, pagination, sorting, and filtering by getting and setting the URL params. It also watches for changes on the post_feed subscription, and opens/closes subscriptions on post_cards (where post_card=thepostid). Debouncing is also handled here, everything to do with blog posts, except for comments...
 - AuthContext contains all the functions related to authentication. It also queries the server to refresh the Users token.
 - UserdropdownContext just contains the code for the dropdown that appears when you click on a users profile picture.
