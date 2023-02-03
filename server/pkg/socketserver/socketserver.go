@@ -208,6 +208,10 @@ func RunServer(socketServer *SocketServer) {
 				if count >= 128 {
 					allow = false
 				}
+				// Users cannot use VID_ events
+				if strings.Contains(connData.Name, "VID_") {
+					allow = false
+				}
 				// Passed all checks, add the connection to the subscription
 				if allow {
 					if socketServer.Subscriptions[connData.Name] == nil {

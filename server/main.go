@@ -227,14 +227,14 @@ func main() {
 		RouteName:     "get_post_thumb",
 	}, *redisClient, *Collections)).Methods(http.MethodGet)
 	api.HandleFunc("/posts/{id}/vote", middleware.BasicRateLimiter(h.VoteOnPost, middleware.SimpleLimiterOpts{
-		Window:        time.Second * 3,
+		Window:        time.Second * 2,
 		MaxReqs:       10,
 		BlockDuration: time.Second * 100,
 		Message:       "Too many requests",
 		RouteName:     "post_vote",
 	}, *redisClient, *Collections)).Methods(http.MethodPatch)
 	api.HandleFunc("/posts/{postId}/{commentId}/vote", middleware.BasicRateLimiter(h.VoteOnPostComment, middleware.SimpleLimiterOpts{
-		Window:        time.Second * 3,
+		Window:        time.Second * 2,
 		MaxReqs:       10,
 		BlockDuration: time.Second * 100,
 		Message:       "Too many requests",

@@ -13,13 +13,15 @@
     border: 1px solid var(--base-medium);
     box-sizing: border-box;
     border-radius: var(--border-radius-medium);
+    overflow: hidden;
+    height: 20rem;
 
     .messages {
       display: flex;
       flex-direction: column;
       overflow-y: auto;
       min-height: 10rem;
-      height: 10rem;
+      flex-grow: 1;
 
       p {
         text-align: center;

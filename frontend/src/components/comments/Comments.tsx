@@ -15,6 +15,7 @@ export default function Comments({
   getReplies,
   updateMyVoteOnComment,
   commentOpened,
+  currentParentComment,
 }: {
   comments: IComment[] | null;
   getReplies: (parentId: string) => IComment[];
@@ -23,6 +24,7 @@ export default function Comments({
   setReplyingTo: (to: string) => void;
   updateMyVoteOnComment: (id: string, isUpvote: boolean) => void;
   commentOpened: (to: string) => void;
+  currentParentComment: string;
 }) {
   /*
   Broken somehow... doesn't give the correct
@@ -57,6 +59,7 @@ export default function Comments({
             replyingTo={replyingTo}
             postId={postId}
             comment={cmt}
+            currentParentComment={currentParentComment}
           />
         ))}
     </div>

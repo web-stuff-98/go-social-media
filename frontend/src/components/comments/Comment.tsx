@@ -10,7 +10,7 @@ import {
   updateComment,
   voteOnPostComment,
 } from "../../services/posts";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ErrorTip from "../shared/forms/ErrorTip";
 import { CommentForm } from "./CommentForm";
 import { useModal } from "../../context/ModalContext";
@@ -26,6 +26,7 @@ export default function Comment({
   getReplies,
   updateMyVoteOnComment,
   commentOpened,
+  currentParentComment,
 }: {
   comment: IComment;
   postId: string;
@@ -34,6 +35,7 @@ export default function Comment({
   getReplies: (parentId: string) => IComment[];
   updateMyVoteOnComment: (id: string, isUpvote: boolean) => void;
   commentOpened: (to: string) => void;
+  currentParentComment: string;
 }) {
   const { getUserData } = useUsers();
   const { openModal } = useModal();
@@ -42,6 +44,10 @@ export default function Comment({
   const [isEditing, setIsEditing] = useState(false);
   const [repliesOpen, setRepliesOpen] = useState(false);
   const childComments = getReplies(comment.ID);
+
+  useEffect(() => {
+    if (currentParentComment && currentParentComment === comment.parent_id) setRepliesOpen(true);
+  }, [currentParentComment]);
 
   return (
     <div className={classes.container}>
@@ -223,6 +229,7 @@ export default function Comment({
               postId={postId}
               comment={cmt}
               commentOpened={commentOpened}
+              currentParentComment={currentParentComment}
             />
           ))}
           {childComments && repliesOpen && (

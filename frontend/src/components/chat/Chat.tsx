@@ -67,6 +67,7 @@ export const ChatContext = createContext<{
   peers: PeerWithID[];
   leftVidChat: (isRoom: boolean, id: string) => void;
   toggleStream: (isRoom: boolean, id: string) => void;
+  streamToggling: boolean;
 
   handleCreateUpdateRoom: (
     vals: { name: string; image?: File },
@@ -91,6 +92,7 @@ export const ChatContext = createContext<{
   peers: [],
   leftVidChat: () => {},
   toggleStream: () => {},
+  streamToggling: false,
 
   handleCreateUpdateRoom: () => {},
 
@@ -206,15 +208,19 @@ export default function Chat() {
   const peersRef = useRef<PeerWithID[]>([]);
   const [peers, setPeers] = useState<PeerWithID[]>([]);
 
+  const [streamToggling, setStreamToggling] = useState(false);
+
   // Instead of using addTrack or addStream (which is addTrack internally)
   // Just restart the entire connection because there are bizarre errors
   const toggleStream = async (isRoom: boolean, id: string) => {
-    leftVidChat(isRoom, id);
+    setStreamToggling(true);
     if (userStream.current) {
       userStream.current?.getTracks().forEach((track) => track.stop());
       userStream.current = undefined;
       setIsStreaming(false);
+      leftVidChat(isRoom, id);
     } else {
+      leftVidChat(isRoom, id);
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
@@ -290,6 +296,7 @@ export default function Chat() {
       ...(userStream.current ? { stream: userStream.current } : {}),
     });
     peer.on("signal", (signal) => {
+      setStreamToggling(false);
       sendIfPossible(
         JSON.stringify({
           event_type: "VID_SENDING_SIGNAL_IN",
@@ -308,15 +315,16 @@ export default function Chat() {
       config: ICE_Config,
       ...(userStream.current ? { stream: userStream.current } : {}),
     });
-    peer.on("signal", (signal) =>
+    peer.on("signal", (signal) => {
+      setStreamToggling(false);
       sendIfPossible(
         JSON.stringify({
           event_type: "VID_RETURNING_SIGNAL_IN",
           signal_json: JSON.stringify(signal),
           caller_uid: callerUID,
         })
-      )
-    );
+      );
+    });
     setTimeout(() => {
       peer.signal(incomingSignal);
     });
@@ -337,7 +345,6 @@ export default function Chat() {
     userStream.current?.getTracks().forEach((track) => track.stop());
     setIsStreaming(false);
     userStream.current = undefined;
-    // eslint-disable-next-line
   };
 
   const handleMessage = (e: MessageEvent) => {
@@ -375,11 +382,16 @@ export default function Chat() {
   }, [socket]);
 
   const notificationsContainerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   return (
     <div
+      ref={containerRef}
       style={{
         ...(pathname.includes("/blog")
-          ? { bottom: "calc(var(--pagination-controls) + var(--padding))" }
+          ? {
+              bottom:
+                "calc(var(--pagination-controls) + var(--padding) + var(--padding))",
+            }
           : {}),
         ...(chatOpen
           ? {}
@@ -405,6 +417,7 @@ export default function Chat() {
               userStream: userStream.current,
               handleCreateUpdateRoom,
               notifications,
+              streamToggling,
             }}
           >
             <ChatTopTray closeChat={() => setChatOpen(false)} />

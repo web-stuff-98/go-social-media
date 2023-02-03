@@ -1,12 +1,11 @@
 import classes from "../../styles/components/chat/VideoChat.module.scss";
 import IconBtn from "../shared/IconBtn";
 import { ImSpinner8, ImVolumeMute, ImVolumeMute2 } from "react-icons/im";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { PeerWithID, useChat } from "./Chat";
 import { useUsers } from "../../context/UsersContext";
 import useSocket from "../../context/SocketContext";
-import { IUser } from "../../interfaces/GeneralInterfaces";
 
 export default function VideoChat({
   isRoom,
@@ -18,8 +17,10 @@ export default function VideoChat({
 }) {
   const { user } = useAuth();
   const { sendIfPossible } = useSocket();
-  const { userStream, isStreaming, peers, leftVidChat } = useChat();
-  const { getUserData } = useUsers();
+  const { userStream, isStreaming, peers, leftVidChat, streamToggling } =
+    useChat();
+
+  const [numPeersStreaming, setNumPeersStreaming] = useState(0);
 
   useEffect(() => {
     sendIfPossible(
@@ -35,11 +36,18 @@ export default function VideoChat({
     // eslint-disable-next-line
   }, []);
 
-  const renderUserName = (user?: IUser) => (user ? user?.username : "user");
+  //const renderUserName = (user?: IUser) => (user ? user?.username : "user");
 
   return (
-    <div className={classes.container}>
-      <span className={classes.count}>
+    <div
+      style={
+        !isStreaming && !numPeersStreaming && !streamToggling
+          ? { display: "none" }
+          : {}
+      }
+      className={classes.container}
+    >
+      {/*<span className={classes.count}>
         {peers.length} peers <br />
         {peers.map((p) => (
           <>
@@ -47,23 +55,42 @@ export default function VideoChat({
             <br />
           </>
         ))}
-      </span>
+        </span>*/}
+      {streamToggling && (
+        <div className={classes.streamToggling}>
+          Establishing...
+          <ImSpinner8 />
+        </div>
+      )}
       <div className={classes.windows}>
-        {isStreaming && (
+        {isStreaming && !streamToggling && (
           <VideoWindow uid={user?.ID as string} stream={userStream} ownVideo />
         )}
         {peers.map((p) => (
-          <PeerVideoWindow key={p.UID} peerWithID={p} />
+          <PeerVideoWindow
+            startedStreaming={() => setNumPeersStreaming((p) => p + 1)}
+            key={p.UID}
+            peerWithID={p}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function PeerVideoWindow({ peerWithID }: { peerWithID: PeerWithID }) {
+function PeerVideoWindow({
+  peerWithID,
+  startedStreaming,
+}: {
+  peerWithID: PeerWithID;
+  startedStreaming: Function;
+}) {
   const [stream, setStream] = useState<MediaStream | undefined>(undefined);
 
-  const handleStream = (stream: MediaStream) => setStream(stream);
+  const handleStream = (stream: MediaStream) => {
+    startedStreaming();
+    setStream(stream);
+  };
 
   useEffect(() => {
     peerWithID.peer.on("stream", handleStream);
@@ -112,6 +139,11 @@ function VideoWindow({
       style={hide ? { display: "none" } : {}}
       data-testid={
         ownVideo ? "Users video chat window" : `Uid ${uid}s video chat window`
+      }
+      aria-label={
+        ownVideo
+          ? "Your video chat window"
+          : `${getUserName()}'s video chat window`
       }
       className={classes.videoWindow}
     >

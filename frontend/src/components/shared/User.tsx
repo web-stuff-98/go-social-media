@@ -41,6 +41,7 @@ export default function User({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const observer = new IntersectionObserver(([entry]) => {
+    // why uid === "undefined", don't remember, could probably be removed
     if (!uid || uid === "undefined") return;
     if (entry.isIntersecting) {
       userEnteredView(uid);

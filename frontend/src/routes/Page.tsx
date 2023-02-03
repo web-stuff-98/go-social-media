@@ -315,6 +315,7 @@ export default function Page() {
           comments={commentsByParentId[parentComment as string]}
           commentOpened={commentOpened}
           updateMyVoteOnComment={updateMyVoteOnComment}
+          currentParentComment={parentComment}
         />
       </div>
       <ResMsg resMsg={resMsg} />
