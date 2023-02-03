@@ -187,8 +187,9 @@ export default function Chat() {
   //////////////// VIDEO CHAT STUFF ///////////////////
   // The user is joined to the WebRTC network        //
   // automatically when they enter a conversation or //
-  // a chatroom. The video/audio stream is added     //
-  // later when they click the webcam icon.          //
+  // a chatroom. When the user wants to stream they  //
+  // click on their icon which will then just        //
+  // restart the entire network for them...........  //
   //                                                 //
   // The socket event handler functions were wrapped //
   // in useCallback but I got rid of that because it //
@@ -266,19 +267,6 @@ export default function Chat() {
       peer,
       UID: callerUID,
     });
-    /*
-    setPeers((peers) => [
-      ...peers.filter((data) => data.UID !== callerUID),
-      { peer, UID: callerUID },
-    ]);
-    peersRef.current = [
-      ...peersRef.current.filter((data) => data.UID !== callerUID),
-      {
-        peer,
-        UID: callerUID,
-      },
-    ];
-    */
   };
 
   const handleVidChatReceivingReturningSignal = (
