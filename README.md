@@ -12,7 +12,7 @@ It uses net/http, gorilla mux and gorilla websocket, you can video chat in group
 
 ### Stuff
 
-- Group & private video chat using simple-peer
+- Group & private video chat using simple-peer (where most of the bugs are)
 - Nested comments
 - Types & models for socket events
 - Context API & Reducers
