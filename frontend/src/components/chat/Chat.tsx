@@ -191,10 +191,6 @@ export default function Chat() {
   // click on their icon which will then just        //
   // restart the entire network for them...........  //
   //                                                 //
-  // The socket event handler functions were wrapped //
-  // in useCallback but I got rid of that because it //
-  // was breaking video chat for some reason.        //
-  //                                                 //
   // I was having extremely weird frustrating        //
   // problems which I "resolved" by just completed   //
   // restarting the peer to peer network whenever a  //
