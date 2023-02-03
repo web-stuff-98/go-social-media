@@ -1,7 +1,7 @@
 import classes from "../../styles/components/chat/VideoChat.module.scss";
 import IconBtn from "../shared/IconBtn";
 import { ImSpinner8, ImVolumeMute, ImVolumeMute2 } from "react-icons/im";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { PeerWithID, useChat } from "./Chat";
 import { useUsers } from "../../context/UsersContext";

@@ -119,8 +119,8 @@ func generateUser(i int, colls *db.Collections) (uid primitive.ObjectID, err err
 }
 
 func generatePost(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid primitive.ObjectID) (primitive.ObjectID, error) {
-	title := strings.Title(sentence(9, 15))
-	description := strings.Title(sentence(9, 15))
+	title := strings.Title(sentence(12, 18))
+	description := strings.Title(sentence(12, 23))
 	tags := []string{}
 
 	/*rb := helpers.DownloadURL("https://loripsum.net/api/link/ul/ol/dl/bq/code/headers/decorate/long")
@@ -377,10 +377,10 @@ func generateComments(colls *db.Collections, pid primitive.ObjectID, uids map[pr
 		createdAt := time.Now().Add(timeRandOffset)
 		updatedAt := createdAt
 		parentId := ""
-		if rand.Float32() > 0.8 {
+		if rand.Float32() > 0.75 {
 			updatedAt = createdAt.Add(time.Hour * 2 * time.Duration(rand.Float32()))
 		}
-		if rand.Float32() > 0.333 {
+		if rand.Float32() > 0.2 {
 			if len(comments.Comments) > 0 {
 				randIndex := len(comments.Comments) - 1
 				if randIndex == 0 || randIndex == -1 {
@@ -389,7 +389,7 @@ func generateComments(colls *db.Collections, pid primitive.ObjectID, uids map[pr
 				parentId = comments.Comments[rand.Intn(randIndex)].ID.Hex()
 			}
 		}
-		content := sentence(3, 60)
+		content := sentence(7, 50)
 		if len(content) > 200 {
 			content = content[:200]
 		}

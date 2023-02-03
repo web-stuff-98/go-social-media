@@ -15,6 +15,7 @@ import (
 	"github.com/web-stuff-98/go-social-media/pkg/handlers"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers/middleware"
 	rdb "github.com/web-stuff-98/go-social-media/pkg/redis"
+	"github.com/web-stuff-98/go-social-media/pkg/seed"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -355,8 +356,8 @@ func main() {
 			protectedPids[user.ID] = struct{}{}
 		}
 	} else {
-		//DB.Drop(context.Background())
-		//go seed.SeedDB(Collections, 5, 5, 5, protectedUids, protectedPids, protectedRids)
+		DB.Drop(context.Background())
+		go seed.SeedDB(Collections, 5, 5, 5, protectedUids, protectedPids, protectedRids)
 	}
 
 	deleteAccountTicker := time.NewTicker(20 * time.Minute)

@@ -5,7 +5,7 @@
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
-  min-height: 15rem;
+  min-height: 20rem;
   width: 6.5rem;
   border-radius: var(--border-radius-medium);
   border: 1px solid var(--base-medium);
@@ -40,8 +40,8 @@
 
 .right {
   width: 12rem;
-  min-height: 15rem;
-  max-height: 15rem;
+  min-height: 20rem;
+  max-height: 20rem;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -54,9 +54,9 @@
     flex-direction: column;
     height: 100%;
     flex-grow: 1;
+    overflow: hidden;
     border-radius: var(--border-radius-medium);
     border: 1px solid var(--base-medium);
-    max-height: 13.125rem;
 
     .messages {
       width: 100%;

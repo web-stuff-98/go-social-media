@@ -28,7 +28,7 @@ import { IResMsg } from "../../interfaces/GeneralInterfaces";
 (window as any).process = process;
 
 export default function Room() {
-  const { roomId, setSection, toggleStream } = useChat();
+  const { roomId, setSection, toggleStream, leftVidChat } = useChat();
   const { socket, openSubscription, closeSubscription, sendIfPossible } =
     useSocket();
   const { user } = useAuth();
@@ -181,7 +181,7 @@ export default function Room() {
           data-testid="Messages and videochat"
           className={classes.messagesAndVideoChat}
         >
-          <VideoChat isRoom id={room.ID} />
+          <VideoChat isRoom id={roomId} />
           {room.messages.length > 0 ? (
             <div className={classes.messages}>
               {room.messages.map((msg) => (
@@ -211,7 +211,9 @@ export default function Room() {
           name="Video chat"
           ariaLabel="Open video chat"
           type="button"
-          onClick={toggleStream}
+          onClick={() => {
+            toggleStream(true, roomId);
+          }}
           Icon={RiWebcamLine}
         />
         <IconBtn

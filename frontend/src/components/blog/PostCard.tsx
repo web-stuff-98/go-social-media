@@ -199,7 +199,7 @@ export default function PostCard({
                               : { filter: "opacity(0.5)" }),
                           }}
                           svgStyle={{
-                            transform: "scale(1.166)",
+                            transform: "scale(1.1)",
                           }}
                           Icon={FaChevronUp}
                           type="button"
@@ -242,7 +242,7 @@ export default function PostCard({
                               : { filter: "opacity(0.5)" }),
                           }}
                           svgStyle={{
-                            transform: "scale(1.166)",
+                            transform: "scale(1.1)",
                           }}
                           Icon={FaChevronDown}
                           type="button"
