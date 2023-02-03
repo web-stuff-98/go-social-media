@@ -50,12 +50,15 @@ export default function VideoChat({
 
   return (
     <div className={classes.container}>
-      {isStreaming && (
-        <VideoWindow uid={user?.ID as string} stream={userStream} ownVideo />
-      )}
-      {peers.map((p) => (
-        <PeerVideoWindow key={p.UID} peerWithID={p} />
-      ))}
+      <span className={classes.count}>{peers.length} peers</span>
+      <div className={classes.windows}>
+        {isStreaming && (
+          <VideoWindow uid={user?.ID as string} stream={userStream} ownVideo />
+        )}
+        {peers.map((p) => (
+          <PeerVideoWindow key={p.UID} peerWithID={p} />
+        ))}
+      </div>
     </div>
   );
 }
