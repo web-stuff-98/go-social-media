@@ -33,7 +33,6 @@ import { useModal } from "../../context/ModalContext";
 
 import * as process from "process";
 import ChatTopTray from "./ChatTopTray";
-import { useAuth } from "../../context/AuthContext";
 (window as any).process = process;
 
 /*
@@ -108,7 +107,6 @@ export const useChat = () => useContext(ChatContext);
 export default function Chat() {
   const { pathname } = useLocation();
   const { socket, sendIfPossible } = useSocket();
-  const { user } = useAuth();
   const { openModal } = useModal();
 
   const [section, setSection] = useState<ChatSection>(ChatSection.MENU);
@@ -181,6 +179,14 @@ export default function Chat() {
     }
   };
 
+  const handleNotifications = useCallback(
+    (notifications: { type: string }[] | null) => {
+      setNotifications(notifications || []);
+    },
+    // eslint-disable-next-line
+    []
+  );
+
   /////////////////////////////////////////////////////
   //////////////// VIDEO CHAT STUFF ///////////////////
   // The user is joined to the WebRTC network        //
@@ -198,7 +204,7 @@ export default function Chat() {
   const peersRef = useRef<PeerWithID[]>([]);
   const [peers, setPeers] = useState<PeerWithID[]>([]);
 
-  const toggleStream = useCallback(() => {
+  const toggleStream = useCallback(async () => {
     if (userStream.current) {
       peersRef.current.forEach((data) => {
         data.peer.removeStream(userStream.current!);
@@ -207,29 +213,28 @@ export default function Chat() {
       userStream.current = undefined;
       setIsStreaming(false);
     } else {
-      navigator.mediaDevices
-        .getUserMedia({
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
           video: true,
-        })
-        .then((stream) => {
-          userStream.current = stream;
-          setIsStreaming(true);
-          peersRef.current.forEach((data) => {
-            data.peer.addStream(stream);
-          });
-        })
-        .catch((e) => {
-          openModal("Message", {
-            msg: `Error creating stream: ${e}`,
-            err: true,
-            pen: false,
-          });
         });
+        userStream.current = stream;
+        setIsStreaming(true);
+        peersRef.current.forEach((data) => {
+          data.peer.addStream(stream);
+        });
+      } catch (e) {
+        openModal("Message", {
+          msg: `Error creating stream: ${e}`,
+          err: true,
+          pen: false,
+        });
+      }
     }
-  }, [peersRef.current]);
+    // eslint-disable-next-line
+  }, []);
 
-  const handleVidChatAllUsers = (uids: string[]) => {
+  const handleVidChatAllUsers = useCallback((uids: string[]) => {
     const peers: PeerWithID[] = [];
     if (uids)
       uids.forEach((id) => {
@@ -241,43 +246,42 @@ export default function Chat() {
         peers.push({ peer, UID: id });
       });
     setPeers(peers);
-  };
+    // eslint-disable-next-line
+  }, []);
 
-  const handleVidChatUserJoined = (
-    signal: Peer.SignalData,
-    callerUID: string
-  ) => {
-    const peer = addPeer(signal, callerUID);
-    setPeers((peers) => [...peers, { peer, UID: callerUID }]);
-    peersRef.current.push({
-      peer,
-      UID: callerUID,
-    });
-  };
+  const handleVidChatUserJoined = useCallback(
+    (signal: Peer.SignalData, callerUID: string) => {
+      const peer = addPeer(signal, callerUID);
+      setPeers((peers) => [...peers, { peer, UID: callerUID }]);
+      peersRef.current.push({
+        peer,
+        UID: callerUID,
+      });
+    },
+    // eslint-disable-next-line
+    []
+  );
 
-  const handleVidChatReceivingReturningSignal = (
-    signal: Peer.SignalData,
-    id: string
-  ) => {
-    const item = peersRef.current.find((p) => p.UID === id);
-    setTimeout(() => {
-      item?.peer.signal(signal);
-    });
-  };
+  const handleVidChatReceivingReturningSignal = useCallback(
+    (signal: Peer.SignalData, id: string) => {
+      const item = peersRef.current.find((p) => p.UID === id);
+      setTimeout(() => {
+        item?.peer.signal(signal);
+      });
+    },
+    // eslint-disable-next-line
+    []
+  );
 
-  const handleVidChatUserLeft = (id: string) => {
+  const handleVidChatUserLeft = useCallback((id: string) => {
     const peerRef = peersRef.current.find((p) => p.UID === id);
     peerRef?.peer.destroy();
     setPeers((peers) => peers.filter((p) => p.UID !== id));
     peersRef.current = peersRef.current.filter((p) => p.UID !== id);
-  };
+    // eslint-disable-next-line
+  }, []);
 
-  const handleNotifications = (notifications: { type: string }[] | null) => {
-    console.log(JSON.stringify(notifications));
-    setNotifications(notifications || []);
-  };
-
-  const createPeer = (id: string) => {
+  const createPeer = useCallback((id: string) => {
     const peer = new Peer({
       initiator: true,
       trickle: false,
@@ -294,29 +298,51 @@ export default function Chat() {
       )
     );
     return peer;
-  };
+    // eslint-disable-next-line
+  }, []);
 
-  const addPeer = (incomingSignal: Peer.SignalData, callerUID: string) => {
-    const peer = new Peer({
-      initiator: false,
-      trickle: false,
-      config: ICE_Config,
-      ...(userStream.current ? { stream: userStream.current } : {}),
-    });
-    peer.on("signal", (signal) =>
-      sendIfPossible(
-        JSON.stringify({
-          event_type: "VID_RETURNING_SIGNAL_IN",
-          signal_json: JSON.stringify(signal),
-          caller_uid: callerUID,
-        })
-      )
+  const addPeer = useCallback(
+    (incomingSignal: Peer.SignalData, callerUID: string) => {
+      const peer = new Peer({
+        initiator: false,
+        trickle: false,
+        config: ICE_Config,
+        ...(userStream.current ? { stream: userStream.current } : {}),
+      });
+      peer.on("signal", (signal) =>
+        sendIfPossible(
+          JSON.stringify({
+            event_type: "VID_RETURNING_SIGNAL_IN",
+            signal_json: JSON.stringify(signal),
+            caller_uid: callerUID,
+          })
+        )
+      );
+      setTimeout(() => {
+        peer.signal(incomingSignal);
+      });
+      return peer;
+    },
+    // eslint-disable-next-line
+    []
+  );
+
+  const leftVidChat = useCallback((isRoom: boolean, id: string) => {
+    sendIfPossible(
+      JSON.stringify({
+        event_type: "VID_LEAVE",
+        is_room: isRoom,
+        id,
+      })
     );
-    setTimeout(() => {
-      peer.signal(incomingSignal);
-    });
-    return peer;
-  };
+    peersRef.current.forEach((p) => p.peer.destroy());
+    setPeers([]);
+    peersRef.current = [];
+    userStream.current?.getTracks().forEach((track) => track.stop());
+    setIsStreaming(false);
+    userStream.current = undefined;
+    // eslint-disable-next-line
+  }, []);
 
   const handleMessage = (e: MessageEvent) => {
     const data = JSON.parse(e.data);
@@ -342,22 +368,6 @@ export default function Chat() {
     if (instanceOfNotificationsData(data)) {
       handleNotifications(JSON.parse(data.DATA));
     }
-  };
-
-  const leftVidChat = (isRoom: boolean, id: string) => {
-    sendIfPossible(
-      JSON.stringify({
-        event_type: "VID_LEAVE",
-        is_room: isRoom,
-        id,
-      })
-    );
-    peersRef.current.forEach((p) => p.peer.destroy());
-    setPeers([]);
-    peersRef.current = [];
-    userStream.current?.getTracks().forEach((track) => track.stop());
-    setIsStreaming(false);
-    userStream.current = undefined;
   };
 
   useEffect(() => {

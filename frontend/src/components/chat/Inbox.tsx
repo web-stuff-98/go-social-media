@@ -338,7 +338,7 @@ export default function Inbox() {
             name="Video chat"
             ariaLabel="Open video chat"
             type="button"
-            onClick={() => toggleStream()}
+            onClick={toggleStream}
             Icon={RiWebcamLine}
           />
           <IconBtn

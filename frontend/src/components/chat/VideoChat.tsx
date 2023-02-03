@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { PeerWithID, useChat } from "./Chat";
 import { useUsers } from "../../context/UsersContext";
 import useSocket from "../../context/SocketContext";
+import { IUser } from "../../interfaces/GeneralInterfaces";
 
 export default function VideoChat({
   isRoom,
@@ -18,6 +19,7 @@ export default function VideoChat({
   const { user } = useAuth();
   const { sendIfPossible } = useSocket();
   const { userStream, isStreaming, peers, leftVidChat } = useChat();
+  const { getUserData } = useUsers();
 
   useEffect(() => {
     sendIfPossible(
@@ -33,9 +35,19 @@ export default function VideoChat({
     // eslint-disable-next-line
   }, []);
 
+  const renderUserName = (user?: IUser) => (user ? user?.username : "user");
+
   return (
     <div className={classes.container}>
-      <span className={classes.count}>{peers.length} peers</span>
+      <span className={classes.count}>
+        {peers.length} peers <br />
+        {peers.map((p) => (
+          <>
+            {renderUserName(getUserData(p.UID))}
+            <br />
+          </>
+        ))}
+      </span>
       <div className={classes.windows}>
         {isStreaming && (
           <VideoWindow uid={user?.ID as string} stream={userStream} ownVideo />
