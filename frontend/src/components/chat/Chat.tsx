@@ -199,8 +199,9 @@ export default function Chat() {
   // restarting the peer to peer network whenever a  //
   // user enables/disables their stream. I have      //
   // spent probably 2 weeks total hours trying to    //
-  // get this to behave as expected and I won't      //
-  // waste any more of my life on it                 //
+  // get this to behave as expected, so I will pick  //
+  // the slow hacky solution instead of wasting more //
+  // of my time                                      //
   /////////////////////////////////////////////////////
   const userStream = useRef<MediaStream | undefined>(undefined);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -208,6 +209,8 @@ export default function Chat() {
   const peersRef = useRef<PeerWithID[]>([]);
   const [peers, setPeers] = useState<PeerWithID[]>([]);
 
+  // Instead of using addTrack or addStream (which is addTrack internally)
+  // Just restart the entire connection because there are bizarre errors
   const toggleStream = async (isRoom: boolean, id: string) => {
     leftVidChat(isRoom, id);
     if (userStream.current) {
