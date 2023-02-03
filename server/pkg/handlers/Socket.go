@@ -54,6 +54,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 			if strings.Contains(eventType.(string), "VID") {
 				log.Println(eventType, "FROM", uid.Hex())
 			}
+			// DUPLICATED
 			if eventType == "OPEN_SUBSCRIPTION" || eventType == "CLOSE_SUBSCRIPTION" {
 				// Authorization check for private subscriptions is done inside socketServer
 				var inMsg socketmodels.OpenCloseSubscription
@@ -84,6 +85,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 					}
 				}
 			} else if eventType == "OPEN_SUBSCRIPTIONS" {
+				// DUPLICATED
 				var inMsg socketmodels.OpenCloseSubscriptions
 				if err := json.Unmarshal(p, &inMsg); err != nil {
 					sendErrorMessageThroughSocket(conn)
