@@ -15,7 +15,7 @@ It uses net/http, gorilla mux and gorilla websocket, you can video chat in group
 - Nested comments
 - Types & models for socket events
 - Context API & Reducers
-- Formik
+- Formik, Zod & Go Validator
 - File attachments
 - Rate limiting
 - Pagination/Filtering/Sorting

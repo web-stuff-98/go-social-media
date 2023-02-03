@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "./static/css/main.be696f49.css",
-    "main.js": "./static/js/main.cf30896b.js",
-    "static/media/coolvetica.rg-regular.otf": "./static/media/coolvetica.rg-regular.3d81d0e1fdbd5f69b232.otf",
-    "static/media/go-mascot-wiki-colour.png": "./static/media/go-mascot-wiki-colour.78e7088ed1557a5ebd3b.png",
-    "index.html": "./index.html",
-    "main.be696f49.css.map": "./static/css/main.be696f49.css.map",
-    "main.cf30896b.js.map": "./static/js/main.cf30896b.js.map"
+    "main.css": "/static/css/main.72a41bbf.css",
+    "main.js": "/static/js/main.cd2f7f96.js",
+    "static/media/coolvetica.rg-regular.otf": "/static/media/coolvetica.rg-regular.3d81d0e1fdbd5f69b232.otf",
+    "static/media/go-mascot-wiki-colour.png": "/static/media/go-mascot-wiki-colour.78e7088ed1557a5ebd3b.png",
+    "index.html": "/index.html",
+    "main.72a41bbf.css.map": "/static/css/main.72a41bbf.css.map",
+    "main.cd2f7f96.js.map": "/static/js/main.cd2f7f96.js.map"
   },
   "entrypoints": [
-    "static/css/main.be696f49.css",
-    "static/js/main.cf30896b.js"
+    "static/css/main.72a41bbf.css",
+    "static/js/main.cd2f7f96.js"
   ]
 }
