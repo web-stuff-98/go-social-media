@@ -6,11 +6,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/web-stuff-98/go-social-media/pkg/attachmentserver"
 	"github.com/web-stuff-98/go-social-media/pkg/db"
 	"github.com/web-stuff-98/go-social-media/pkg/db/changestreams"
+	"github.com/web-stuff-98/go-social-media/pkg/db/models"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers/middleware"
 	rdb "github.com/web-stuff-98/go-social-media/pkg/redis"
@@ -26,7 +28,32 @@ import (
 
 /*
 	Router stuff should be moved into a seperate file...
+
+	https://github.com/gorilla/mux#serving-single-page-applications
 */
+
+type spaHandler struct {
+	staticPath string
+	indexPath  string
+}
+
+func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	path, err := filepath.Abs(r.URL.Path)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	path = filepath.Join(h.staticPath, path)
+	_, err = os.Stat(path)
+	if os.IsNotExist(err) {
+		http.ServeFile(w, r, filepath.Join(h.staticPath, h.indexPath))
+		return
+	} else if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.FileServer(http.Dir(h.staticPath)).ServeHTTP(w, r)
+}
 
 func main() {
 	protectedUids := make(map[primitive.ObjectID]struct{})
@@ -321,22 +348,17 @@ func main() {
 
 	api.HandleFunc("/ws", h.WebSocketEndpoint)
 
-	// Serve static files
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./build/static/"))))
-	// Serve index page on all unhandled routes
-	router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/html")
-		http.ServeFile(w, r, "./build/index.html")
-	})
+	spa := spaHandler{staticPath: "build", indexPath: "index.html"}
+	router.PathPrefix("/").Handler(spa)
 
 	log.Println("Watching changestreams...")
 	changestreams.WatchCollections(DB, SocketServer, AttachmentServer)
 
 	if os.Getenv("PRODUCTION") == "true" {
-		DB.Drop(context.Background())
-		go seed.SeedDB(Collections, 20, 200, 50, protectedUids, protectedPids, protectedRids)
+		//DB.Drop(context.Background())
+		//go seed.SeedDB(Collections, 20, 200, 50, protectedUids, protectedPids, protectedRids)
 		// Seeds already been generated, so just get everything already in the database instead
-		/*pcursor, _ := Collections.PostCollection.Find(context.Background(), bson.M{})
+		pcursor, _ := Collections.PostCollection.Find(context.Background(), bson.M{})
 		for pcursor.Next(context.Background()) {
 			post := &models.Post{}
 			pcursor.Decode(&post)
@@ -353,7 +375,7 @@ func main() {
 			user := &models.User{}
 			ucursor.Decode(&user)
 			protectedPids[user.ID] = struct{}{}
-		}*/
+		}
 	} else {
 		DB.Drop(context.Background())
 		go seed.SeedDB(Collections, 5, 10, 5, protectedUids, protectedPids, protectedRids)
