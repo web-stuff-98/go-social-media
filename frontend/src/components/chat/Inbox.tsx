@@ -176,6 +176,7 @@ export default function Inbox() {
           fileRef.current = undefined;
         }
       }
+      return;
     }
     if (instanceOfPrivateMessageDeleteData(data)) {
       if (data.DATA.recipient_id === selectedConversationRef.current) {
@@ -192,6 +193,7 @@ export default function Inbox() {
           }
         });
       }
+      return;
     }
     if (instanceOfPrivateMessageUpdateData(data)) {
       if (data.DATA.recipient_id === selectedConversationRef.current) {
@@ -209,6 +211,7 @@ export default function Inbox() {
           }
         });
       }
+      return;
     }
     if (instanceOfAttachmentProgressData(data)) {
       if (selectedConversationIndexRef.current !== -1) {
@@ -231,6 +234,7 @@ export default function Inbox() {
           }
         });
       }
+      return;
     }
     if (instanceOfAttachmentCompleteData(data)) {
       if (selectedConversationIndexRef.current !== -1) {
@@ -261,6 +265,7 @@ export default function Inbox() {
           }
         });
       }
+      return;
     }
     // eslint-disable-next-line
   }, []);

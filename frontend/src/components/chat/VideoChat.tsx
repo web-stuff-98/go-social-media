@@ -58,7 +58,7 @@ export default function VideoChat({
         </span>*/}
       {streamToggling && (
         <div className={classes.streamToggling}>
-          Establishing...
+          Waiting for other users...
           <ImSpinner8 />
         </div>
       )}

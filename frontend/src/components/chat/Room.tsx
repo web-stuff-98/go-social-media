@@ -30,7 +30,7 @@ import { IResMsg } from "../../interfaces/GeneralInterfaces";
 (window as any).process = process;
 
 export default function Room() {
-  const { roomId, setSection, toggleStream, leftVidChat } = useChat();
+  const { roomId, setSection, toggleStream } = useChat();
   const { socket, openSubscription, closeSubscription, sendIfPossible } =
     useSocket();
   const { user } = useAuth();

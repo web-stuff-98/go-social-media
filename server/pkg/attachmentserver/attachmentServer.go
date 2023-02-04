@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/web-stuff-98/go-social-media/pkg/db"
@@ -63,7 +62,6 @@ func RunServer(colls *db.Collections, SocketServer *socketserver.SocketServer, A
 	go func() {
 		for {
 			msgId := <-AttachmentServer.DeleteChunksChan
-			log.Println("Delete chunks chan")
 			var metaData models.AttachmentMetadata
 			if err := colls.AttachmentMetadataCollection.FindOne(context.Background(), bson.M{"_id": msgId}).Decode(&metaData); err != nil {
 				if err == mongo.ErrNoDocuments {
@@ -83,7 +81,6 @@ func RunServer(colls *db.Collections, SocketServer *socketserver.SocketServer, A
 	go func() {
 		for {
 			info := <-AttachmentServer.UploadFailedChan
-			log.Println("Attachment failed channel")
 			if _, uploaderOk := AttachmentServer.Uploaders[info.Uid]; uploaderOk {
 				if upload, uploadOk := AttachmentServer.Uploaders[info.Uid][info.MsgID]; uploadOk {
 					outBytes, _ := json.Marshal(socketmodels.OutMessage{
@@ -173,7 +170,6 @@ func cleanUp(as *AttachmentServer, colls *db.Collections) {
 							if u.LastUpdate.Before(time.Now().Add(-time.Minute * 10)) {
 								// If the upload never finished delete the chunks aswell
 								if u.ChunksDone < u.TotalChunks-1 {
-									log.Println("Deleted attachment", msgId.Hex(), "which was", u.ChunksDone, "chunks done out of", u.TotalChunks-1)
 									recursivelyDeleteChunks(msgId, colls)
 								}
 								delete(as.Uploaders[oi], msgId)

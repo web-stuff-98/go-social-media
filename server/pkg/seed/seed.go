@@ -304,7 +304,7 @@ func generatePostVotes(colls *db.Collections, pid primitive.ObjectID, uids map[p
 }
 
 func generateRoom(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid primitive.ObjectID, i int) (primitive.ObjectID, error) {
-	name := "ExampleRoom" + strconv.Itoa(i)
+	name := "ExampleRoom" + strconv.Itoa(i+1)
 
 	r := helpers.DownloadRandomImage(false)
 	var img image.Image

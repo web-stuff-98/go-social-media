@@ -53,9 +53,6 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, attac
 		eventType, eventTypeOk := data["event_type"]
 
 		if eventTypeOk {
-			if strings.Contains(eventType.(string), "VID") {
-				log.Println(eventType, "FROM", uid.Hex())
-			}
 			// DUPLICATED
 			if eventType == "OPEN_SUBSCRIPTION" || eventType == "CLOSE_SUBSCRIPTION" {
 				// Authorization check for private subscriptions is done inside socketServer

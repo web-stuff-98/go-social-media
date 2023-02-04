@@ -355,8 +355,8 @@ func main() {
 			protectedPids[user.ID] = struct{}{}
 		}*/
 	} else {
-		//DB.Drop(context.Background())
-		//go seed.SeedDB(Collections, 5, 5, 5, protectedUids, protectedPids, protectedRids)
+		DB.Drop(context.Background())
+		go seed.SeedDB(Collections, 5, 10, 5, protectedUids, protectedPids, protectedRids)
 	}
 
 	deleteAccountTicker := time.NewTicker(20 * time.Minute)
