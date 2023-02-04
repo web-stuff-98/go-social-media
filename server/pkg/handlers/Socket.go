@@ -308,7 +308,6 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, attac
 							}, bson.M{
 								"$set": bson.M{"messages.$.content": inMsg.Content},
 							}); res.Err() != nil {
-								log.Println("Update msg err:", res.Err().Error())
 								sendErrorMessageThroughSocket(conn)
 							} else {
 								data := make(map[string]interface{})
@@ -392,6 +391,91 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, attac
 											Data: outBytes,
 										}
 										colls.UserCollection.UpdateByID(context.Background(), uid, bson.M{"$addToSet": bson.M{"rooms_in": roomId}})
+									}
+								}
+							}
+						}
+					}
+				}
+			} else if eventType == "ROOM_MESSAGE_DELETE" {
+				var inMsg socketmodels.RoomMessageDelete
+				if *uid == primitive.NilObjectID {
+					sendErrorMessageThroughSocket(conn)
+				} else {
+					if err := json.Unmarshal(p, &inMsg); err != nil {
+						sendErrorMessageThroughSocket(conn)
+					} else {
+						if roomId, err := primitive.ObjectIDFromHex(inMsg.RoomId); err != nil {
+							sendErrorMessageThroughSocket(conn)
+						} else if msgId, err := primitive.ObjectIDFromHex(inMsg.MsgId); err != nil {
+							sendErrorMessageThroughSocket(conn)
+						} else {
+							if _, err := colls.RoomMessagesCollection.UpdateByID(context.TODO(), roomId, bson.M{"$pull": bson.M{"messages": bson.M{"_id": msgId, "author_id": *uid}}}); err != nil {
+								sendErrorMessageThroughSocket(conn)
+							} else {
+								attachmentServer.DeleteChunksChan <- msgId
+								data := make(map[string]interface{})
+								data["ID"] = msgId.Hex()
+								dataBytes, err := json.Marshal(data)
+								if err != nil {
+									sendErrorMessageThroughSocket(conn)
+								} else {
+									outBytes, err := json.Marshal(socketmodels.OutMessage{
+										Type: "ROOM_MESSAGE_DELETE",
+										Data: string(dataBytes),
+									})
+									if err != nil {
+										sendErrorMessageThroughSocket(conn)
+									} else {
+										socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+											Name: "room=" + roomId.Hex(),
+											Data: outBytes,
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			} else if eventType == "ROOM_MESSAGE_UPDATE" {
+				var inMsg socketmodels.RoomMessageUpdate
+				if *uid == primitive.NilObjectID {
+					sendErrorMessageThroughSocket(conn)
+				} else {
+					if err := json.Unmarshal(p, &inMsg); err != nil {
+						sendErrorMessageThroughSocket(conn)
+					} else {
+						if roomId, err := primitive.ObjectIDFromHex(inMsg.RoomId); err != nil {
+							sendErrorMessageThroughSocket(conn)
+						} else if msgId, err := primitive.ObjectIDFromHex(inMsg.MsgId); err != nil {
+							sendErrorMessageThroughSocket(conn)
+						} else {
+							if res := colls.RoomMessagesCollection.FindOneAndUpdate(context.TODO(), bson.M{
+								"_id":          roomId,
+								"messages._id": msgId,
+							}, bson.M{
+								"$set": bson.M{"messages.$.content": inMsg.Content},
+							}); res.Err() != nil {
+								sendErrorMessageThroughSocket(conn)
+							} else {
+								data := make(map[string]interface{})
+								data["ID"] = msgId.Hex()
+								data["content"] = inMsg.Content
+								dataBytes, err := json.Marshal(data)
+								if err != nil {
+									sendErrorMessageThroughSocket(conn)
+								} else {
+									outBytes, err := json.Marshal(socketmodels.OutMessage{
+										Type: "ROOM_MESSAGE_UPDATE",
+										Data: string(dataBytes),
+									})
+									if err != nil {
+										sendErrorMessageThroughSocket(conn)
+									} else {
+										socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+											Name: "room=" + roomId.Hex(),
+											Data: outBytes,
+										}
 									}
 								}
 							}

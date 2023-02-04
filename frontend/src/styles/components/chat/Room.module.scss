@@ -48,6 +48,14 @@
             font-size: var(--font-xs);
             width: 100%;
           }
+          form {
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            width: 9.866rem;
+            gap:var(--padding-medium)
+          }
         }
       }
     }

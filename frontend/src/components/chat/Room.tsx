@@ -14,6 +14,8 @@ import {
   instanceOfAttachmentProgressData,
   instanceOfChangeData,
   instanceOfRoomMessageData,
+  instanceOfRoomMessageDeleteData,
+  instanceOfRoomMessageUpdateData,
 } from "../../utils/DetermineSocketEvent";
 import { useAuth } from "../../context/AuthContext";
 import { useUsers } from "../../context/UsersContext";
@@ -99,12 +101,38 @@ export default function Room() {
         uploadAttachment(fileRef.current, data.DATA.ID, roomId, true);
         fileRef.current = undefined;
       }
+      return;
     }
     if (instanceOfChangeData(data)) {
       if (data.DATA.ID !== roomId) return;
       if (data.METHOD === "DELETE") {
         setSection(ChatSection.MENU);
       }
+      return;
+    }
+    if (instanceOfRoomMessageDeleteData(data)) {
+      setRoom((o) => {
+        if (!o) return o;
+        return {
+          ...o,
+          messages: [...o.messages.filter((msg) => msg.ID !== data.DATA.ID)],
+        };
+      });
+      return;
+    }
+    if (instanceOfRoomMessageUpdateData(data)) {
+      setRoom((o) => {
+        if (!o) return o;
+        let newMsgs = o.messages;
+        const i = o.messages.findIndex((msg) => msg.ID === data.DATA.ID);
+        if (i === -1) return o;
+        newMsgs[i].content = data.DATA.content;
+        return {
+          ...o,
+          messages: newMsgs,
+        };
+      });
+      return;
     }
     if (instanceOfAttachmentProgressData(data)) {
       setRoom((o) => {
@@ -122,6 +150,7 @@ export default function Room() {
           return o;
         }
       });
+      return;
     }
     if (instanceOfAttachmentCompleteData(data)) {
       setRoom((o) => {
@@ -145,6 +174,7 @@ export default function Room() {
           return o;
         }
       });
+      return;
     }
     // eslint-disable-next-line
   }, []);

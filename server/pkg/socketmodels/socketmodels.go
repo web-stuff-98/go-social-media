@@ -45,6 +45,21 @@ type RoomMessage struct {
 	HasAttachment bool   `json:"has_attachment"`
 }
 
+// TYPE: ROOM_MESSAGE_DELETE (type needs to be TYPE, not event_type, because this goes OUT not in)
+type RoomMessageDelete struct {
+	Type   string `json:"TYPE"`
+	MsgId  string `json:"msg_id"`
+	RoomId string `json:"room_id"`
+}
+
+// TYPE: ROOM_MESSAGE_UPDATE (type needs to be TYPE, not event_type, because this goes OUT not in)
+type RoomMessageUpdate struct {
+	Type    string `json:"TYPE"`
+	MsgId   string `json:"msg_id"`
+	Content string `json:"content"`
+	RoomId  string `json:"room_id"`
+}
+
 // TYPE: OPEN_SUBSCRIPTION/CLOSE_SUBSCRIPTION
 type OpenCloseSubscription struct {
 	Name string `json:"name"`

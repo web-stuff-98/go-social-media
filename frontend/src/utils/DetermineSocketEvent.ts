@@ -33,6 +33,19 @@ export type RoomMessageData = {
   TYPE: "ROOM_MESSAGE";
   DATA: IRoomMessage;
 };
+export type RoomMessageDeleteData = {
+  TYPE: "ROOM_MESSAGE_DELETE";
+  DATA: {
+    ID: string;
+  };
+};
+export type RoomMessageUpdateData = {
+  TYPE: "ROOM_MESSAGE_UPDATE";
+  DATA: {
+    ID: string;
+    content: string;
+  };
+};
 export type PostVoteData = {
   TYPE: "POST_VOTE";
   DATA: { ID: string; is_upvote: boolean; remove: boolean };
@@ -106,6 +119,18 @@ export function instanceOfRoomMessageData(
   return object.TYPE === "ROOM_MESSAGE";
 }
 
+export function instanceOfRoomMessageDeleteData(
+  object: any
+): object is RoomMessageDeleteData {
+  return object.TYPE === "ROOM_MESSAGE_DELETE";
+}
+
+export function instanceOfRoomMessageUpdateData(
+  object: any
+): object is RoomMessageUpdateData {
+  return object.TYPE === "ROOM_MESSAGE_UPDATE";
+}
+
 export function instanceOfPostVoteData(object: any): object is PostVoteData {
   return object.TYPE === "POST_VOTE";
 }
@@ -162,12 +187,15 @@ export function instanceOfReceivingReturnedSignal(
 ): object is VidReceivingReturnedSignal {
   return object.TYPE === "VID_RECEIVING_RETURNED_SIGNAL";
 }
+
 export function instanceOfVidAllUsers(object: any): object is VidAllUsersData {
   return object.TYPE === "VID_ALL_USERS";
 }
+
 export function instanceOfVidUserLeft(object: any): object is VidUserLeftData {
   return object.TYPE === "VID_USER_LEFT";
 }
+
 export function instanceOfVidUserJoined(
   object: any
 ): object is VidUserJoinedData {
