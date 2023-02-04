@@ -12,6 +12,8 @@ import {
   instanceOfAttachmentCompleteData,
   instanceOfAttachmentProgressData,
   instanceOfPrivateMessageData,
+  instanceOfPrivateMessageDeleteData,
+  instanceOfPrivateMessageUpdateData,
 } from "../../utils/DetermineSocketEvent";
 import { useModal } from "../../context/ModalContext";
 import { getConversations, getConversation } from "../../services/chat";
@@ -175,6 +177,39 @@ export default function Inbox() {
         }
       }
     }
+    if (instanceOfPrivateMessageDeleteData(data)) {
+      if (data.DATA.recipient_id === selectedConversationRef.current) {
+        setInbox((inbox) => {
+          let newInbox = inbox;
+          const i = inbox[
+            selectedConversationIndexRef.current
+          ].messages.findIndex((msg) => msg.ID === data.DATA.ID);
+          if (i !== -1) {
+            newInbox[selectedConversationIndexRef.current].messages.splice(i);
+            return [...newInbox];
+          } else {
+            return inbox;
+          }
+        });
+      }
+    }
+    if (instanceOfPrivateMessageUpdateData(data)) {
+      if (data.DATA.recipient_id === selectedConversationRef.current) {
+        setInbox((inbox) => {
+          let newInbox = inbox;
+          const i = inbox[
+            selectedConversationIndexRef.current
+          ].messages.findIndex((msg) => msg.ID === data.DATA.ID);
+          if (i !== -1) {
+            newInbox[selectedConversationIndexRef.current].messages[i].content =
+              data.DATA.content;
+            return [...newInbox];
+          } else {
+            return inbox;
+          }
+        });
+      }
+    }
     if (instanceOfAttachmentProgressData(data)) {
       if (selectedConversationIndexRef.current !== -1) {
         setInbox((inbox) => {
@@ -318,14 +353,19 @@ export default function Inbox() {
         >
           {selectedConversation && <VideoChat id={selectedConversation} />}
           <div className={classes.messages}>
-            {selectedConversation &&
+            {selectedConversation ? (
               inbox[selectedConversationIndex].messages.map((msg) => (
                 <PrivateMessage
                   key={msg.ID}
                   reverse={msg.uid !== currentUser?.ID}
                   msg={msg}
                 />
-              ))}
+              ))
+            ) : (
+              <div className={classes.emptyInboxMessage}>
+                You can click on a users image to start a conversation
+              </div>
+            )}
           </div>
         </div>
         <form

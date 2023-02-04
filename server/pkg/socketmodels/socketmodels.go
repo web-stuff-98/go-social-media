@@ -22,6 +22,21 @@ type PrivateMessage struct {
 	HasAttachment bool   `json:"has_attachment"`
 }
 
+// TYPE: PRIVATE_MESSAGE_DELETE (type needs to be TYPE, not event_type, because this goes OUT not in)
+type PrivateMessageDelete struct {
+	Type        string `json:"TYPE"`
+	MsgId       string `json:"msg_id"`
+	RecipientId string `json:"recipient_id"`
+}
+
+// TYPE: PRIVATE_MESSAGE_UPDATE (type needs to be TYPE, not event_type, because this goes OUT not in)
+type PrivateMessageUpdate struct {
+	Type        string `json:"TYPE"`
+	MsgId       string `json:"msg_id"`
+	Content     string `json:"content"`
+	RecipientId string `json:"recipient_id"`
+}
+
 // TYPE: ROOM_MESSAGE (type needs to be TYPE, not event_type, because this goes OUT not in)
 type RoomMessage struct {
 	Type          string `json:"TYPE"`
@@ -40,7 +55,7 @@ type OpenCloseSubscriptions struct {
 	Names []string `json:"names"`
 }
 
-// TYPE: ROOM_MESSAGE/PRIVATE_MESSAGE/POST_VOTE/POST_COMMENT_VOTE/ATTACHMENT_PROGRESS/ATTACHMENT_COMPLETE/RESPONSE_MESSAGE/NOTIFICATIONS
+// TYPE: ROOM_MESSAGE/ROOM_MESSAGE_DELETE/ROOM_MESSAGE_UPDATE/PRIVATE_MESSAGE/PRIVATE_MESSAGE_DELETE/PRIVATE_MESSAGE_UPDATE/POST_VOTE/POST_COMMENT_VOTE/ATTACHMENT_PROGRESS/ATTACHMENT_COMPLETE/RESPONSE_MESSAGE/NOTIFICATIONS
 type OutMessage struct {
 	Type string `json:"TYPE"`
 	Data string `json:"DATA"`

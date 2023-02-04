@@ -14,6 +14,21 @@ export type PrivateMessageData = {
   TYPE: "PRIVATE_MESSAGE";
   DATA: IPrivateMessage;
 };
+export type PrivateMessageDeleteData = {
+  TYPE: "PRIVATE_MESSAGE_DELETE";
+  DATA: {
+    ID: string;
+    recipient_id: string;
+  };
+};
+export type PrivateMessageUpdateData = {
+  TYPE: "PRIVATE_MESSAGE_UPDATE";
+  DATA: {
+    ID: string;
+    content: string;
+    recipient_id: string;
+  };
+};
 export type RoomMessageData = {
   TYPE: "ROOM_MESSAGE";
   DATA: IRoomMessage;
@@ -71,6 +86,18 @@ export function instanceOfPrivateMessageData(
   object: any
 ): object is PrivateMessageData {
   return object.TYPE === "PRIVATE_MESSAGE";
+}
+
+export function instanceOfPrivateMessageDeleteData(
+  object: any
+): object is PrivateMessageDeleteData {
+  return object.TYPE === "PRIVATE_MESSAGE_DELETE";
+}
+
+export function instanceOfPrivateMessageUpdateData(
+  object: any
+): object is PrivateMessageUpdateData {
+  return object.TYPE === "PRIVATE_MESSAGE_UPDATE";
 }
 
 export function instanceOfRoomMessageData(

@@ -10,7 +10,19 @@
     line-height: 1;
     display: flex;
     flex-direction: column;
-    gap:var(--padding-small);
+    gap: var(--padding-small);
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--padding-small);
+  }
+
+  textarea {
+    max-width: 7.65rem;
+    font-size: var(--font-xs);
+    height: 5rem;
   }
 
   .date {
@@ -18,10 +30,11 @@
     flex-direction: column;
     text-align: right;
     height: 100%;
+    padding: var(--padding);
     span {
       line-height: 0.9;
       font-size: 0.866rem;
-      color:var(--base-heavy);
+      color: var(--base-heavy);
     }
   }
 }

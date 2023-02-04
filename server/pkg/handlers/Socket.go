@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/web-stuff-98/go-social-media/pkg/attachmentserver"
 	"github.com/web-stuff-98/go-social-media/pkg/db"
 	"github.com/web-stuff-98/go-social-media/pkg/db/models"
 	"github.com/web-stuff-98/go-social-media/pkg/helpers"
@@ -26,11 +27,12 @@ var upgrader = websocket.Upgrader{
 }
 
 /*
-	This is where private message and room messages socket event are triggered from, some are triggered from API routes,
-	like voting & commenting
+	This is where private message and room messages socket event are triggered from, some are triggered from API routes.
+
+	Voting and commenting are done in the API handlers, I could have put that in here but I didn't
 */
 
-func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *primitive.ObjectID, colls *db.Collections) {
+func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, attachmentServer *attachmentserver.AttachmentServer, uid *primitive.ObjectID, colls *db.Collections) {
 	for {
 		_, p, err := conn.ReadMessage()
 		if err != nil {
@@ -234,6 +236,126 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, uid *
 													Data: outBytes,
 												}
 											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			} else if eventType == "PRIVATE_MESSAGE_DELETE" {
+				var inMsg socketmodels.PrivateMessageDelete
+				if *uid == primitive.NilObjectID {
+					sendErrorMessageThroughSocket(conn)
+				} else {
+					if err := json.Unmarshal(p, &inMsg); err != nil {
+						sendErrorMessageThroughSocket(conn)
+					} else {
+						if recipientId, err := primitive.ObjectIDFromHex(inMsg.RecipientId); err != nil {
+							sendErrorMessageThroughSocket(conn)
+						} else if msgId, err := primitive.ObjectIDFromHex(inMsg.MsgId); err != nil {
+							sendErrorMessageThroughSocket(conn)
+						} else {
+							if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, bson.M{"$pull": bson.M{"messages": bson.M{"_id": msgId, "author_id": *uid}}}); err != nil {
+								sendErrorMessageThroughSocket(conn)
+							} else {
+								attachmentServer.DeleteChunksChan <- msgId
+								data := make(map[string]interface{})
+								data["ID"] = msgId.Hex()
+								data["recipient_id"] = recipientId.Hex()
+								dataBytes, err := json.Marshal(data)
+								if err != nil {
+									sendErrorMessageThroughSocket(conn)
+								} else {
+									outBytes, err := json.Marshal(socketmodels.OutMessage{
+										Type: "PRIVATE_MESSAGE_DELETE",
+										Data: string(dataBytes),
+									})
+									if err != nil {
+										sendErrorMessageThroughSocket(conn)
+									} else {
+										socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+											Name: "inbox=" + recipientId.Hex(),
+											Data: outBytes,
+										}
+										// Also send the message to the sender
+										socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+											Name: "inbox=" + uid.Hex(),
+											Data: outBytes,
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			} else if eventType == "PRIVATE_MESSAGE_UPDATE" {
+				var inMsg socketmodels.PrivateMessageUpdate
+				if *uid == primitive.NilObjectID {
+					sendErrorMessageThroughSocket(conn)
+				} else {
+					if err := json.Unmarshal(p, &inMsg); err != nil {
+						sendErrorMessageThroughSocket(conn)
+					} else {
+						if recipientId, err := primitive.ObjectIDFromHex(inMsg.RecipientId); err != nil {
+							sendErrorMessageThroughSocket(conn)
+						} else if msgId, err := primitive.ObjectIDFromHex(inMsg.MsgId); err != nil {
+							sendErrorMessageThroughSocket(conn)
+						} else {
+							if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, []bson.M{
+								{
+									"$set": bson.M{
+										"messages": bson.M{
+											"$map": bson.M{
+												"input": "$messages",
+												"as":    "message",
+												"in": bson.M{
+													"$cond": bson.M{
+														"if": bson.M{
+															"$eq": []interface{}{"$$message._id", msgId},
+														},
+														"then": bson.M{
+															"$mergeObjects": []interface{}{
+																"$$message",
+																bson.M{
+																	"content": inMsg.Content,
+																},
+															},
+														},
+														"else": "$$message",
+													},
+												},
+											},
+										},
+									},
+								},
+							}); err != nil {
+								log.Println("Update msg err:", err)
+								sendErrorMessageThroughSocket(conn)
+							} else {
+								data := make(map[string]interface{})
+								data["ID"] = msgId.Hex()
+								data["content"] = inMsg.Content
+								data["recipient_id"] = recipientId.Hex()
+								dataBytes, err := json.Marshal(data)
+								if err != nil {
+									sendErrorMessageThroughSocket(conn)
+								} else {
+									outBytes, err := json.Marshal(socketmodels.OutMessage{
+										Type: "PRIVATE_MESSAGE_UPDATE",
+										Data: string(dataBytes),
+									})
+									if err != nil {
+										sendErrorMessageThroughSocket(conn)
+									} else {
+										socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+											Name: "inbox=" + recipientId.Hex(),
+											Data: outBytes,
+										}
+										// Also send the message to the sender because they need to be able to see their own message
+										socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+											Name: "inbox=" + uid.Hex(),
+											Data: outBytes,
 										}
 									}
 								}
@@ -496,5 +618,5 @@ func (h handler) WebSocketEndpoint(w http.ResponseWriter, r *http.Request) {
 			VidChatOpen: false,
 		}
 	}()
-	reader(ws, h.SocketServer, &uid, h.Collections)
+	reader(ws, h.SocketServer, h.AttachmentServer, &uid, h.Collections)
 }
