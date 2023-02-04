@@ -302,35 +302,13 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, attac
 						} else if msgId, err := primitive.ObjectIDFromHex(inMsg.MsgId); err != nil {
 							sendErrorMessageThroughSocket(conn)
 						} else {
-							if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, []bson.M{
-								{
-									"$set": bson.M{
-										"messages": bson.M{
-											"$map": bson.M{
-												"input": "$messages",
-												"as":    "message",
-												"in": bson.M{
-													"$cond": bson.M{
-														"if": bson.M{
-															"$eq": []interface{}{"$$message._id", msgId},
-														},
-														"then": bson.M{
-															"$mergeObjects": []interface{}{
-																"$$message",
-																bson.M{
-																	"content": inMsg.Content,
-																},
-															},
-														},
-														"else": "$$message",
-													},
-												},
-											},
-										},
-									},
-								},
-							}); err != nil {
-								log.Println("Update msg err:", err)
+							if res := colls.InboxCollection.FindOneAndUpdate(context.TODO(), bson.M{
+								"_id":          recipientId,
+								"messages._id": msgId,
+							}, bson.M{
+								"$set": bson.M{"messages.$.content": inMsg.Content},
+							}); res.Err() != nil {
+								log.Println("Update msg err:", res.Err().Error())
 								sendErrorMessageThroughSocket(conn)
 							} else {
 								data := make(map[string]interface{})
