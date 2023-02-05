@@ -317,6 +317,7 @@ func (h handler) AcceptRoomInvite(w http.ResponseWriter, r *http.Request) {
 	data := make(map[string]interface{})
 	data["ID"] = msgId.Hex()
 	data["invitation_accepted"] = true
+	data["recipient_id"] = user.ID.Hex()
 	dataBytes, err := json.Marshal(data)
 
 	outBytes, err := json.Marshal(socketmodels.OutMessage{
@@ -324,26 +325,24 @@ func (h handler) AcceptRoomInvite(w http.ResponseWriter, r *http.Request) {
 		Data: string(dataBytes),
 	})
 
-	h.SocketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-		Name: "inbox=" + uid.Hex(),
-		Data: outBytes,
-	}
-	// Also send the message to the sender because they need to be able to see their own message
-	h.SocketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-		Name: "inbox=" + user.ID.Hex(),
-		Data: outBytes,
+	h.SocketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+		Names: []string{"inbox=" + uid.Hex(), "inbox=" + user.ID.Hex()},
+		Data:  outBytes,
 	}
 
-	outChangeBytes, err := json.Marshal(socketmodels.OutChangeMessage{
-		Type:   "CHANGE",
-		Method: "INSERT",
-		Entity: "MEMBER",
-		Data:   `{"ID":"` + uid.Hex() + `"}`,
-	})
-	h.SocketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-		Name: "room_private_data=" + room.ID.Hex(),
-		Data: outChangeBytes,
-	}
+	go func() {
+		if outChangeBytes, err := json.Marshal(socketmodels.OutChangeMessage{
+			Type:   "CHANGE",
+			Method: "INSERT",
+			Entity: "MEMBER",
+			Data:   `{"ID":"` + user.ID.Hex() + `"}`,
+		}); err != nil {
+			h.SocketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+				Name: "room_private_data=" + room.ID.Hex(),
+				Data: outChangeBytes,
+			}
+		}
+	}()
 
 	responseMessage(w, http.StatusOK, "Invitation accepted")
 }
@@ -407,6 +406,7 @@ func (h handler) DeclineRoomInvite(w http.ResponseWriter, r *http.Request) {
 	data := make(map[string]interface{})
 	data["ID"] = msgId.Hex()
 	data["invitation_declined"] = true
+	data["recipient_id"] = user.ID.Hex()
 	dataBytes, err := json.Marshal(data)
 
 	outBytes, err := json.Marshal(socketmodels.OutMessage{
@@ -414,14 +414,9 @@ func (h handler) DeclineRoomInvite(w http.ResponseWriter, r *http.Request) {
 		Data: string(dataBytes),
 	})
 
-	h.SocketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-		Name: "inbox=" + uid.Hex(),
-		Data: outBytes,
-	}
-	// Also send the message to the sender because they need to be able to see their own message
-	h.SocketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-		Name: "inbox=" + user.ID.Hex(),
-		Data: outBytes,
+	h.SocketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+		Names: []string{"inbox=" + uid.Hex(), "inbox=" + user.ID.Hex()},
+		Data:  outBytes,
 	}
 
 	responseMessage(w, http.StatusOK, "Invitation declined")
@@ -838,7 +833,7 @@ func (h handler) UpdateRoom(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	result, err := h.Collections.PostCollection.UpdateByID(r.Context(), room.ID, bson.M{
+	result, err := h.Collections.RoomCollection.UpdateByID(r.Context(), roomId, bson.M{
 		"$set": bson.M{
 			"name":    roomInput.Name,
 			"private": roomInput.Private,
@@ -846,7 +841,7 @@ func (h handler) UpdateRoom(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if result.MatchedCount == 0 {
-		responseMessage(w, http.StatusNotFound, "Room not found")
+		responseMessage(w, http.StatusBadRequest, "Room not matched")
 		return
 	}
 

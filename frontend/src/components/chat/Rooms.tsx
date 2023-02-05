@@ -17,7 +17,11 @@ import Toggle from "../shared/Toggle";
 export default function Rooms() {
   const { socket, openSubscription, closeSubscription } = useSocket();
 
-  const [onlyOwnRooms, setOnlyOwnRooms] = useState(false);
+  const [onlyOwnRooms, setOnlyOwnRoomsState] = useState(false);
+  const setOnlyOwnRooms = (to: boolean) => {
+    setPageNum(1);
+    setOnlyOwnRoomsState(to);
+  };
   const [pageNum, setPageNum] = useState(1);
   const [page, setPage] = useState<IRoomCard[]>([]);
   const [count, setCount] = useState(0);
@@ -42,7 +46,11 @@ export default function Rooms() {
 
   const updatePage = async () => {
     try {
-      const { count, rooms } = await getRoomPage(pageNum, searchInput, onlyOwnRooms);
+      const { count, rooms } = await getRoomPage(
+        pageNum,
+        searchInput,
+        onlyOwnRooms
+      );
       setCount(Number(count));
       setPage(JSON.parse(rooms) as IRoomCard[]);
       setResMsg({ msg: "", err: false, pen: false });

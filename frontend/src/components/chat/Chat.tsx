@@ -66,7 +66,7 @@ export const ChatContext = createContext<{
   streamToggling: boolean;
 
   handleCreateUpdateRoom: (
-    vals: { name: string; image?: File },
+    vals: { name: string; image?: File; private: boolean },
     originalImageChanged: boolean,
     numErrs: number
   ) => void;
@@ -160,7 +160,7 @@ export default function Chat() {
   };
 
   const handleCreateUpdateRoom = async (
-    vals: { name: string; image?: File },
+    vals: { name: string; image?: File; private: boolean },
     originalImageChanged: boolean,
     numErrs: number
   ) => {
@@ -170,6 +170,7 @@ export default function Chat() {
       id = editRoomId;
       await updateRoom({
         name: vals.name,
+        private: vals.private,
         ID: editRoomId,
       });
     } else {

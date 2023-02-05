@@ -155,6 +155,7 @@ export default function Inbox() {
             return [...newInbox];
           });
         } else {
+          console.log("Recipient ID doesn't match")
           // If there's no current conversation create one
           setInbox((inbox) => {
             let newInbox = inbox;

@@ -36,8 +36,6 @@ export default function VideoChat({
     // eslint-disable-next-line
   }, []);
 
-  //const renderUserName = (user?: IUser) => (user ? user?.username : "user");
-
   return (
     <div
       style={

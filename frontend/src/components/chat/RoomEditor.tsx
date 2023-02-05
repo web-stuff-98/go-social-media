@@ -61,7 +61,7 @@ export default function RoomEditor() {
   const formik = useFormik({
     initialValues: { name: "", image: null, private: false },
     validate,
-    onSubmit: async (vals: { name: string; image?: any }) => {
+    onSubmit: async (vals: { name: string; image?: any; private: boolean }) => {
       try {
         setResMsg({ msg: "", pen: true, err: false });
         handleCreateUpdateRoom(
@@ -71,7 +71,7 @@ export default function RoomEditor() {
         );
         setResMsg({ msg: "", pen: false, err: false });
       } catch (e) {
-        setResMsg({ msg: `${e}`, pen: false, err: false });
+        setResMsg({ msg: `${e}`, pen: false, err: true });
       }
     },
   });

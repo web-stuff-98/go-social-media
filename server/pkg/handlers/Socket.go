@@ -30,7 +30,75 @@ var upgrader = websocket.Upgrader{
 	Socket event handling.
 
 	Voting and commenting and room invites are done in the API handlers, I could have put that in here but I didn't
+
+	Todo:
+	 - probably write some functions for better error handling
+	 - maybe write some functions and refactor so that there aren't so many if statements and lots of indentation
+
 */
+
+/* else if eventType == "ACCEPT_INVITATION" {
+	var inMsg socketmodels.AcceptDeclineInvitation
+	if err := json.Unmarshal(p, &inMsg); err != nil {
+		sendErrorMessageThroughSocket(conn)
+	} else {
+		if senderId, err := primitive.ObjectIDFromHex(inMsg.SenderId); err != nil {
+			sendErrorMessageThroughSocket(conn)
+		} else {
+			if msgId, err := primitive.ObjectIDFromHex(inMsg.MsgId); err != nil {
+				sendErrorMessageThroughSocket(conn)
+			} else {
+				inbox := &models.Inbox{}
+				msg := &models.PrivateMessage{}
+				foundMsg := false
+				if err := colls.InboxCollection.FindOne(context.Background(), bson.M{"_id": uid}).Decode(&inbox); err != nil {
+					sendErrorMessageThroughSocket(conn)
+				} else {
+					for _, pm := range inbox.Messages {
+						if pm.ID == msgId {
+							msg = &pm
+							foundMsg = true
+							break
+						}
+					}
+					if !foundMsg {
+						sendErrorMessageThroughSocket(conn)
+					} else {
+						if !msg.IsInvitation || msg.Uid == *uid || msg.Uid != senderId {
+							sendErrorMessageThroughSocket(conn)
+						} else {
+							if res := colls.InboxCollection.FindOneAndUpdate(context.Background(), bson.M{
+								"_id":          uid,
+								"messages._id": msgId,
+							}, bson.M{
+								"$set": bson.M{"messages.$.invitation_accepted": true},
+							}); res.Err() != nil {
+								sendErrorMessageThroughSocket(conn)
+							} else {
+								if roomId, err := primitive.ObjectIDFromHex(msg.Content); err != nil {
+									sendErrorMessageThroughSocket(conn)
+								} else {
+									if res := colls.RoomPrivateDataCollection.FindOneAndUpdate(context.Background(), bson.M{
+										"_id": roomId,
+									}, bson.M{
+										"$addToSet": bson.M{"members": uid},
+										"$pull":     bson.M{"banned": uid},
+									}); res.Err() != nil {
+										sendErrorMessageThroughSocket(conn)
+									} else {
+
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+} else if eventType == "DECLINE_INVITATION" {
+
+}*/
 
 func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, attachmentServer *attachmentserver.AttachmentServer, uid *primitive.ObjectID, colls *db.Collections) {
 	for {
@@ -149,6 +217,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, attac
 					if err := json.Unmarshal(p, &inMsg); err != nil {
 						sendErrorMessageThroughSocket(conn)
 					} else {
+						inMsg.Type = "PRIVATE_MESSAGE"
 						inBytes, err := json.Marshal(inMsg)
 						socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 							Name: "inbox=" + inMsg.RecipientId,

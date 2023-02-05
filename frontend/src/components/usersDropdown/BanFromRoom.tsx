@@ -45,6 +45,7 @@ export default function BanFromRoom({
 
   useEffect(() => {
     getRooms();
+    // eslint-disable-next-line
   }, []);
 
   return (
@@ -52,7 +53,7 @@ export default function BanFromRoom({
       <ul id="rooms list" className={classes.roomsList}>
         <label htmlFor="rooms list">Ban user from room</label>
         {rooms.map((room) => (
-          <li>
+          <li key={room.ID}>
             <button
               onClick={() => ban(room.ID)}
               style={

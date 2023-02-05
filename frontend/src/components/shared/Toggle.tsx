@@ -13,6 +13,7 @@ export default function Toggle({
     <div className={classes.container}>
       <label htmlFor={label}>{label}</label>
       <button
+      type="button"
         onClick={() => setToggledOn(!toggledOn)}
         aria-label={label}
         id={label}

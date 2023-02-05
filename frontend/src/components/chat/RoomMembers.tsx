@@ -62,23 +62,32 @@ export default function RoomMembers() {
     if (!data["DATA"]) return;
     data["DATA"] = JSON.parse(data["DATA"]);
     if (instanceOfChangeData(data)) {
-      if (data.ENTITY === "MEMBER" || data.ENTITY === "BANNED") {
-        const key = data.ENTITY === "MEMBER" ? "members" : "banned";
-        const otherKey = data.ENTITY === "MEMBER" ? "banned" : "members";
+      if (data.ENTITY === "MEMBER") {
         if (data.METHOD === "DELETE") {
-          setData((o) => {
-            let newData = o;
-            newData[key].filter((uid) => uid !== data.DATA.ID);
-            return newData;
-          });
+          setData((o) => ({
+            members: [...o.members.filter((uid) => uid !== data.DATA.ID)],
+            banned: o.banned,
+          }));
         }
         if (data.METHOD === "INSERT") {
-          setData((o) => {
-            let newData = o;
-            newData[key].push(data.DATA.ID);
-            newData[otherKey].filter((uid) => uid !== data.DATA.ID);
-            return newData;
-          });
+          setData((o) => ({
+            members: [...o.members, data.DATA.ID],
+            banned: [...o.banned.filter((uid) => uid !== data.DATA.ID)],
+          }));
+        }
+      }
+      if (data.ENTITY === "BANNED") {
+        if (data.METHOD === "DELETE") {
+          setData((o) => ({
+            banned: [...o.banned.filter((uid) => uid !== data.DATA.ID)],
+            members: o.members,
+          }));
+        }
+        if (data.METHOD === "INSERT") {
+          setData((o) => ({
+            banned: [...o.banned, data.DATA.ID],
+            members: [...o.members.filter((uid) => uid !== data.DATA.ID)],
+          }));
         }
       }
     }
@@ -90,6 +99,7 @@ export default function RoomMembers() {
     return () => {
       socket?.removeEventListener("message", handleMessage);
     };
+    // eslint-disable-next-line
   }, [socket]);
 
   return (

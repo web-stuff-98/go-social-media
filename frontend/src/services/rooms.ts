@@ -2,17 +2,18 @@ import axios from "axios";
 import { IRoomCard } from "../interfaces/ChatInterfaces";
 import { makeRequest } from "./makeRequest";
 
-const createRoom = (data: Pick<IRoomCard, "name">) =>
+const createRoom = (data: Pick<IRoomCard, "name" | "private">) =>
   makeRequest("/api/rooms", {
     method: "POST",
     withCredentials: true,
     data,
   });
 
-const updateRoom = (data: Pick<IRoomCard, "name" | "ID">) =>
+const updateRoom = (data: Pick<IRoomCard, "name" | "ID" | "private">) =>
   makeRequest(`/api/rooms/${data.ID}/update`, {
     method: "PATCH",
     withCredentials: true,
+    data,
   });
 
 const getRoom = (id: string) =>

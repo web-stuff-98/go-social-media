@@ -27,6 +27,8 @@ export type PrivateMessageUpdateData = {
     ID: string;
     content: string;
     recipient_id: string;
+    invitation_accepted?: boolean;
+    invitation_declined?: boolean;
   };
 };
 export type RoomMessageData = {

@@ -1,9 +1,17 @@
-import { useState, useContext, createContext } from "react";
+import {
+  useState,
+  useContext,
+  createContext,
+  useCallback,
+  useEffect,
+} from "react";
 import type { ReactNode } from "react";
 import { ImSpinner8 } from "react-icons/im";
 import { BiError } from "react-icons/bi";
 
 import classes from "../styles/components/shared/Modal.module.scss";
+import { instanceOfResponseMessageData } from "../utils/DetermineSocketEvent";
+import useSocket from "./SocketContext";
 
 /**
  *
@@ -48,6 +56,8 @@ export const ModalContext = createContext<{
 });
 
 export const ModalProvider = ({ children }: { children: ReactNode }) => {
+  const { socket } = useSocket();
+
   const [modalType, setModalType] = useState<"Message" | "Confirm">("Message");
   const [modalData, setModalData] = useState<IModalData>(defaultModalData);
   const [showModal, setShowModal] = useState(false);
@@ -65,6 +75,28 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
   };
   const setData = (data: Partial<IModalData>) =>
     setModalData((old) => ({ ...old, ...data }));
+
+  const handleMessage = useCallback((e: MessageEvent) => {
+    const data = JSON.parse(e.data);
+    if (!data["DATA"]) return;
+    data["DATA"] = JSON.parse(data["DATA"]);
+    if (instanceOfResponseMessageData(e.data)) {
+      openModal("Message", {
+        msg: data.msg,
+        err: data.err,
+        pen: false,
+      });
+    }
+    // eslint-disable-next-line
+  }, []);
+
+  useEffect(() => {
+    socket?.addEventListener("message", handleMessage);
+    return () => {
+      socket?.removeEventListener("message", handleMessage);
+    };
+    // eslint-disable-next-line
+  }, [socket]);
 
   return (
     <ModalContext.Provider value={{ openModal, closeModal, setData }}>

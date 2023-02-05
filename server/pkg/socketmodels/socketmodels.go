@@ -14,7 +14,7 @@ type OpenExitConv struct {
 	Uid string `json:"uid"`
 }
 
-// TYPE: PRIVATE_MESSAGE (type needs to be TYPE, not event_type, because this goes OUT not in)
+// TYPE: PRIVATE_MESSAGE
 type PrivateMessage struct {
 	Type          string `json:"TYPE"`
 	RecipientId   string `json:"recipient_id"`
@@ -22,14 +22,14 @@ type PrivateMessage struct {
 	HasAttachment bool   `json:"has_attachment"`
 }
 
-// TYPE: PRIVATE_MESSAGE_DELETE (type needs to be TYPE, not event_type, because this goes OUT not in)
+// TYPE: PRIVATE_MESSAGE_DELETE
 type PrivateMessageDelete struct {
 	Type        string `json:"TYPE"`
 	MsgId       string `json:"msg_id"`
 	RecipientId string `json:"recipient_id"`
 }
 
-// TYPE: PRIVATE_MESSAGE_UPDATE (type needs to be TYPE, not event_type, because this goes OUT not in)
+// TYPE: PRIVATE_MESSAGE_UPDATE
 type PrivateMessageUpdate struct {
 	Type        string `json:"TYPE"`
 	MsgId       string `json:"msg_id"`
@@ -37,7 +37,7 @@ type PrivateMessageUpdate struct {
 	RecipientId string `json:"recipient_id"`
 }
 
-// TYPE: ROOM_MESSAGE (type needs to be TYPE, not event_type, because this goes OUT not in)
+// TYPE: ROOM_MESSAGE
 type RoomMessage struct {
 	Type          string `json:"TYPE"`
 	RoomId        string `json:"room_id"`
@@ -45,19 +45,25 @@ type RoomMessage struct {
 	HasAttachment bool   `json:"has_attachment"`
 }
 
-// TYPE: ROOM_MESSAGE_DELETE (type needs to be TYPE, not event_type, because this goes OUT not in)
+// TYPE: ROOM_MESSAGE_DELETE
 type RoomMessageDelete struct {
 	Type   string `json:"TYPE"`
 	MsgId  string `json:"msg_id"`
 	RoomId string `json:"room_id"`
 }
 
-// TYPE: ROOM_MESSAGE_UPDATE (type needs to be TYPE, not event_type, because this goes OUT not in)
+// TYPE: ROOM_MESSAGE_UPDATE
 type RoomMessageUpdate struct {
 	Type    string `json:"TYPE"`
 	MsgId   string `json:"msg_id"`
 	Content string `json:"content"`
 	RoomId  string `json:"room_id"`
+}
+
+// TYPE: ACCEPT_INVITATION/DECLINE_INVITATION
+type AcceptDeclineInvitation struct {
+	Type  string `json:"TYPE"`
+	MsgId string `json:"msg_id"`
 }
 
 // TYPE: OPEN_SUBSCRIPTION/CLOSE_SUBSCRIPTION

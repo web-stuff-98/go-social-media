@@ -22,7 +22,7 @@ type Vote struct {
 
 type Room struct {
 	Name    string `json:"name" validate:"required,min=2,max=16"`
-	Private bool   `json:"private" validate:"required"`
+	Private bool   `json:"private"`
 }
 
 type PostComment struct {

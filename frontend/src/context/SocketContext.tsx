@@ -1,13 +1,5 @@
-import {
-  useEffect,
-  useState,
-  useContext,
-  createContext,
-  useCallback,
-} from "react";
+import { useEffect, useState, useContext, createContext } from "react";
 import type { ReactNode } from "react";
-import { useModal } from "./ModalContext";
-import { instanceOfResponseMessageData } from "../utils/DetermineSocketEvent";
 
 /*
 Change events (DELETE, INSERT, UPDATE) come through from the server like this :
@@ -36,8 +28,6 @@ export const SocketContext = createContext<{
 });
 
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
-  const { openModal } = useModal();
-
   const [socket, setSocket] = useState<WebSocket | undefined>(undefined);
 
   // Store subscriptions in state so that if the websocket reconnects the subscriptions can be opened back up again
@@ -119,31 +109,15 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     setOpenSubscriptions((o) => [...o.filter((o) => o !== subscriptionName)]);
   };
 
-  const handleMessage = useCallback((e: MessageEvent) => {
-    const data = JSON.parse(e.data);
-    if (!data["DATA"]) return;
-    data["DATA"] = JSON.parse(data["DATA"]);
-    if (instanceOfResponseMessageData(e.data)) {
-      openModal("Message", {
-        msg: data.msg,
-        err: data.err,
-        pen: false,
-      });
-    }
-    // eslint-disable-next-line
-  }, []);
-
   useEffect(() => {
     if (socket) {
       socket.addEventListener("open", onOpen);
       socket.addEventListener("close", connectSocket);
-      socket.addEventListener("message", handleMessage);
     } else connectSocket();
     return () => {
       if (socket) {
         socket.removeEventListener("open", onOpen);
         socket.removeEventListener("close", connectSocket);
-        socket.removeEventListener("message", handleMessage);
         socket.close();
       }
     };

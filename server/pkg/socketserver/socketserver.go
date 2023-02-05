@@ -249,7 +249,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 						allow = false
 					} else {
 						id, err := primitive.ObjectIDFromHex(strings.ReplaceAll(connData.Name, "room_private_data=", ""))
-						if err != nil {
+						if err == nil {
 							room := &models.Room{}
 							if err := colls.RoomCollection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&room); err != nil {
 								allow = false
@@ -257,21 +257,21 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 								if room.Author != connData.Uid {
 									allow = false
 								}
-							}
-							roomPrivateData := &models.RoomPrivateData{}
-							foundInMembers := false
-							if err := colls.RoomPrivateDataCollection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&roomPrivateData); err != nil {
-								allow = false
-							} else {
-								for _, oi := range roomPrivateData.Members {
-									if oi == connData.Uid {
-										foundInMembers = true
-										break
+								roomPrivateData := &models.RoomPrivateData{}
+								foundInMembers := false
+								if err := colls.RoomPrivateDataCollection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&roomPrivateData); err != nil {
+									allow = false
+								} else {
+									for _, oi := range roomPrivateData.Members {
+										if oi == connData.Uid {
+											foundInMembers = true
+											break
+										}
 									}
 								}
-							}
-							if foundInMembers || room.Author == connData.Uid {
-								allow = true
+								if foundInMembers || room.Author == connData.Uid {
+									allow = true
+								}
 							}
 						} else {
 							allow = false
