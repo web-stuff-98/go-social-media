@@ -1,13 +1,6 @@
 import classes from "../../styles/components/chat/Chat.module.scss";
 import Inbox from "./Inbox";
-import {
-  useState,
-  createContext,
-  useContext,
-  useRef,
-  useEffect,
-  useCallback,
-} from "react";
+import { useState, createContext, useContext, useRef, useEffect } from "react";
 import Menu from "./Menu";
 import RoomEditor from "./RoomEditor";
 import Rooms from "./Rooms";
@@ -33,6 +26,7 @@ import { useModal } from "../../context/ModalContext";
 
 import * as process from "process";
 import ChatTopTray from "./ChatTopTray";
+import RoomMembers from "./RoomMembers";
 (window as any).process = process;
 
 /*
@@ -49,6 +43,7 @@ export enum ChatSection {
   "ROOMS" = "Rooms",
   "ROOM" = "Room",
   "EDITOR" = "Editor",
+  "MEMBERS" = "Members",
 }
 
 export const ChatContext = createContext<{
@@ -56,6 +51,7 @@ export const ChatContext = createContext<{
   setSection: (to: ChatSection) => void;
 
   openRoom: (id: string) => void;
+  openRoomMembers: (id: string) => void;
   openRoomEditor: (id: string) => void;
   deleteRoom: (id: string) => void;
 
@@ -81,6 +77,7 @@ export const ChatContext = createContext<{
   setSection: () => {},
 
   openRoom: () => {},
+  openRoomMembers: () => {},
   openRoomEditor: () => {},
   deleteRoom: () => {},
 
@@ -116,6 +113,11 @@ export default function Chat() {
   const [editRoomId, setEditRoomId] = useState("");
   const [chatOpen, setChatOpen] = useState(false);
   const [notifications, setNotifications] = useState<{ type: string }[]>([]);
+
+  const openRoomMembers = (id: string) => {
+    setRoomId(id);
+    setSection(ChatSection.MEMBERS);
+  };
 
   const openRoom = (id: string) => {
     setRoomId(id);
@@ -405,6 +407,7 @@ export default function Chat() {
             value={{
               setSection,
               openRoom,
+              openRoomMembers,
               openRoomEditor,
               deleteRoom,
               leftVidChat,
@@ -429,6 +432,7 @@ export default function Chat() {
                   Room: <Room />,
                   Editor: <RoomEditor />,
                   Menu: <Menu />,
+                  Members: <RoomMembers />,
                 }[section]
               }
             </div>

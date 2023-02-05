@@ -27,9 +27,9 @@ var upgrader = websocket.Upgrader{
 }
 
 /*
-	This is where private message and room messages socket event are triggered from, some are triggered from API routes.
+	Socket event handling.
 
-	Voting and commenting are done in the API handlers, I could have put that in here but I didn't
+	Voting and commenting and room invites are done in the API handlers, I could have put that in here but I didn't
 */
 
 func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, attachmentServer *attachmentserver.AttachmentServer, uid *primitive.ObjectID, colls *db.Collections) {
@@ -166,6 +166,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, attac
 								CreatedAt:     primitive.NewDateTimeFromTime(time.Now()),
 								UpdatedAt:     primitive.NewDateTimeFromTime(time.Now()),
 								RecipientId:   recipientId,
+								IsInvitation:  false,
 							}
 							if inMsg.HasAttachment {
 								msg.AttachmentProgress = models.AttachmentProgress{
@@ -303,7 +304,7 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, attac
 								"_id":          recipientId,
 								"messages._id": msgId,
 							}, bson.M{
-								"$set": bson.M{"messages.$.content": inMsg.Content},
+								"$set": bson.M{"messages.$.content": inMsg.Content, "messages.$.invitation": false},
 							}); res.Err() != nil {
 								sendErrorMessageThroughSocket(conn)
 							} else {

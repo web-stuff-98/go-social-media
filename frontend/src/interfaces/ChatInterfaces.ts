@@ -21,6 +21,9 @@ export interface IPrivateMessage {
   recipient_id: string;
   attachment_progress?: IMsgAttachmentProgress;
   attachment_metadata?: IAttachmentData;
+  invitation?: boolean;
+  invitation_accepted?: boolean;
+  invitation_declined?: boolean;
 }
 
 export type IConversation = {
@@ -49,4 +52,5 @@ export interface IRoomCard {
   author_id: string;
   img_blur?: string;
   img_url?: string;
+  private?: boolean;
 }

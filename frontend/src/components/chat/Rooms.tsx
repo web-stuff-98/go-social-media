@@ -12,10 +12,12 @@ import RoomCard from "./RoomCard";
 import { debounce } from "lodash";
 import { IRoomCard } from "../../interfaces/ChatInterfaces";
 import { IResMsg } from "../../interfaces/GeneralInterfaces";
+import Toggle from "../shared/Toggle";
 
 export default function Rooms() {
   const { socket, openSubscription, closeSubscription } = useSocket();
 
+  const [onlyOwnRooms, setOnlyOwnRooms] = useState(false);
   const [pageNum, setPageNum] = useState(1);
   const [page, setPage] = useState<IRoomCard[]>([]);
   const [count, setCount] = useState(0);
@@ -30,7 +32,7 @@ export default function Rooms() {
     setResMsg({ msg: "", err: false, pen: true });
     handleSearch();
     // eslint-disable-next-line
-  }, [pageNum, searchInput]);
+  }, [pageNum, searchInput, onlyOwnRooms]);
 
   const handleSearch = useMemo(
     () => debounce(() => updatePage(), 300),
@@ -40,7 +42,7 @@ export default function Rooms() {
 
   const updatePage = async () => {
     try {
-      const { count, rooms } = await getRoomPage(pageNum, searchInput);
+      const { count, rooms } = await getRoomPage(pageNum, searchInput, onlyOwnRooms);
       setCount(Number(count));
       setPage(JSON.parse(rooms) as IRoomCard[]);
       setResMsg({ msg: "", err: false, pen: false });
@@ -115,23 +117,30 @@ export default function Rooms() {
           name="Search rooms"
         />
       </form>
-      <div
-        data-testid="Pagination controls container"
-        className={classes.paginationControls}
-      >
-        <IconBtn
-          onClick={prevPage}
-          name="Prev page"
-          ariaLabel="Prev page"
-          Icon={BsChevronLeft}
+      <div className={classes.ownRoomsToggleAndPaginationControls}>
+        <Toggle
+          toggledOn={onlyOwnRooms}
+          setToggledOn={setOnlyOwnRooms}
+          label="Your rooms"
         />
-        {pageNum}/{Math.ceil(count / 30)}
-        <IconBtn
-          onClick={nextPage}
-          name="Next page"
-          ariaLabel="Next page"
-          Icon={BsChevronRight}
-        />
+        <div
+          data-testid="Pagination controls container"
+          className={classes.paginationControls}
+        >
+          <IconBtn
+            onClick={prevPage}
+            name="Prev page"
+            ariaLabel="Previous page"
+            Icon={BsChevronLeft}
+          />
+          {pageNum}/{Math.ceil(count / 30)}
+          <IconBtn
+            onClick={nextPage}
+            name="Next page"
+            ariaLabel="Next page"
+            Icon={BsChevronRight}
+          />
+        </div>
       </div>
     </div>
   );

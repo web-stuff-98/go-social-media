@@ -16,7 +16,6 @@ import (
 	"github.com/web-stuff-98/go-social-media/pkg/handlers"
 	"github.com/web-stuff-98/go-social-media/pkg/handlers/middleware"
 	rdb "github.com/web-stuff-98/go-social-media/pkg/redis"
-	"github.com/web-stuff-98/go-social-media/pkg/seed"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -64,7 +63,7 @@ func main() {
 		log.Fatal("DOTENV ERROR : ", err)
 	}
 	DB, Collections := db.Init()
-	SocketServer, err := socketserver.Init()
+	SocketServer, err := socketserver.Init(Collections)
 	if err != nil {
 		log.Fatal("Failed to set up socket server ", err)
 	}
@@ -281,6 +280,13 @@ func main() {
 		Message:       "Too many requests",
 		RouteName:     "get_room_page",
 	}, *redisClient, *Collections)).Methods(http.MethodGet)
+	api.HandleFunc("/rooms/own", middleware.BasicRateLimiter(h.GetOwnRooms, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 10,
+		MaxReqs:       20,
+		BlockDuration: time.Second * 1000,
+		Message:       "Too many requests",
+		RouteName:     "get_own_rooms",
+	}, *redisClient, *Collections)).Methods(http.MethodGet)
 	api.HandleFunc("/rooms/{id}", middleware.BasicRateLimiter(h.GetRoom, middleware.SimpleLimiterOpts{
 		Window:        time.Second * 10,
 		MaxReqs:       20,
@@ -309,6 +315,48 @@ func main() {
 		Message:       "You have been editing too many rooms",
 		RouteName:     "update_room",
 	}, *redisClient, *Collections)).Methods(http.MethodPatch)
+	api.HandleFunc("/rooms/{id}/invite", middleware.BasicRateLimiter(h.InviteToRoom, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 120,
+		MaxReqs:       10,
+		BlockDuration: time.Second * 3000,
+		Message:       "You have been sending too many invitations",
+		RouteName:     "invite_room",
+	}, *redisClient, *Collections)).Methods(http.MethodPost)
+	api.HandleFunc("/rooms/{id}/ban", middleware.BasicRateLimiter(h.BanUserFromRoom, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 120,
+		MaxReqs:       10,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "ban_room",
+	}, *redisClient, *Collections)).Methods(http.MethodPost)
+	api.HandleFunc("/rooms/{id}/unban", middleware.BasicRateLimiter(h.UnBanUserFromRoom, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 120,
+		MaxReqs:       10,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "unban_room",
+	}, *redisClient, *Collections)).Methods(http.MethodPost)
+	api.HandleFunc("/rooms/{id}/invite/accept/{msgId}", middleware.BasicRateLimiter(h.AcceptRoomInvite, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 120,
+		MaxReqs:       10,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "invite_room_accept",
+	}, *redisClient, *Collections)).Methods(http.MethodPost)
+	api.HandleFunc("/rooms/{id}/invite/decline/{msgId}", middleware.BasicRateLimiter(h.DeclineRoomInvite, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 120,
+		MaxReqs:       10,
+		BlockDuration: time.Second * 3000,
+		Message:       "Too many requests",
+		RouteName:     "invite_room_decline",
+	}, *redisClient, *Collections)).Methods(http.MethodPost)
+	api.HandleFunc("/rooms/{id}/private-data", middleware.BasicRateLimiter(h.GetRoomPrivateData, middleware.SimpleLimiterOpts{
+		Window:        time.Second * 3,
+		MaxReqs:       60,
+		BlockDuration: time.Second * 100,
+		Message:       "Too many requests",
+		RouteName:     "get_room_private_data",
+	}, *redisClient, *Collections)).Methods(http.MethodGet)
 	api.HandleFunc("/rooms/{id}/delete", middleware.BasicRateLimiter(h.DeleteRoom, middleware.SimpleLimiterOpts{
 		Window:        time.Second * 120,
 		MaxReqs:       20,
@@ -356,7 +404,7 @@ func main() {
 
 	if os.Getenv("PRODUCTION") == "true" {
 		//DB.Drop(context.Background())
-		//go seed.SeedDB(Collections, 20, 200, 50, protectedUids, protectedPids, protectedRids)
+		//go seed.SeedDB(Collections, 50, 500, 50, protectedUids, protectedPids, protectedRids)
 		// Seeds already been generated, so just get everything already in the database instead
 		pcursor, _ := Collections.PostCollection.Find(context.Background(), bson.M{})
 		for pcursor.Next(context.Background()) {
@@ -377,8 +425,8 @@ func main() {
 			protectedPids[user.ID] = struct{}{}
 		}
 	} else {
-		DB.Drop(context.Background())
-		go seed.SeedDB(Collections, 5, 10, 5, protectedUids, protectedPids, protectedRids)
+		//DB.Drop(context.Background())
+		//go seed.SeedDB(Collections, 5, 20, 5, protectedUids, protectedPids, protectedRids)
 	}
 
 	deleteAccountTicker := time.NewTicker(20 * time.Minute)

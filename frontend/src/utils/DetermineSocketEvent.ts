@@ -72,7 +72,6 @@ export type NotificationsData = {
   TYPE: "NOTIFICATIONS";
   DATA: string;
 };
-
 export type SocketEventChangeMethod =
   | "UPDATE"
   | "INSERT"
@@ -83,6 +82,8 @@ export type SocketEventChangeEntityType =
   | "POST"
   | "POST_COMMENT"
   | "CHAT_MESSAGE"
+  | "MEMBER"
+  | "BANNED"
   | "USER";
 
 export function instanceOfChangeData(object: any): object is ChangeData {

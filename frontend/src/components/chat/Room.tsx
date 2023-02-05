@@ -23,6 +23,7 @@ import ErrorTip from "../shared/forms/ErrorTip";
 import useAttachment from "../../context/AttachmentContext";
 import { useModal } from "../../context/ModalContext";
 import VideoChat from "./VideoChat";
+import { ImUsers } from "react-icons/im";
 
 import * as process from "process";
 import { IRoom } from "../../interfaces/ChatInterfaces";
@@ -30,7 +31,7 @@ import { IResMsg } from "../../interfaces/GeneralInterfaces";
 (window as any).process = process;
 
 export default function Room() {
-  const { roomId, setSection, toggleStream } = useChat();
+  const { roomId, setSection, toggleStream, openRoomMembers } = useChat();
   const { socket, openSubscription, closeSubscription, sendIfPossible } =
     useSocket();
   const { user } = useAuth();
@@ -237,6 +238,15 @@ export default function Room() {
         className={classes.messageForm}
       >
         <input ref={fileInputRef} type="file" onChange={handleFile} />
+        <IconBtn
+          name="View users"
+          ariaLabel="View users"
+          type="button"
+          onClick={() => {
+            openRoomMembers(roomId);
+          }}
+          Icon={ImUsers}
+        />
         <IconBtn
           name="Video chat"
           ariaLabel="Open video chat"

@@ -9,11 +9,12 @@ import { useChat } from "./Chat";
 import { useAuth } from "../../context/AuthContext";
 import { IRoomCard } from "../../interfaces/ChatInterfaces";
 import { RiDeleteBin2Fill } from "react-icons/ri";
+import { ImUsers } from "react-icons/im";
 
 export default function RoomCard({ r }: { r: IRoomCard }) {
   const { user } = useAuth();
   const { openSubscription, closeSubscription } = useSocket();
-  const { openRoom, openRoomEditor, deleteRoom } = useChat();
+  const { openRoom, openRoomEditor, deleteRoom, openRoomMembers } = useChat();
   const [imgURL, setImgURL] = useState("");
 
   const loadImage = async () => {
@@ -46,19 +47,28 @@ export default function RoomCard({ r }: { r: IRoomCard }) {
   return (
     <div
       data-testid="Container"
-      style={
-        r.img_blur
+      style={{
+        ...(r.img_blur
           ? {
               backgroundImage: `url(${imgURL || r.img_blur})`,
             }
-          : {}
-      }
+          : {}),
+        ...(r.private && r.author_id !== user?.ID
+          ? { filter: "opacity(0.5)", pointerEvents: "none" }
+          : {}),
+      }}
       className={classes.room}
     >
       {r.name}
       <div className={classes.icons}>
         {user && r.author_id === user.ID && (
           <>
+            <IconBtn
+              name="Room members"
+              ariaLabel="Room members"
+              onClick={() => openRoomMembers(r.ID)}
+              Icon={ImUsers}
+            />
             <IconBtn
               name="Edit room"
               ariaLabel="Edit room"

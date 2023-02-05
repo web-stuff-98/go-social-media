@@ -203,8 +203,10 @@ export default function Inbox() {
             selectedConversationIndexRef.current
           ].messages.findIndex((msg) => msg.ID === data.DATA.ID);
           if (i !== -1) {
-            newInbox[selectedConversationIndexRef.current].messages[i].content =
-              data.DATA.content;
+            newInbox[selectedConversationIndexRef.current].messages[i] = {
+              ...newInbox[selectedConversationIndexRef.current].messages[i],
+              ...data.DATA,
+            };
             return [...newInbox];
           } else {
             return inbox;

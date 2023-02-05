@@ -1,6 +1,7 @@
 package socketserver
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -8,6 +9,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/web-stuff-98/go-social-media/pkg/db"
+	"github.com/web-stuff-98/go-social-media/pkg/db/models"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -85,7 +89,7 @@ type SocketServer struct {
 	DestroySubscription chan string
 }
 
-func Init() (*SocketServer, error) {
+func Init(colls *db.Collections) (*SocketServer, error) {
 	socketServer := &SocketServer{
 		Connections:                 make(map[*websocket.Conn]primitive.ObjectID),
 		Subscriptions:               make(map[string]map[*websocket.Conn]primitive.ObjectID),
@@ -112,11 +116,11 @@ func Init() (*SocketServer, error) {
 
 		DestroySubscription: make(chan string),
 	}
-	RunServer(socketServer)
+	RunServer(socketServer, colls)
 	return socketServer, nil
 }
 
-func RunServer(socketServer *SocketServer) {
+func RunServer(socketServer *SocketServer, colls *db.Collections) {
 	/* ----- Connection registration ----- */
 	go func() {
 		for {
@@ -197,19 +201,86 @@ func RunServer(socketServer *SocketServer) {
 						allow = false
 					}
 				}
-				// Make sure users cannot subscribe to rooms without being logged in
+				// Make sure users cannot subscribe to rooms if they aren't logged in, banned, or not a member (if rooms private)
 				if strings.Contains(connData.Name, "room=") {
 					if connData.Uid == primitive.NilObjectID {
 						allow = false
+					}
+					rawRoomId := strings.ReplaceAll(connData.Name, "room=", "")
+					roomId, err := primitive.ObjectIDFromHex(rawRoomId)
+					if err != nil {
+						allow = false
+					} else {
+						var room models.Room
+						if err := colls.RoomCollection.FindOne(context.Background(), bson.M{"_id": roomId}).Decode(&room); err != nil {
+							allow = false
+							return
+						} else {
+							var roomPrivateData models.RoomPrivateData
+							if err := colls.RoomPrivateDataCollection.FindOne(context.Background(), bson.M{"_id": roomId}).Decode(&roomPrivateData); err != nil {
+								allow = false
+								return
+							}
+							for _, oi := range roomPrivateData.Banned {
+								if oi == connData.Uid {
+									allow = false
+									break
+								}
+							}
+							if room.Private == true {
+								isMember := false
+								for _, oi := range roomPrivateData.Members {
+									if oi == connData.Uid {
+										allow = true
+										break
+									}
+								}
+								if connData.Uid != room.Author && !isMember {
+									allow = false
+									return
+								}
+							}
+						}
+					}
+				}
+				// Make sure users cannot subscribe to room private data if not a member or the author
+				if strings.Contains(connData.Name, "room_private_data=") {
+					if connData.Uid == primitive.NilObjectID {
+						allow = false
+					} else {
+						id, err := primitive.ObjectIDFromHex(strings.ReplaceAll(connData.Name, "room_private_data=", ""))
+						if err != nil {
+							room := &models.Room{}
+							if err := colls.RoomCollection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&room); err != nil {
+								allow = false
+							} else {
+								if room.Author != connData.Uid {
+									allow = false
+								}
+							}
+							roomPrivateData := &models.RoomPrivateData{}
+							foundInMembers := false
+							if err := colls.RoomPrivateDataCollection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&roomPrivateData); err != nil {
+								allow = false
+							} else {
+								for _, oi := range roomPrivateData.Members {
+									if oi == connData.Uid {
+										foundInMembers = true
+										break
+									}
+								}
+							}
+							if foundInMembers || room.Author == connData.Uid {
+								allow = true
+							}
+						} else {
+							allow = false
+						}
 					}
 				}
 				// Make sure users cannot open too many subscriptions
 				count, countOk := socketServer.ConnectionSubscriptionCount[connData.Conn]
 				if count >= 128 {
-					allow = false
-				}
-				// Users cannot use VID_ events
-				if strings.Contains(connData.Name, "VID_") {
 					allow = false
 				}
 				// Passed all checks, add the connection to the subscription

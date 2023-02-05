@@ -377,7 +377,7 @@ func (h handler) CommentOnPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create notification for recipient if they aren't already on the post page
-	if parentId != "" {
+	/*if parentId != "" {
 		var cmts models.PostComments
 		if err := h.Collections.PostCommentsCollection.FindOne(r.Context(), bson.M{"_id": postId}).Decode(&cmts); err != nil {
 			responseMessage(w, http.StatusInternalServerError, "Internal error")
@@ -403,13 +403,13 @@ func (h handler) CommentOnPost(w http.ResponseWriter, r *http.Request) {
 					}
 					if !found {
 						h.Collections.NotificationsCollection.UpdateByID(r.Context(), cmt.Author, bson.M{"$push": bson.M{"notifications": models.Notification{
-							Type: "REPLY:" + postId.Hex(),
+							Type: "REPLY:" + postId.Hex() + ":" + user.ID.Hex(),
 						}}})
 					}
 				}
 			}
 		}
-	}
+	}*/
 
 	responseMessage(w, http.StatusCreated, "Comment added")
 }

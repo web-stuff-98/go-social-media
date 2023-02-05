@@ -6,12 +6,14 @@ import {
   useCallback,
   useRef,
 } from "react";
-import type { ReactNode, ChangeEvent, FormEvent } from "react";
-import { MdError, MdSend } from "react-icons/md";
-import { BsFillChatRightFill } from "react-icons/bs";
+import type { ReactNode } from "react";
+import { MdError } from "react-icons/md";
 import useScrollbarSize from "react-scrollbar-size";
-import useSocket from "./SocketContext";
 import classes from "../styles/components/shared/Userdropdown.module.scss";
+import Menu from "../components/usersDropdown/Menu";
+import DirectMessage from "../components/usersDropdown/DirectMessage";
+import InviteToRoom from "../components/usersDropdown/InviteToRoom";
+import BanFromRoom from "../components/usersDropdown/BanFromRoom";
 
 const UserdropdownContext = createContext<{
   clickPos: { left: string; top: string };
@@ -21,37 +23,25 @@ const UserdropdownContext = createContext<{
   openUserdropdown: () => {},
 });
 
-type UserMenuSection = "Menu" | "DirectMessage";
+export type UserMenuSection =
+  | "Menu"
+  | "DirectMessage"
+  | "InviteToRoom"
+  | "BanFromRoom";
 
 export function UserdropdownProvider({ children }: { children: ReactNode }) {
   const { width: scrollbarWidth } = useScrollbarSize();
-  const { sendIfPossible } = useSocket();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [uid, setUid] = useState("");
   const [clickPos, setClickPos] = useState({ left: "0", top: "0" });
   const [cursorInside, setCursorInside] = useState(false);
-  const [messageInput, setMessageInput] = useState("");
   const [err, setErr] = useState("");
   const [section, setSection] = useState<UserMenuSection>("Menu");
 
   const openUserdropdown = (uid: string) => {
     setUid(uid);
   };
-
-  const privateMessageSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    sendIfPossible(
-      JSON.stringify({
-        event_type: "PRIVATE_MESSAGE",
-        content: messageInput,
-        recipient_id: uid,
-      })
-    );
-    setMessageInput("");
-    closeUserDropdown();
-  };
-
   const closeUserDropdown = () => {
     setUid("");
     setCursorInside(false);
@@ -121,43 +111,36 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
           className={classes.container}
         >
           {err ? (
-            <div className={classes.errContainer}>
+            <div aria-label="Error" className={classes.errContainer}>
               <MdError />
               {err}
             </div>
           ) : (
             <>
-              {section === "Menu" && (
-                <div className={classes.menu}>
-                  <button
-                    aria-label="Message"
-                    onClick={() => setSection("DirectMessage")}
-                  >
-                    <BsFillChatRightFill />
-                    Chat
-                  </button>
-                </div>
-              )}
-              {section === "DirectMessage" && (
-                <form
-                  className={classes.messageForm}
-                  onSubmit={privateMessageSubmit}
-                >
-                  <input
-                    autoFocus
-                    value={messageInput}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      setMessageInput(e.target.value)
-                    }
-                    placeholder="Direct message..."
-                    required
-                    type="text"
-                  />
-                  <button aria-label="Send direct message">
-                    <MdSend />
-                  </button>
-                </form>
-              )}
+              {
+                {
+                  Menu: <Menu setDropdownSectionTo={setSection} />,
+                  DirectMessage: (
+                    <DirectMessage
+                      setDropdownSectionTo={setSection}
+                      closeUserDropdown={closeUserDropdown}
+                      uid={uid}
+                    />
+                  ),
+                  InviteToRoom: (
+                    <InviteToRoom
+                      uid={uid}
+                      closeUserDropdown={closeUserDropdown}
+                    />
+                  ),
+                  BanFromRoom: (
+                    <BanFromRoom
+                      uid={uid}
+                      closeUserDropdown={closeUserDropdown}
+                    />
+                  ),
+                }[section]
+              }
             </>
           )}
         </div>

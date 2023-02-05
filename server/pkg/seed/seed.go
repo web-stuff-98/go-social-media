@@ -334,10 +334,19 @@ func generateRoom(colls *db.Collections, lipsum *loremipsum.LoremIpsum, uid prim
 		CreatedAt:    primitive.NewDateTimeFromTime(time.Now()),
 		UpdatedAt:    primitive.NewDateTimeFromTime(time.Now()),
 		ImgBlur:      "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(blurBuf.Bytes()),
+		Private:      false,
 	}
 
 	inserted, err := colls.RoomCollection.InsertOne(context.TODO(), room)
 	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	if colls.RoomPrivateDataCollection.InsertOne(context.TODO(), models.RoomPrivateData{
+		ID:      inserted.InsertedID.(primitive.ObjectID),
+		Members: []primitive.ObjectID{},
+		Banned:  []primitive.ObjectID{},
+	}); err != nil {
 		return primitive.NilObjectID, err
 	}
 

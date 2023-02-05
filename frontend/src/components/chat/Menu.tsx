@@ -6,7 +6,7 @@ export default function Menu() {
 
   const MenuButton = ({ section }: { section: ChatSection }) => (
     <button name={section} onClick={() => setSection(section)}>
-      {section}
+      {section === "Editor" ? "Room editor" : section}
     </button>
   );
 

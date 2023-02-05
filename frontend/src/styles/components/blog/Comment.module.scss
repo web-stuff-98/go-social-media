@@ -40,6 +40,7 @@
       align-items: center;
       gap: var(--padding);
       font-size: var(--font-xs);
+      width: 100%;
       input {
         width: 100%;
       }
@@ -56,6 +57,8 @@
     flex-direction: column;
     padding-left: 3rem;
     position: relative;
+    width: 100%;
+    box-sizing: border-box;
     .repliesBar {
       padding: 0;
       width: 18px;

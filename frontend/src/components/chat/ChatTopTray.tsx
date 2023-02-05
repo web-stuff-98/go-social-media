@@ -8,7 +8,7 @@ export default function ChatTopTray({ closeChat }: { closeChat: () => void }) {
   const { section, setSection } = useChat();
   return (
     <div className={classes.topTray}>
-      {section}
+      {section === "Editor" ? "Room editor" : section}
       <div className={classes.icons}>
         {section !== ChatSection.MENU && (
           <IconBtn

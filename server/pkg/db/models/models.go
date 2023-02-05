@@ -30,9 +30,9 @@ type Notifications struct {
 	Notifications []Notification     `bson:"notifications" json:"notifications"`
 }
 
-// Notification will not be created if the user already has the conversation open, or is already on the page in the case of replies
+// Notification will not be created if the user already has the conversation open
 type Notification struct {
-	//Notification type can be MSG:UID, REPLY:POSTID. Where msg is a private message, and reply is a reply to a comment on a post
+	//Notification will be MSG:userid but if its a notification for a message from the server it will be MSG:SERVER
 	Type string `bson:"type" json:"type"`
 }
 
@@ -47,15 +47,19 @@ type Session struct {
 }
 
 type PrivateMessage struct {
-	ID                 primitive.ObjectID    `bson:"_id,omitempty" json:"ID"`
-	Content            string                `bson:"content,maxlength=200" json:"content"`
-	Uid                primitive.ObjectID    `bson:"uid" json:"uid"`
-	CreatedAt          primitive.DateTime    `bson:"created_at" json:"created_at"`
-	UpdatedAt          primitive.DateTime    `bson:"updated_at" json:"updated_at"`
-	RecipientId        primitive.ObjectID    `bson:"-" json:"recipient_id"`
-	HasAttachment      bool                  `bson:"has_attachment" json:"has_attachment"`
-	AttachmentProgress AttachmentProgress    `bson:"-" json:"attachment_progress"`
-	AttachmentMetadata OutAttachmentMetadata `bson:"-" json:"attachment_metadata"`
+	ID      primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
+	Content string             `bson:"content,maxlength=200" json:"content"`
+	// If the message is an invitation then content should be the room id
+	IsInvitation         bool                  `bson:"invitation" json:"invitation"`
+	IsAcceptedInvitation bool                  `bson:"invitation_accepted" json:"invitation_accepted"`
+	IsDeclinedInvitation bool                  `bson:"invitation_declined" json:"invitation_declined"`
+	Uid                  primitive.ObjectID    `bson:"uid" json:"uid"`
+	CreatedAt            primitive.DateTime    `bson:"created_at" json:"created_at"`
+	UpdatedAt            primitive.DateTime    `bson:"updated_at" json:"updated_at"`
+	RecipientId          primitive.ObjectID    `bson:"-" json:"recipient_id"`
+	HasAttachment        bool                  `bson:"has_attachment" json:"has_attachment"`
+	AttachmentProgress   AttachmentProgress    `bson:"-" json:"attachment_progress"`
+	AttachmentMetadata   OutAttachmentMetadata `bson:"-" json:"attachment_metadata"`
 }
 
 type AttachmentProgress struct {
@@ -172,10 +176,18 @@ type Room struct {
 	ImgBlur      string             `bson:"img_blur" json:"img_blur,omitempty"`
 	Messages     []RoomMessage      `bson:"-" json:"messages"`
 	ImagePending bool               `bson:"image_pending" json:"image_pending"`
+	Private      bool               `bson:"private" json:"private"`
 }
 type RoomMessages struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty" json:"ID"`
 	Messages []RoomMessage      `bson:"messages" json:"messages"`
+}
+
+// A RoomPrivateData document will exist for rooms even if they aren't private
+type RoomPrivateData struct {
+	ID      primitive.ObjectID   `bson:"_id,omitempty" json:"ID"`
+	Members []primitive.ObjectID `bson:"members" json:"members"`
+	Banned  []primitive.ObjectID `bson:"banned" json:"banned"`
 }
 
 type RoomImage struct {

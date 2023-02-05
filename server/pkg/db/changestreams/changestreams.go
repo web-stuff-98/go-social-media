@@ -79,11 +79,13 @@ func watchUserDeletes(db *mongo.Database, ss *socketserver.SocketServer, as *att
 			return
 		}
 		uid := changeEv.DocumentKey.ID
+
 		db.Collection("posts").DeleteMany(context.Background(), bson.M{"author_id": uid})
 		db.Collection("rooms").DeleteMany(context.Background(), bson.M{"author_id": uid})
 		db.Collection("pfps").DeleteOne(context.Background(), bson.M{"_id": uid})
 		db.Collection("sessions").DeleteOne(context.Background(), bson.M{"_uid": uid})
 		db.Collection("notifications").DeleteOne(context.Background(), bson.M{"_id": uid})
+
 		inbox := &models.Inbox{}
 		res := db.Collection("inboxes").FindOne(context.Background(), bson.M{"_id": uid}).Decode(&inbox)
 		if res.Error() == "" {
@@ -104,6 +106,9 @@ func watchUserDeletes(db *mongo.Database, ss *socketserver.SocketServer, as *att
 					}
 				}
 				db.Collection("inboxes").UpdateByID(context.Background(), recipient, bson.M{"$pull": bson.M{"messages": bson.M{"uid": uid}, "messages_sent_to": uid}})
+			}
+			if err := db.Collection("notifications").FindOne(context.Background(), bson.M{"_id": recipient}).Decode(&inbox); err == nil {
+				db.Collection("notifications").UpdateByID(context.Background(), recipient, bson.M{"$pull": bson.M{"notifications": bson.M{"type": "MSG:" + uid.Hex()}}})
 			}
 		}
 		for _, roomId := range changeEv.DocumentKey.ID {
@@ -352,6 +357,7 @@ func watchRoomDeletes(db *mongo.Database, ss *socketserver.SocketServer, as *att
 		}
 		roomId := changeEv["documentKey"].(bson.M)["_id"].(primitive.ObjectID)
 		db.Collection("room_images").DeleteOne(context.Background(), bson.M{"_id": roomId})
+		db.Collection("room_private_data").DeleteOne(context.Background(), bson.M{"_id": roomId})
 
 		msgs := &models.RoomMessages{}
 		db.Collection("room_messages").FindOneAndDelete(context.Background(), bson.M{"_id": roomId}).Decode(&msgs)

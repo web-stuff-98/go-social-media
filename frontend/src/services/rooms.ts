@@ -20,6 +20,11 @@ const getRoom = (id: string) =>
     withCredentials: true,
   });
 
+const getRoomPrivateData = (id: string) =>
+  makeRequest(`/api/rooms/${id}/private-data`, {
+    withCredentials: true,
+  });
+
 const getRoomImage = async (id: string) => {
   const data = await makeRequest(`/api/rooms/${id}/image`, {
     responseType: "arraybuffer",
@@ -50,15 +55,18 @@ const deleteRoom = (id: string) =>
     method: "DELETE",
   });
 
-const getRoomPage = (page: number, term: string) =>
+const getRoomPage = (page: number, term: string, own: boolean) =>
   makeRequest(
     `/api/rooms/page/${page}${
       term ? `?term=${term.replaceAll(" ", "+")}` : ""
-    }`,
+    }${own ? `${term ? "&" : "?"}own=true` : ""}`,
     {
       withCredentials: true,
     }
   );
+
+const getOwnRooms = () =>
+  makeRequest("/api/rooms/own", { withCredentials: true });
 
 const uploadRoomImage = (file: File, id: string) => {
   const data = new FormData();
@@ -70,14 +78,51 @@ const uploadRoomImage = (file: File, id: string) => {
   });
 };
 
+const inviteToRoom = (uid: string, roomId: string) =>
+  makeRequest(`/api/rooms/${roomId}/invite?uid=${uid}`, {
+    withCredentials: true,
+    method: "POST",
+  });
+
+const banFromRoom = (uid: string, roomId: string) =>
+  makeRequest(`/api/rooms/${roomId}/ban?uid=${uid}`, {
+    withCredentials: true,
+    method: "POST",
+  });
+
+const unbanFromRoom = (uid: string, roomId: string) =>
+  makeRequest(`/api/rooms/${roomId}/unban?uid=${uid}`, {
+    withCredentials: true,
+    method: "POST",
+  });
+
+const declineInvite = (uid: string, msgId: string, roomId: string) =>
+  makeRequest(`/api/rooms/${roomId}/invite/decline/${msgId}?uid=${uid}`, {
+    withCredentials: true,
+    method: "POST",
+  });
+
+const acceptInvite = (uid: string, msgId: string, roomId: string) =>
+  makeRequest(`/api/rooms/${roomId}/invite/accept/${msgId}?uid=${uid}`, {
+    withCredentials: true,
+    method: "POST",
+  });
+
 export {
   createRoom,
   getRoomImage,
   updateRoom,
   uploadRoomImage,
+  getRoomPrivateData,
   deleteRoom,
   getRoomPage,
   getRoom,
   getRoomImageAsBlob,
   getRandomRoomImage,
+  getOwnRooms,
+  inviteToRoom,
+  banFromRoom,
+  unbanFromRoom,
+  declineInvite,
+  acceptInvite,
 };

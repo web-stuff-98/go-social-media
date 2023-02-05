@@ -18,6 +18,7 @@ export default function Home() {
           <ul>
             <li>Private & group video chat</li>
             <li>File sharing with progress updates</li>
+            <li>Lazy loading & placeholders</li>
             <li>Live blog with a rich text editor (quill)</li>
             <li>Pagination & sorting</li>
             <li>Filtering by terms and tags</li>
@@ -31,6 +32,7 @@ export default function Home() {
           <ul>
             <li>Gorilla Mux & Gorilla Websocket</li>
             <li>Socket event models and interfaces</li>
+            <li>Intersection observers</li>
             <li>MongoDB with Changestreams</li>
             <li>Rate limiting middleware with redis</li>
             <li>React Context API & Reducers</li>

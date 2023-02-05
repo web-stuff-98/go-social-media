@@ -35,9 +35,10 @@ type Collections struct {
 	PostThumbCollection    *mongo.Collection
 	PostCommentsCollection *mongo.Collection
 
-	RoomCollection         *mongo.Collection
-	RoomMessagesCollection *mongo.Collection
-	RoomImageCollection    *mongo.Collection
+	RoomCollection            *mongo.Collection
+	RoomMessagesCollection    *mongo.Collection
+	RoomImageCollection       *mongo.Collection
+	RoomPrivateDataCollection *mongo.Collection
 
 	AttachmentMetadataCollection *mongo.Collection
 	AttachmentChunksCollection   *mongo.Collection
@@ -71,9 +72,10 @@ func Init() (*mongo.Database, *Collections) {
 		PostThumbCollection:    DB.Collection("post_thumbs"),
 		PostCommentsCollection: DB.Collection("post_comments"),
 
-		RoomCollection:         DB.Collection("rooms"),
-		RoomMessagesCollection: DB.Collection("room_messages"),
-		RoomImageCollection:    DB.Collection("room_images"),
+		RoomCollection:            DB.Collection("rooms"),
+		RoomMessagesCollection:    DB.Collection("room_messages"),
+		RoomImageCollection:       DB.Collection("room_images"),
+		RoomPrivateDataCollection: DB.Collection("room_private_data"),
 
 		AttachmentMetadataCollection: DB.Collection("attachment_metadata"),
 		AttachmentChunksCollection:   DB.Collection("attachment_chunks"),

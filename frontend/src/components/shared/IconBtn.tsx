@@ -44,7 +44,9 @@ const IconBtn = ({
     <Icon
       style={{
         ...svgStyle,
-        ...(style && style.color ? { fill: style.color } : {}),
+        ...(style && style.color
+          ? { fill: style.color, color: style.color }
+          : {}),
       }}
       className={classes.icon}
     />

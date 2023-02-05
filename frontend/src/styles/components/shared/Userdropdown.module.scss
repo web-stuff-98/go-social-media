@@ -22,7 +22,8 @@
     }
   }
 
-  .menu {
+  .menu,
+  .roomsList {
     display: flex;
     flex-direction: column;
     gap: var(--padding-medium);
@@ -31,7 +32,7 @@
     button {
       font-size: var(--font-md);
       padding: 0 var(--padding);
-      gap: calc(var(--padding) * 2);
+      gap: 0.666rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -54,7 +55,7 @@
     input {
       width: 100%;
     }
-    
+
     button {
       background: none;
       border: none;
@@ -62,6 +63,28 @@
       svg {
         margin: auto;
         font-size: 1rem;
+      }
+    }
+  }
+
+  .inviteToRoom {
+    .roomsList {
+      box-sizing: border-box;
+      width: 100%;
+      margin: 0;
+      list-style: none;
+      label {
+        padding: 0 var(--padding);
+      }
+      li {
+        button {
+          justify-content: center;
+          text-align: center;
+          width: 100%;
+          background-size: cover;
+          text-shadow: 0px 0px 2px black, 0px 0px 6px black, 0px 0px 12px black;
+        }
+        width: 100%;
       }
     }
   }

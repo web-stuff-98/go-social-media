@@ -1,0 +1,43 @@
+.container {
+  text-align: center;
+  font-size: var(--font-xs);
+  min-width: 3rem;
+  padding: 1px;
+
+  label {
+    margin: 0;
+    padding: 0;
+    font-size: var(--font-xs);
+  }
+
+  button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    background: none;
+    padding: 1px;
+    border: none;
+    position: relative;
+    height: 1rem;
+
+    .sliderBar {
+      width: 100%;
+      height: 2px;
+      background: var(--base-heavy);
+      border-radius: 1px;
+    }
+
+    .toggler {
+      transition: left 100ms linear, background-color 200ms ease;
+      height: 8px;
+      width: 1rem;
+      border-radius: 2px;
+      background-color: var(--text-color);
+      outline: 1px solid var(--base-heavy-contrast);
+      position: absolute;
+      box-shadow: 0px 2px 3px black;
+      left: 0;
+    }
+  }
+}

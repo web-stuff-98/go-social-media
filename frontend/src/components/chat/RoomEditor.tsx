@@ -14,6 +14,7 @@ import FormikFileButtonInput from "../shared/forms/FormikFileButtonInput";
 import useFormikValidate from "../../hooks/useFormikValidate";
 import { IResMsg } from "../../interfaces/GeneralInterfaces";
 import { IRoomCard } from "../../interfaces/ChatInterfaces";
+import Toggle from "../shared/Toggle";
 
 export default function RoomEditor() {
   const { editRoomId, handleCreateUpdateRoom } = useChat();
@@ -35,6 +36,7 @@ export default function RoomEditor() {
         throw new Error("Room image error");
       });
       formik.setFieldValue("image", b);
+      formik.setFieldValue("private", r.private);
       setImgURL(URL.createObjectURL(b));
       setResMsg({ msg: "", err: false, pen: false });
     } catch (e) {
@@ -57,7 +59,7 @@ export default function RoomEditor() {
   );
 
   const formik = useFormik({
-    initialValues: { name: "", image: null },
+    initialValues: { name: "", image: null, private: false },
     validate,
     onSubmit: async (vals: { name: string; image?: any }) => {
       try {
@@ -88,7 +90,7 @@ export default function RoomEditor() {
         <>
           <FormikInputAndLabel
             touched={formik.touched.name}
-            name="Room name"
+            name="name"
             id="name"
             ariaLabel="Room name"
             validationErrs={validationErrs}
@@ -98,9 +100,9 @@ export default function RoomEditor() {
           />
           <FormikFileButtonInput
             buttonTestId="Image file button"
-            name="Select room image"
+            name="room image"
             id="image"
-            ariaControls="Select room image"
+            ariaControls="room image"
             accept=".jpeg,.jpeg,.png"
             touched={formik.touched.image}
             validationErrs={validationErrs}
@@ -129,6 +131,11 @@ export default function RoomEditor() {
           >
             {editRoomId ? "Update" : "Create"}
           </button>
+          <Toggle
+            label="Private"
+            toggledOn={formik.values.private}
+            setToggledOn={(to: boolean) => formik.setFieldValue("private", to)}
+          />
           <img
             data-testid="Image preview"
             ref={imgRef}

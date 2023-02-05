@@ -9,6 +9,7 @@ import { useState, useEffect, useRef, FormEvent } from "react";
 import type { ChangeEvent } from "react";
 import { useModal } from "../../context/ModalContext";
 import useSocket from "../../context/SocketContext";
+import { acceptInvite, declineInvite } from "../../services/rooms";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: "short",
@@ -96,7 +97,7 @@ export default function PrivateMessage({
       onMouseEnter={() => setMouseInside(true)}
       onMouseLeave={() => setMouseInside(false)}
     >
-      {msg.uid === user?.ID && !isEditing && (
+      {msg.uid === user?.ID && !isEditing && !msg.invitation && (
         <div className={classes.icons}>
           <IconBtn
             type="button"
@@ -156,6 +157,41 @@ export default function PrivateMessage({
               Update
             </button>
           </form>
+        ) : msg.invitation ? (
+          msg.uid === user?.ID ? (
+            !msg.invitation_accepted && !msg.invitation_declined ? (
+              "Invitation sent"
+            ) : (
+              `Your invitation was ${
+                msg.invitation_accepted ? "accepted" : "declined"
+              }`
+            )
+          ) : !msg.invitation_accepted && !msg.invitation_declined ? (
+            <>
+              Invitation
+              <br />
+              <div className={classes.invitationButtons}>
+                <button
+                  //msg.content is the room id for invitations
+                  onClick={() => acceptInvite(msg.uid, msg.ID, msg.content)}
+                  aria-label="Accept invitation"
+                  name="Accept invitation"
+                >
+                  ✅Accept
+                </button>
+                <button
+                  //msg.content is the room id for invitations
+                  onClick={() => declineInvite(msg.uid, msg.ID, msg.content)}
+                  aria-label="Decline invitation"
+                  name="Decline invitation"
+                >
+                  ❌Decline
+                </button>
+              </div>
+            </>
+          ) : (
+            `Invitation ${msg.invitation_accepted ? "accepted" : "declined"}`
+          )
         ) : (
           msg.content
         )}
