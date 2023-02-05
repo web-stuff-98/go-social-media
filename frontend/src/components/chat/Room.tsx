@@ -23,7 +23,7 @@ import ErrorTip from "../shared/forms/ErrorTip";
 import useAttachment from "../../context/AttachmentContext";
 import { useModal } from "../../context/ModalContext";
 import VideoChat from "./VideoChat";
-import { ImUsers } from "react-icons/im";
+import { IoPeople } from "react-icons/io5";
 
 import * as process from "process";
 import { IRoom } from "../../interfaces/ChatInterfaces";
@@ -245,7 +245,7 @@ export default function Room() {
           onClick={() => {
             openRoomMembers(roomId);
           }}
-          Icon={ImUsers}
+          Icon={IoPeople}
         />
         <IconBtn
           name="Video chat"

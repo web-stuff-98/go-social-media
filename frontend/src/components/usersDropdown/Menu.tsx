@@ -1,6 +1,6 @@
 import { BiDoorOpen } from "react-icons/bi";
 import { BsFillChatRightFill } from "react-icons/bs";
-import { IoBan } from "react-icons/io5";
+import { FaBan } from "react-icons/fa";
 import { UserMenuSection } from "../../context/UserdropdownContext";
 import classes from "../../styles/components/shared/Userdropdown.module.scss";
 
@@ -29,7 +29,8 @@ export default function Menu({
         aria-label="Ban from room"
         onClick={() => setDropdownSectionTo("BanFromRoom")}
       >
-        <IoBan />
+        <FaBan />
+        Ban from room
       </button>
     </div>
   );

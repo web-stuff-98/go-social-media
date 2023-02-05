@@ -9,7 +9,7 @@ import { useChat } from "./Chat";
 import { useAuth } from "../../context/AuthContext";
 import { IRoomCard } from "../../interfaces/ChatInterfaces";
 import { RiDeleteBin2Fill } from "react-icons/ri";
-import { ImUsers } from "react-icons/im";
+import { IoPeople } from "react-icons/io5";
 
 export default function RoomCard({ r }: { r: IRoomCard }) {
   const { user } = useAuth();
@@ -67,7 +67,8 @@ export default function RoomCard({ r }: { r: IRoomCard }) {
               name="Room members"
               ariaLabel="Room members"
               onClick={() => openRoomMembers(r.ID)}
-              Icon={ImUsers}
+              style={{ color: "white" }}
+              Icon={IoPeople}
             />
             <IconBtn
               name="Edit room"

@@ -170,6 +170,11 @@ func (h handler) InviteToRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if recipientId == user.ID {
+		responseMessage(w, http.StatusBadRequest, "You cannot invite yourself")
+		return
+	}
+
 	msg := &models.PrivateMessage{
 		ID:                   primitive.NewObjectID(),
 		Content:              id.Hex(),
@@ -456,6 +461,11 @@ func (h handler) BanUserFromRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if uid == user.ID {
+		responseMessage(w, http.StatusBadRequest, "You cannot ban yourself")
+		return
+	}
+
 	if room.Author != user.ID {
 		responseMessage(w, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -715,7 +725,7 @@ func (h handler) GetRoom(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, oi := range roomPrivateData.Banned {
 		if oi == user.ID {
-			responseMessage(w, http.StatusUnauthorized, "Unauthorized")
+			responseMessage(w, http.StatusUnauthorized, "You are banned from this room")
 			break
 		}
 	}
@@ -728,7 +738,7 @@ func (h handler) GetRoom(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if user.ID != room.Author && !isMember {
-			responseMessage(w, http.StatusUnauthorized, "Unauthorized")
+			responseMessage(w, http.StatusUnauthorized, "This room is private")
 			return
 		}
 	}
