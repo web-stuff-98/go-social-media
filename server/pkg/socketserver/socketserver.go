@@ -16,8 +16,6 @@ import (
 )
 
 /*
-	This is for the chat. It handles JSON messages only.
-
 	All messages are put through the queue channel before being sent, to avoid
 	the concurrent write to websocket error which I did not anticipate. Write to
 	websocket can only be done from one goroutine.
