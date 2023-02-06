@@ -21,7 +21,8 @@ import (
 
 	Before it was just maps without any concurrency protection, the server would
 	crash every few minutes because of race conditions. It's fixed now, but the
-	amount of code is getting crazy.
+	amount of code is getting crazy and I will probably be very confused if I
+	come back to this project after a long time.
 
 	Uid can always be left as primitive.NilObjectID, users are not required
 	to be authenticated to connect or open subscriptions, but there is an auth
@@ -48,17 +49,20 @@ type SocketServer struct {
 	RemoveUserFromSubscription       chan RemoveUserFromSubscription
 
 	// websocket Write/Read must be done from 1 goroutine. Queue all of them to be executed in a loop.
-	// this is Golang noob me trying to fix concurrency problems not realizing I should have been using mutexes
 	MessageSendQueue chan QueuedMessage
 
-	VidChatOpenChan  chan VidChatOpenData
-	VidChatCloseChan chan *websocket.Conn
-	VidChatStatus    VidChatStatus
+	VidChatOpenChan            chan VidChatOpenData
+	VidChatCloseChan           chan *websocket.Conn
+	VidChatStatus              VidChatStatus
+	VidChatGetAllUsersInRoom   chan VidChatGetAllUsersInRoom
+	VidChatGetOtherUserVidOpen chan VidChatGetOtherUserVidOpen
 
-	// openConversations is a map including all the users that have the "inbox" section of their chat open.
-	// probably needs renaming. The "inbox" section on the frontend was originally called "conversations"
+	// openConversations is a map including all the users that have the "inbox" section of their chat open,
+	// with an inner map containing the UIDs of users they have conversation open with (with an empty struct)
 	OpenConversations            OpenConversations
 	GetUserConversationsOpenWith chan GetUserConversationsOpenWith
+	UserOpenConversationWith     chan UserOpenCloseConversationWith
+	UserCloseConversationWith    chan UserOpenCloseConversationWith
 
 	SendDataToUser chan UserDataMessage
 
@@ -129,16 +133,30 @@ type VidChatOpenData struct {
 	Conn *websocket.Conn
 	Id   primitive.ObjectID
 }
+type RemoveUserFromSubscription struct {
+	Name string
+	Uid  primitive.ObjectID
+}
+type UserOpenCloseConversationWith struct {
+	Uid     primitive.ObjectID
+	ConvUid primitive.ObjectID
+}
 
-/*--------------- CHANNEL STRUCTS (some from above should probably be moved here) ---------------*/
+/*--------------- CHANNEL STRUCTS ---------------*/
 type GetUserConversationsOpenWith struct {
 	RecvChan chan<- bool
 	Uid      primitive.ObjectID
 	UidB     primitive.ObjectID
 }
-type RemoveUserFromSubscription struct {
-	Name string
-	Uid  primitive.ObjectID
+type VidChatGetAllUsersInRoom struct {
+	RecvChan  chan<- []string // Hexes of other user ids
+	Uid       primitive.ObjectID
+	RoomIdHex string
+}
+type VidChatGetOtherUserVidOpen struct {
+	RecvChan chan<- []string // Array will be empty or contain the other user Id hex
+	Uid      primitive.ObjectID
+	UidB     primitive.ObjectID
 }
 
 func Init(colls *db.Collections) (*SocketServer, error) {
@@ -172,11 +190,15 @@ func Init(colls *db.Collections) (*SocketServer, error) {
 		VidChatStatus: VidChatStatus{
 			data: make(map[*websocket.Conn]VidChatOpenData),
 		},
+		VidChatGetAllUsersInRoom:   make(chan VidChatGetAllUsersInRoom),
+		VidChatGetOtherUserVidOpen: make(chan VidChatGetOtherUserVidOpen),
 
 		OpenConversations: OpenConversations{
 			data: make(map[primitive.ObjectID]map[primitive.ObjectID]struct{}),
 		},
 		GetUserConversationsOpenWith: make(chan GetUserConversationsOpenWith),
+		UserOpenConversationWith:     make(chan UserOpenCloseConversationWith),
+		UserCloseConversationWith:    make(chan UserOpenCloseConversationWith),
 
 		SendDataToUser: make(chan UserDataMessage),
 
@@ -585,6 +607,12 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 	/* ----- Destroy subscription ----- */
 	go func() {
 		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in destroy subscription channel :", r)
+				}
+			}()
 			subsName := <-socketServer.DestroySubscription
 			for c := range socketServer.Subscriptions.data[subsName] {
 				if _, ok := socketServer.ConnectionSubscriptionCount.data[c]; ok {
@@ -620,9 +648,15 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			delete(socketServer.VidChatStatus.data, data)
 		}
 	}()
-	/* ----- Get user has conversations open with other user channel ----- */
+	/* ----- Get user has conversations open with other user chan ----- */
 	go func() {
 		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in get user has convesations open with other user chan :", r)
+				}
+			}()
 			data := <-socketServer.GetUserConversationsOpenWith
 			if openConvs, ok := socketServer.OpenConversations.data[data.Uid]; ok {
 				for oi := range openConvs {
@@ -633,6 +667,105 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}
 			data.RecvChan <- false
+		}
+	}()
+	/* ----- Open conversation with other user chan ----- */
+	go func() {
+		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in open conversation with other user chan :", r)
+				}
+			}()
+			data := <-socketServer.UserOpenConversationWith
+			socketServer.OpenConversations.mutex.Lock()
+			if _, ok := socketServer.OpenConversations.data[data.Uid]; ok {
+				socketServer.OpenConversations.data[data.Uid][data.ConvUid] = struct{}{}
+			} else {
+				convs := make(map[primitive.ObjectID]struct{})
+				convs[data.ConvUid] = struct{}{}
+				socketServer.OpenConversations.data[data.Uid] = convs
+			}
+			socketServer.OpenConversations.mutex.Unlock()
+		}
+	}()
+	/* ----- Close conversation with other user chan ----- */
+	go func() {
+		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in close conversation with other user chan :", r)
+				}
+			}()
+			data := <-socketServer.UserCloseConversationWith
+			if _, ok := socketServer.OpenConversations.data[data.Uid]; ok {
+				socketServer.OpenConversations.mutex.Lock()
+				delete(socketServer.OpenConversations.data[data.Uid], data.ConvUid)
+				socketServer.OpenConversations.mutex.Unlock()
+			}
+		}
+	}()
+	/* ----- Get UID hexes of other users in a room (vidChat) chan ----- */
+	go func() {
+		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in room vidChat get all users chan :", r)
+				}
+			}()
+			data := <-socketServer.VidChatGetAllUsersInRoom
+			allUsers := []string{}
+			for k, v := range socketServer.Subscriptions.data {
+				if strings.ReplaceAll(k, "room=", "") == data.RoomIdHex {
+					for _, oi := range v {
+						if oi != data.Uid {
+							for c, oi2 := range socketServer.Connections.data {
+								if oi2 == oi {
+									if status, ok := socketServer.VidChatStatus.data[c]; ok {
+										if status.Id.Hex() == data.RoomIdHex {
+											allUsers = append(allUsers, oi.Hex())
+										}
+									}
+									break
+								}
+							}
+						}
+					}
+					break
+				}
+			}
+			data.RecvChan <- allUsers
+		}
+	}()
+	/* ----- Get UID hex of other user in a conversation (vidChat) chan ----- */
+	go func() {
+		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in room vidChat get all users (conversation) chan :", r)
+				}
+			}()
+			data := <-socketServer.VidChatGetOtherUserVidOpen
+			allUsers := []string{}
+			hasOpen := false
+			for c, oi := range socketServer.Connections.data {
+				if oi == data.UidB {
+					if status, ok := socketServer.VidChatStatus.data[c]; ok {
+						if status.Id == data.Uid {
+							hasOpen = true
+						}
+					}
+					break
+				}
+			}
+			if hasOpen {
+				allUsers = []string{data.UidB.Hex()}
+			}
+			data.RecvChan <- allUsers
 		}
 	}()
 

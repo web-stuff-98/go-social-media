@@ -133,13 +133,9 @@ func openConv(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *socket
 	if convUid, err := primitive.ObjectIDFromHex(data.Uid); err != nil {
 		return err
 	} else {
-		// YOU NEED A CHANNEL TO ADD A USER TO OPEN CONVERSATIONS
-		if _, ok := ss.OpenConversations[uid]; ok {
-			ss.OpenConversations[uid][convUid] = struct{}{}
-		} else {
-			convs := make(map[primitive.ObjectID]struct{})
-			convs[convUid] = struct{}{}
-			ss.OpenConversations[uid] = convs
+		ss.UserOpenConversationWith <- socketserver.UserOpenCloseConversationWith{
+			Uid:     uid,
+			ConvUid: convUid,
 		}
 		// Conversation was opened, remove notifications
 		colls.NotificationsCollection.UpdateByID(context.Background(), uid, bson.M{
@@ -159,9 +155,9 @@ func exitConv(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *socket
 	if convUid, err := primitive.ObjectIDFromHex(data.Uid); err != nil {
 		return err
 	} else {
-		// YOU NEED A CHANNEL TO REMOVE A USER FROM OPEN CONVERSATIONS
-		if _, ok := ss.OpenConversations[uid]; ok {
-			delete(ss.OpenConversations[uid], convUid)
+		ss.UserCloseConversationWith <- socketserver.UserOpenCloseConversationWith{
+			Uid:     uid,
+			ConvUid: convUid,
 		}
 	}
 	return nil
@@ -208,17 +204,17 @@ func privateMessage(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *
 	}); err != nil {
 		return err
 	}
-	addNotification := true
-	// YOU NEED A TWO WAY CHANNEL TO CHECK IF A USER IS IN OPENCONVERSATIONS
-	if openConvs, ok := ss.OpenConversations[recipientId]; ok {
-		for oi := range openConvs {
-			if oi == uid {
-				// Recipient has conversation open. Don't create the notification
-				addNotification = false
-				break
-			}
-		}
+
+	hasConvsOpenWithRecv := make(chan bool)
+	ss.GetUserConversationsOpenWith <- socketserver.GetUserConversationsOpenWith{
+		RecvChan: hasConvsOpenWithRecv,
+		Uid:      recipientId,
+		UidB:     uid,
 	}
+	hasConvsOpenWith := <-hasConvsOpenWithRecv
+	addNotification := !hasConvsOpenWith
+	close(hasConvsOpenWithRecv)
+
 	if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, bson.M{
 		"$push": bson.M{
 			"messages": msg,
@@ -541,45 +537,28 @@ func vidJoin(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *sockets
 		}
 		// Find all the users connected to the room, check if they have video chat
 		// open in the room, if they do add to allUsers
-		// NEED A SOCKETSERVER TWO-WAY CHANNEL TO GET ALL OTHER USERS CONNECTED TO A SUBSCRIPTION
-		for k, v := range ss.Subscriptions {
-			if strings.ReplaceAll(k, "room=", "") == data.JoinID {
-				for _, oi := range v {
-					if oi != uid {
-						for c, oi2 := range ss.Connections {
-							if oi2 == oi {
-								if status, ok := ss.VidChatStatus[c]; ok {
-									if status.Id == joinID {
-										allUsers = append(allUsers, oi.Hex())
-									}
-								}
-								break
-							}
-						}
-					}
-				}
-				break
-			}
+		allUsersRecv := make(chan []string)
+		ss.VidChatGetAllUsersInRoom <- socketserver.VidChatGetAllUsersInRoom{
+			Uid:       uid,
+			RoomIdHex: data.JoinID,
+			RecvChan:  allUsersRecv,
 		}
+		received := <-allUsersRecv
+		allUsers = received
+		close(allUsersRecv)
 	} else {
 		// The only other user is the user receiving the direct video.
 		// First check if the other user has video chat open in the conversation before
 		// forming the WebRTC connection.
-		// NEED A SOCKETSERVER TWO-WAY CHANNEL TO GET THE VID CHAT OPEN STATUS OF ANOTHER USER
-		hasOpen := false
-		for c, oi := range ss.Connections {
-			if oi == joinID {
-				if status, ok := ss.VidChatStatus[c]; ok {
-					if status.Id == uid {
-						hasOpen = true
-					}
-				}
-				break
-			}
+		allUsersRecv := make(chan []string)
+		ss.VidChatGetOtherUserVidOpen <- socketserver.VidChatGetOtherUserVidOpen{
+			Uid:      uid,
+			UidB:     joinID,
+			RecvChan: allUsersRecv,
 		}
-		if hasOpen {
-			allUsers = []string{data.JoinID}
-		}
+		received := <-allUsersRecv
+		allUsers = received
+		close(allUsersRecv)
 	}
 	ss.VidChatOpenChan <- socketserver.VidChatOpenData{
 		Id:   joinID,
@@ -610,21 +589,28 @@ func vidExit(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *sockets
 		if err := colls.RoomCollection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&room); err != nil {
 			return err
 		}
-		// Find all the users connected to the room
-		// NEED A SOCKETSERVER TWO-WAY CHANNEL TO RETRIEVE ALL USERS CONNECTED TO A ROOM
-		for k, v := range ss.Subscriptions {
-			if strings.ReplaceAll(k, "room=", "") == data.ID {
-				for _, oi := range v {
-					// Tell all the other users the user has left
-					ss.SendDataToUser <- socketserver.UserDataMessage{
-						Type: "VID_USER_LEFT",
-						Uid:  oi,
-						Data: socketmodels.OutVidChatUserLeft{
-							UID: uid.Hex(),
-						},
-					}
+		// Find all the users connected to the room and tell them the user left
+		var allUsers []string
+		allUsersRecv := make(chan []string)
+		ss.VidChatGetAllUsersInRoom <- socketserver.VidChatGetAllUsersInRoom{
+			Uid:       uid,
+			RoomIdHex: id.Hex(),
+			RecvChan:  allUsersRecv,
+		}
+		received := <-allUsersRecv
+		allUsers = received
+		close(allUsersRecv)
+		for _, v := range allUsers {
+			if oid, err := primitive.ObjectIDFromHex(v); err != nil {
+				return err
+			} else {
+				ss.SendDataToUser <- socketserver.UserDataMessage{
+					Type: "VID_USER_LEFT",
+					Uid:  oid,
+					Data: socketmodels.OutVidChatUserLeft{
+						UID: uid.Hex(),
+					},
 				}
-				break
 			}
 		}
 	} else {
