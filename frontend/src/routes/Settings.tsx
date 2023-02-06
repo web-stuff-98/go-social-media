@@ -113,7 +113,7 @@ export default function Settings() {
                     err: false,
                     pen: true,
                   });
-                  await deleteAccount();
+                  deleteAccount();
                   openModal("Message", {
                     msg: "Account deleted",
                     err: false,

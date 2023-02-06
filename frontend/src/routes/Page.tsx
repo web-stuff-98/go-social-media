@@ -274,50 +274,54 @@ export default function Page() {
 
   return (
     <div className={classes.container}>
-      {post && <PageContent post={post} imgURL={imgURL} setPost={setPost} />}
-      <div className={classes.comments}>
-        <div className={classes.count}>{comments.length} Comments</div>
-        <CommentForm
-          loading={false}
-          error={cmtErr}
-          onSubmit={async (c: string) => {
-            try {
-              await submitComment(c, post!.ID, "");
-            } catch (e) {
-              setCmtErr(`${e}`);
-            }
-          }}
-          placeholder="Add a comment..."
-        />
-        {parentComment && (
-          <button
-            onClick={() => {
-              goBackInComments();
-            }}
-            name="Go back in comments"
-            aria-label="Go back in comments"
-            className={classes.viewingReplies}
-          >
-            Viewing replies to{" "}
-            {getUserName(
-              getUserData(
-                comments.find((c) => c.ID === parentComment)?.author_id!
-              )
+      {post && (
+        <>
+          <PageContent post={post} imgURL={imgURL} setPost={setPost} />
+          <div className={classes.comments}>
+            <div className={classes.count}>{comments.length} Comments</div>
+            <CommentForm
+              loading={false}
+              error={cmtErr}
+              onSubmit={async (c: string) => {
+                try {
+                  await submitComment(c, post!.ID, "");
+                } catch (e) {
+                  setCmtErr(`${e}`);
+                }
+              }}
+              placeholder="Add a comment..."
+            />
+            {parentComment && (
+              <button
+                onClick={() => {
+                  goBackInComments();
+                }}
+                name="Go back in comments"
+                aria-label="Go back in comments"
+                className={classes.viewingReplies}
+              >
+                Viewing replies to{" "}
+                {getUserName(
+                  getUserData(
+                    comments.find((c) => c.ID === parentComment)?.author_id!
+                  )
+                )}
+                &apos;s comment... click to go back
+              </button>
             )}
-            &apos;s comment... click to go back
-          </button>
-        )}
-        <Comments
-          setReplyingTo={setReplyingTo}
-          replyingTo={replyingTo}
-          getReplies={getReplies}
-          postId={post?.ID as string}
-          comments={commentsByParentId[parentComment as string]}
-          commentOpened={commentOpened}
-          updateMyVoteOnComment={updateMyVoteOnComment}
-          currentParentComment={parentComment}
-        />
-      </div>
+            <Comments
+              setReplyingTo={setReplyingTo}
+              replyingTo={replyingTo}
+              getReplies={getReplies}
+              postId={post?.ID as string}
+              comments={commentsByParentId[parentComment as string]}
+              commentOpened={commentOpened}
+              updateMyVoteOnComment={updateMyVoteOnComment}
+              currentParentComment={parentComment}
+            />
+          </div>
+        </>
+      )}
       <ResMsg resMsg={resMsg} />
     </div>
   );

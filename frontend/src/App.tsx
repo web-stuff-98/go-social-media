@@ -4,7 +4,6 @@ import { AttachmentProvider } from "./context/AttachmentContext";
 import { InterfaceProvider } from "./context/InterfaceContext";
 import { ModalProvider } from "./context/ModalContext";
 import { MouseProvider } from "./context/MouseContext";
-import { PostsProvider } from "./context/PostsContext";
 import { SocketProvider } from "./context/SocketContext";
 import { UserdropdownProvider } from "./context/UserdropdownContext";
 import { UsersProvider } from "./context/UsersContext";

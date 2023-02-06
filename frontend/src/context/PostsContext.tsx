@@ -342,8 +342,8 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
               if (posts[0]) {
                 removePostCard(posts[0].ID);
               }
-            } else if (getSortOrderFromParams === "ASC" && posts.length < 30) {
-              /* If sorting by oldest posts and there are less than 30
+            } else if (getSortOrderFromParams === "ASC" && posts.length < 20) {
+              /* If sorting by oldest posts and there are less than 20
           posts (the maximum number of posts on a page) it means the
           user is on the last page, so add the post to the end of
           the list */
@@ -384,7 +384,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const nextPage = () =>
     navigate(
       "/blog/" +
-        Math.min(Number(page) + 1, Math.ceil(postsCount / 30)) +
+        Math.min(Number(page) + 1, Math.ceil(postsCount / 20)) +
         queryString
     );
 
