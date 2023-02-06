@@ -53,4 +53,5 @@ export interface IRoomCard {
   img_blur?: string;
   img_url?: string;
   private?: boolean;
+  can_access: boolean;
 }

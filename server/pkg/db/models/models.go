@@ -177,6 +177,8 @@ type Room struct {
 	Messages     []RoomMessage      `bson:"-" json:"messages"`
 	ImagePending bool               `bson:"image_pending" json:"image_pending"`
 	Private      bool               `bson:"private" json:"private"`
+	// If the room is private and the user is not a member, or if the user is banned this will be sent back as false
+	CanAccess bool `bson:"-" json:"can_access"`
 }
 type RoomMessages struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty" json:"ID"`

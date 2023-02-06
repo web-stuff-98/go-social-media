@@ -77,18 +77,15 @@ func (h handler) GetRoomPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	cursor, err := h.Collections.RoomCollection.Find(ctx, filter, findOptions)
+	cursor, err := h.Collections.RoomCollection.Find(r.Context(), filter, findOptions)
 	if err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
 	}
-	defer cursor.Close(ctx)
+	defer cursor.Close(r.Context())
 
 	var rooms []models.Room
-	if err = cursor.All(ctx, &rooms); err != nil {
+	if err = cursor.All(r.Context(), &rooms); err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
 	}
@@ -97,6 +94,38 @@ func (h handler) GetRoomPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
+	}
+
+	// Need to fill out the can_access property, so get the RoomPrivateData documents for each room
+	for i, room := range rooms {
+		privateData := &models.RoomPrivateData{}
+		if err := h.Collections.RoomPrivateDataCollection.FindOne(r.Context(), bson.M{"_id": room.ID}).Decode(&privateData); err != nil {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+			return
+		}
+		rooms[i].CanAccess = true
+		if room.Author != user.ID {
+			if room.Private {
+				isMember := false
+				for _, oi := range privateData.Members {
+					if oi == user.ID {
+						isMember = true
+						break
+					}
+				}
+				rooms[i].CanAccess = isMember
+			}
+			for _, oi := range privateData.Banned {
+				isBanned := false
+				if oi == user.ID {
+					isBanned = true
+					break
+				}
+				if isBanned {
+					rooms[i].CanAccess = false
+				}
+			}
+		}
 	}
 
 	roomBytes, err := json.Marshal(rooms)

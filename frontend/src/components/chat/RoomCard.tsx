@@ -85,8 +85,8 @@ export default function RoomCard({ r }: { r: IRoomCard }) {
             />
           </>
         )}
-        {r.private && r.author_id !== user?.ID ? (
-          <AiFillLock style={{fill:"white"}} />
+        {!r.can_access ? (
+          <AiFillLock style={{ fill: "white" }} />
         ) : (
           <IconBtn
             name="Enter room"
