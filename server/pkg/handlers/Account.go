@@ -392,6 +392,7 @@ func (h handler) GetConversation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// ChatGPT to retrieve both recipient and sender messages
 	match := bson.M{
 		"$match": bson.M{
 			"_id": bson.M{
@@ -450,6 +451,7 @@ func (h handler) GetConversation(w http.ResponseWriter, r *http.Request) {
 				Length:   metadata.VideoLength,
 			}
 		}
+		// Sort messages by creation date
 		messages = append(messages, msg)
 		sort.Slice(messages, func(i, j int) bool {
 			return messages[i].CreatedAt.Time().Before(messages[j].CreatedAt.Time())

@@ -302,6 +302,8 @@ func recursivelyWriteAttachmentChunksToResponse(w http.ResponseWriter, NextChunk
 }
 
 // BROKEN - CLIENT CANT PLAY BACK VIDEO FOR SOME REASON, I GIVE UP AFTER WASTING 5 DAYS
+// When the video bytes are appended together it doesn't work. If its a video smaller than the chunk
+// size it works fine, but the point is to have chunked video streaming. I could not resolve this.
 func (h handler) GetVideoPartialContent(w http.ResponseWriter, r *http.Request) {
 	rawId := mux.Vars(r)["id"]
 	id, err := primitive.ObjectIDFromHex(rawId)

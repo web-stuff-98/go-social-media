@@ -84,8 +84,7 @@ type SocketServer struct {
 	SendDataToSubscriptions          chan SubscriptionDataMessageMulti
 	SendDataToSubscriptionsExclusive chan ExclusiveSubscriptionDataMessageMulti
 
-	// Because of concurrent write to websocket connection error, queue all messages, didn't read enough before starting
-	// websocket Write/Read must be done from 1 goroutine.
+	// websocket Write/Read must be done from 1 goroutine. Queue all of them to be executed in a loop.
 	MessageSendQueue chan QueuedMessage
 
 	VidChatOpenChan  chan VidChatOpenData

@@ -41,13 +41,12 @@ export default function Nav() {
         setMobileLinksFadeIn(mobileOpen);
       }, 200);
     } else {
-      setMobileLinksFadeIn(false)
+      setMobileLinksFadeIn(false);
     }
   }, [mobileOpen]);
 
   return (
     <nav
-      aria-expanded={!isMobile || mobileOpen}
       style={{
         ...(isMobile
           ? {
@@ -76,6 +75,7 @@ export default function Nav() {
       )}
       {(!isMobile || mobileOpen) && (
         <div
+          aria-expanded={!isMobile || mobileOpen}
           style={{
             ...(mobileOpen && isMobile
               ? {
