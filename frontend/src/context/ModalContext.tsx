@@ -147,6 +147,14 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
                     )}
                     {modalData.err && <BiError className={classes.error} />}
                     <b>{modalData.msg}</b>
+                    <button
+                      className={classes.closeButton}
+                      aria-label="Close message"
+                      name="Close message"
+                      onClick={() => closeModal()}
+                    >
+                      Ok
+                    </button>
                   </>
                 )}
               </div>

@@ -14,8 +14,8 @@ function App() {
     <InterfaceProvider>
       <MouseProvider>
         <SocketProvider>
-          <UserdropdownProvider>
-            <ModalProvider>
+          <ModalProvider>
+            <UserdropdownProvider>
               <AuthProvider>
                 <AttachmentProvider>
                   <PostsProvider>
@@ -25,8 +25,8 @@ function App() {
                   </PostsProvider>
                 </AttachmentProvider>
               </AuthProvider>
-            </ModalProvider>
-          </UserdropdownProvider>
+            </UserdropdownProvider>
+          </ModalProvider>
         </SocketProvider>
       </MouseProvider>
     </InterfaceProvider>
