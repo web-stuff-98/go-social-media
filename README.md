@@ -2,8 +2,8 @@
 
 This is my Golang social media personal project. I made tests for the React components.
 
-This is also my 2nd Go project. There are race conditions which cause the server to crash after a while.
-I have finished all its features so now I'm trying to fix those race conditions.
+This is also my 2nd Go project. It has Mutex locks and uses channels so there are no
+race conditions. My other project was crap.
 
 ## Features
  - Private & group video chat
