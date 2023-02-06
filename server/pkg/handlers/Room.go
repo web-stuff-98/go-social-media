@@ -591,6 +591,18 @@ func (h handler) UnBanUserFromRoom(w http.ResponseWriter, r *http.Request) {
 		Data: outChangeBytes,
 	}
 
+	if !room.Private {
+		h.SocketServer.SendDataToUser <- socketserver.UserDataMessage{
+			Uid: uid,
+			Data: socketmodels.OutChangeMessage{
+				Method: "UPDATE",
+				Entity: "ROOM",
+				Data:   `{"ID":"` + room.ID.Hex() + `","can_access":true}`,
+			},
+			Type: "CHANGE",
+		}
+	}
+
 	responseMessage(w, http.StatusOK, "User unbanned")
 }
 
