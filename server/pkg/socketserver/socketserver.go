@@ -236,20 +236,20 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}()
 			connData := <-socketServer.UnregisterConn
+			defer func() {
+				socketServer.Connections.mutex.Unlock()
+				socketServer.Subscriptions.mutex.Unlock()
+				socketServer.VidChatStatus.mutex.Unlock()
+				socketServer.ConnectionSubscriptionCount.mutex.Unlock()
+				socketServer.OpenConversations.mutex.Unlock()
+			}()
+			socketServer.Connections.mutex.Lock()
 			for conn := range socketServer.Connections.data {
 				if conn == connData.Conn {
-					socketServer.Connections.mutex.Lock()
 					socketServer.Subscriptions.mutex.Lock()
 					socketServer.VidChatStatus.mutex.Lock()
 					socketServer.ConnectionSubscriptionCount.mutex.Lock()
 					socketServer.OpenConversations.mutex.Lock()
-					defer func() {
-						socketServer.Connections.mutex.Unlock()
-						socketServer.Subscriptions.mutex.Unlock()
-						socketServer.VidChatStatus.mutex.Unlock()
-						socketServer.ConnectionSubscriptionCount.mutex.Unlock()
-						socketServer.OpenConversations.mutex.Unlock()
-					}()
 					delete(socketServer.Connections.data, conn)
 					delete(socketServer.VidChatStatus.data, conn)
 					delete(socketServer.ConnectionSubscriptionCount.data, conn)
@@ -394,6 +394,10 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					}
 				}
 				// Make sure users cannot open too many subscriptions
+				socketServer.ConnectionSubscriptionCount.mutex.Lock()
+				defer func() {
+					socketServer.ConnectionSubscriptionCount.mutex.Unlock()
+				}()
 				count, countOk := socketServer.ConnectionSubscriptionCount.data[connData.Conn]
 				if count >= 128 {
 					allow = false
@@ -405,7 +409,6 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 						socketServer.Subscriptions.data[connData.Name] = make(map[*websocket.Conn]primitive.ObjectID)
 					}
 					socketServer.Subscriptions.data[connData.Name][connData.Conn] = connData.Uid
-					socketServer.ConnectionSubscriptionCount.mutex.Lock()
 					if countOk {
 						socketServer.ConnectionSubscriptionCount.data[connData.Conn]++
 					} else {
@@ -413,7 +416,6 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					}
 					defer func() {
 						socketServer.Subscriptions.mutex.Unlock()
-						socketServer.ConnectionSubscriptionCount.mutex.Unlock()
 					}()
 				}
 			}
@@ -434,19 +436,19 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				err = fmt.Errorf("Connection was nil")
 			}
 			if err != nil {
+				socketServer.Subscriptions.mutex.Lock()
 				if _, ok := socketServer.Subscriptions.data[connData.Name]; ok {
-					socketServer.Subscriptions.mutex.Lock()
 					delete(socketServer.Subscriptions.data[connData.Name], connData.Conn)
 					socketServer.Subscriptions.mutex.Unlock()
 				}
 				socketServer.VidChatStatus.mutex.Lock()
 				delete(socketServer.VidChatStatus.data, connData.Conn)
 				socketServer.VidChatStatus.mutex.Unlock()
+				socketServer.ConnectionSubscriptionCount.mutex.Lock()
 				if _, ok := socketServer.ConnectionSubscriptionCount.data[connData.Conn]; ok {
-					socketServer.ConnectionSubscriptionCount.mutex.Lock()
 					socketServer.ConnectionSubscriptionCount.data[connData.Conn]--
-					socketServer.ConnectionSubscriptionCount.mutex.Unlock()
 				}
+				socketServer.ConnectionSubscriptionCount.mutex.Unlock()
 			}
 		}
 	}()
@@ -460,6 +462,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}()
 			subsData := <-socketServer.SendDataToSubscription
+			socketServer.Subscriptions.mutex.Lock()
 			for k, s := range socketServer.Subscriptions.data {
 				if k == subsData.Name {
 					for conn := range s {
@@ -471,6 +474,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					break
 				}
 			}
+			socketServer.Subscriptions.mutex.Unlock()
 		}
 	}()
 	/* ----- Send data to subscription excluding uids ----- */
@@ -483,6 +487,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}()
 			subsData := <-socketServer.SendDataToSubscriptionExclusive
+			socketServer.Subscriptions.mutex.Lock()
 			for k, s := range socketServer.Subscriptions.data {
 				if k == subsData.Name {
 					for conn, oid := range s {
@@ -496,6 +501,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					break
 				}
 			}
+			socketServer.Subscriptions.mutex.Unlock()
 		}
 	}()
 	/* ----- Send data to multiple subscriptions ----- */
@@ -508,6 +514,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}()
 			subsData := <-socketServer.SendDataToSubscriptions
+			socketServer.Subscriptions.mutex.Lock()
 			for _, v := range subsData.Names {
 				for k, s := range socketServer.Subscriptions.data {
 					if k == v {
@@ -521,6 +528,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					}
 				}
 			}
+			socketServer.Subscriptions.mutex.Unlock()
 		}
 	}()
 	/* ----- Send data to multiple subscriptions excluding uids ----- */
@@ -533,6 +541,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}()
 			subsData := <-socketServer.SendDataToSubscriptionsExclusive
+			socketServer.Subscriptions.mutex.Lock()
 			for _, v := range subsData.Names {
 				for k, s := range socketServer.Subscriptions.data {
 					if k == v {
@@ -548,6 +557,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					}
 				}
 			}
+			socketServer.Subscriptions.mutex.Unlock()
 		}
 	}()
 	/* ----- Send data to a specific user ----- */
@@ -560,6 +570,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}()
 			data := <-socketServer.SendDataToUser
+			socketServer.Connections.mutex.Lock()
 			for conn, uid := range socketServer.Connections.data {
 				if data.Uid == uid {
 					var m map[string]interface{}
@@ -578,6 +589,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					break
 				}
 			}
+			socketServer.Connections.mutex.Unlock()
 		}
 	}()
 	/* ----- Remove a user from subscription ----- */
@@ -590,6 +602,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}()
 			data := <-socketServer.RemoveUserFromSubscription
+			socketServer.Subscriptions.mutex.Lock()
 			if subs, ok := socketServer.Subscriptions.data[data.Name]; ok {
 				for c, oi := range subs {
 					if oi == data.Uid {
@@ -602,6 +615,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					}
 				}
 			}
+			socketServer.Subscriptions.mutex.Unlock()
 		}
 	}()
 	/* ----- Destroy subscription ----- */
@@ -614,15 +628,15 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}()
 			subsName := <-socketServer.DestroySubscription
+			socketServer.Subscriptions.mutex.Lock()
+			socketServer.ConnectionSubscriptionCount.mutex.Lock()
 			for c := range socketServer.Subscriptions.data[subsName] {
 				if _, ok := socketServer.ConnectionSubscriptionCount.data[c]; ok {
-					socketServer.ConnectionSubscriptionCount.mutex.Lock()
 					socketServer.ConnectionSubscriptionCount.data[c]--
-					socketServer.ConnectionSubscriptionCount.mutex.Unlock()
 				}
 			}
-			socketServer.Subscriptions.mutex.Lock()
 			delete(socketServer.Subscriptions.data, subsName)
+			socketServer.ConnectionSubscriptionCount.mutex.Unlock()
 			socketServer.Subscriptions.mutex.Unlock()
 		}
 	}()
@@ -658,6 +672,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}()
 			data := <-socketServer.GetUserConversationsOpenWith
+			socketServer.OpenConversations.mutex.Lock()
 			if openConvs, ok := socketServer.OpenConversations.data[data.Uid]; ok {
 				for oi := range openConvs {
 					if oi == data.UidB {
@@ -666,6 +681,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					}
 				}
 			}
+			socketServer.OpenConversations.mutex.Unlock()
 			data.RecvChan <- false
 		}
 	}()
@@ -700,11 +716,11 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}()
 			data := <-socketServer.UserCloseConversationWith
+			socketServer.OpenConversations.mutex.Lock()
 			if _, ok := socketServer.OpenConversations.data[data.Uid]; ok {
-				socketServer.OpenConversations.mutex.Lock()
 				delete(socketServer.OpenConversations.data[data.Uid], data.ConvUid)
-				socketServer.OpenConversations.mutex.Unlock()
 			}
+			socketServer.OpenConversations.mutex.Unlock()
 		}
 	}()
 	/* ----- Get UID hexes of other users in a room (vidChat) chan ----- */
@@ -718,6 +734,9 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			}()
 			data := <-socketServer.VidChatGetAllUsersInRoom
 			allUsers := []string{}
+			socketServer.Subscriptions.mutex.Lock()
+			socketServer.VidChatStatus.mutex.Lock()
+			socketServer.Connections.mutex.Lock()
 			for k, v := range socketServer.Subscriptions.data {
 				if strings.ReplaceAll(k, "room=", "") == data.RoomIdHex {
 					for _, oi := range v {
@@ -737,6 +756,9 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					break
 				}
 			}
+			socketServer.Subscriptions.mutex.Unlock()
+			socketServer.VidChatStatus.mutex.Unlock()
+			socketServer.Connections.mutex.Unlock()
 			data.RecvChan <- allUsers
 		}
 	}()
@@ -752,6 +774,8 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			data := <-socketServer.VidChatGetOtherUserVidOpen
 			allUsers := []string{}
 			hasOpen := false
+			socketServer.Connections.mutex.Lock()
+			socketServer.VidChatStatus.mutex.Lock()
 			for c, oi := range socketServer.Connections.data {
 				if oi == data.UidB {
 					if status, ok := socketServer.VidChatStatus.data[c]; ok {
@@ -762,6 +786,8 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					break
 				}
 			}
+			socketServer.Connections.mutex.Unlock()
+			socketServer.VidChatStatus.mutex.Unlock()
 			if hasOpen {
 				allUsers = []string{data.UidB.Hex()}
 			}
