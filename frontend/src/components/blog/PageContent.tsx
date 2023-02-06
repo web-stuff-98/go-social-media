@@ -8,6 +8,7 @@ import { useModal } from "../../context/ModalContext";
 import { useAuth } from "../../context/AuthContext";
 import { IPost } from "../../interfaces/PostInterfaces";
 import { useInterface } from "../../context/InterfaceContext";
+import { useEffect, useState } from "react";
 
 export default function PageContent({
   post,
@@ -25,13 +26,32 @@ export default function PageContent({
     state: { isMobile },
   } = useInterface();
 
+  const [scrollY, setScrollY] = useState(0);
+
+  const handleScroll = (e: Event) => {
+    setScrollY(window.scrollY);
+  };
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
   return (
     <>
       <div
         data-testid="Image and title"
         className={classes.imageTitleContainer}
       >
-        <img className={classes.image} alt={post.title} src={imgURL} />
+        <div
+          className={classes.image}
+          style={{
+            backgroundImage: `url(${imgURL})`,
+            backgroundPositionY: `${Math.floor(scrollY * 0.5)}px`,
+          }}
+        />
         <div className={classes.text}>
           <div className={classes.titleDescription}>
             <h1 data-testid="Heading">{post.title}</h1>

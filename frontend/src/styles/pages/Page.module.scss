@@ -31,8 +31,8 @@
       width: 100%;
       height: 100%;
       position: absolute;
-      object-fit: cover;
-      object-position: center;
+      background-size: cover;
+      background-position-x: center;
       border-bottom: 1px solid var(--base-light);
       mask-image: linear-gradient(to bottom, black 25%, transparent 120%);
     }
@@ -111,7 +111,7 @@
       background: none;
       justify-content: center;
       width: 100%;
-      color:var(--text-color);
+      color: var(--text-color);
     }
   }
 }

@@ -39,17 +39,10 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
   const sendIfPossible = (data: string) => {
     if (socket) {
-      if (socket.CONNECTING) {
-        queueSocketMessage(data);
-      }
-      if (socket.CLOSED) {
-        queueSocketMessage(data);
-      }
-      if (socket.CLOSING) {
-        queueSocketMessage(data);
-      }
-      if (socket.OPEN) {
+      if (socket.readyState === 1) {
         socket.send(data);
+      } else {
+        queueSocketMessage(data);
       }
     } else {
       queueSocketMessage(data);

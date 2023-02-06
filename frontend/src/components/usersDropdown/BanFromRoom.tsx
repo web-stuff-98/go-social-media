@@ -32,6 +32,11 @@ export default function BanFromRoom({
   const ban = async (inviteTo: string) => {
     try {
       await banFromRoom(uid, inviteTo);
+      openModal("Message", {
+        msg: "The user is now banned from the room",
+        err: false,
+        pen: false,
+      });
     } catch (e) {
       openModal("Message", {
         msg: `${e}`,

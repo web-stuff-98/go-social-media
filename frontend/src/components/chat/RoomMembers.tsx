@@ -104,22 +104,34 @@ export default function RoomMembers() {
 
   return (
     <div className={classes.container}>
-      <label>Members ({data.members.length})</label>
-      <ul aria-label="Members list">
+      <label htmlFor="Members list">Members ({data.members.length})</label>
+      <ul aria-label="Members list" id="Members list">
         {data.members.map((uid) => (
           <li>
             <User square small uid={uid} user={getUserData(uid)} />
             <button
-              onClick={async () => {
-                try {
-                  await banFromRoom(uid, roomId);
-                } catch (e) {
-                  openModal("Message", {
-                    err: true,
-                    msg: `${e}`,
-                    pen: false,
-                  });
-                }
+              onClick={() => {
+                openModal("Confirm", {
+                  msg: "Are you sure you want to ban this user?",
+                  err: false,
+                  pen: false,
+                  confirmationCallback: async () => {
+                    try {
+                      await banFromRoom(uid, roomId);
+                      openModal("Message", {
+                        err: false,
+                        msg: "User has been banned",
+                        pen: false,
+                      });
+                    } catch (e) {
+                      openModal("Message", {
+                        err: true,
+                        msg: `${e}`,
+                        pen: false,
+                      });
+                    }
+                  },
+                });
               }}
               aria-label="Ban user"
               className={classes.redButton}
@@ -129,22 +141,34 @@ export default function RoomMembers() {
           </li>
         ))}
       </ul>
-      <label>Banned ({data.banned.length})</label>
-      <ul aria-label="Banned users list">
+      <label htmlFor="Banned list">Banned ({data.banned.length})</label>
+      <ul aria-label="Banned list" id="Banned list">
         {data.banned.map((uid) => (
           <li>
             <User square small uid={uid} user={getUserData(uid)} />
             <button
-              onClick={async () => {
-                try {
-                  await unbanFromRoom(uid, roomId);
-                } catch (e) {
-                  openModal("Message", {
-                    err: true,
-                    msg: `${e}`,
-                    pen: false,
-                  });
-                }
+              onClick={() => {
+                openModal("Confirm", {
+                  msg: "Are you sure you want to unban this user?",
+                  err: false,
+                  pen: false,
+                  confirmationCallback: async () => {
+                    try {
+                      await unbanFromRoom(uid, roomId);
+                      openModal("Message", {
+                        err: false,
+                        msg: "User has been unbanned, if your room is private you will need to invite them again for them to join",
+                        pen: false,
+                      });
+                    } catch (e) {
+                      openModal("Message", {
+                        err: true,
+                        msg: `${e}`,
+                        pen: false,
+                      });
+                    }
+                  },
+                });
               }}
               aria-label="Unban user"
               className={classes.greenButton}
