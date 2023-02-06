@@ -396,16 +396,13 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 				// Make sure users cannot open too many subscriptions
 				socketServer.ConnectionSubscriptionCount.mutex.Lock()
-				defer func() {
-					socketServer.ConnectionSubscriptionCount.mutex.Unlock()
-				}()
+				socketServer.Subscriptions.mutex.Lock()
 				count, countOk := socketServer.ConnectionSubscriptionCount.data[connData.Conn]
 				if count >= 128 {
 					allow = false
 				}
 				// Passed all checks, add the connection to the subscription
 				if allow {
-					socketServer.Subscriptions.mutex.Lock()
 					if socketServer.Subscriptions.data[connData.Name] == nil {
 						socketServer.Subscriptions.data[connData.Name] = make(map[*websocket.Conn]primitive.ObjectID)
 					}
@@ -415,10 +412,9 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					} else {
 						socketServer.ConnectionSubscriptionCount.data[connData.Conn] = 1
 					}
-					defer func() {
-						socketServer.Subscriptions.mutex.Unlock()
-					}()
 				}
+				socketServer.Subscriptions.mutex.Unlock()
+				socketServer.ConnectionSubscriptionCount.mutex.Unlock()
 			}
 		}
 	}()
@@ -438,12 +434,12 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			}
 			if err != nil {
 				socketServer.Subscriptions.mutex.Lock()
+				socketServer.VidChatStatus.mutex.Lock()
 				if _, ok := socketServer.Subscriptions.data[connData.Name]; ok {
 					delete(socketServer.Subscriptions.data[connData.Name], connData.Conn)
-					socketServer.Subscriptions.mutex.Unlock()
 				}
-				socketServer.VidChatStatus.mutex.Lock()
 				delete(socketServer.VidChatStatus.data, connData.Conn)
+				socketServer.Subscriptions.mutex.Unlock()
 				socketServer.VidChatStatus.mutex.Unlock()
 				socketServer.ConnectionSubscriptionCount.mutex.Lock()
 				if _, ok := socketServer.ConnectionSubscriptionCount.data[connData.Conn]; ok {
@@ -637,30 +633,26 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}
 			delete(socketServer.Subscriptions.data, subsName)
-			socketServer.ConnectionSubscriptionCount.mutex.Unlock()
 			socketServer.Subscriptions.mutex.Unlock()
+			socketServer.ConnectionSubscriptionCount.mutex.Unlock()
 		}
 	}()
 	/* ----- Vid chat opened chan ----- */
 	go func() {
 		for {
 			data := <-socketServer.VidChatOpenChan
-			defer func() {
-				socketServer.VidChatStatus.mutex.Unlock()
-			}()
 			socketServer.VidChatStatus.mutex.Lock()
 			socketServer.VidChatStatus.data[data.Conn] = data
+			socketServer.VidChatStatus.mutex.Unlock()
 		}
 	}()
 	/* ----- Vid chat closed chan ----- */
 	go func() {
 		for {
 			data := <-socketServer.VidChatCloseChan
-			defer func() {
-				socketServer.VidChatStatus.mutex.Unlock()
-			}()
 			socketServer.VidChatStatus.mutex.Lock()
 			delete(socketServer.VidChatStatus.data, data)
+			socketServer.VidChatStatus.mutex.Unlock()
 		}
 	}()
 	/* ----- Get user has conversations open with other user chan ----- */
@@ -807,11 +799,13 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			select {
 			case <-cleanupTicker.C:
 				// Destroy empty subscriptions
+				socketServer.Subscriptions.mutex.Lock()
 				for k, v := range socketServer.Subscriptions.data {
 					if len(v) == 0 {
 						socketServer.DestroySubscription <- k
 					}
 				}
+				socketServer.Subscriptions.mutex.Unlock()
 			case <-quitCleanup:
 				cleanupTicker.Stop()
 				return
