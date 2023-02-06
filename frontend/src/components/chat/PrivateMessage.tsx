@@ -9,7 +9,6 @@ import { useState, useEffect, useRef, FormEvent } from "react";
 import type { ChangeEvent } from "react";
 import { useModal } from "../../context/ModalContext";
 import useSocket from "../../context/SocketContext";
-import { acceptInvite, declineInvite } from "../../services/rooms";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: "short",
@@ -87,6 +86,26 @@ export default function PrivateMessage({
     };
     // eslint-disable-next-line
   }, [mouseInside]);
+
+  const acceptInvite = () => {
+    sendIfPossible(
+      JSON.stringify({
+        event_type: "ACCEPT_INVITATION",
+        msg_id: msg.ID,
+        sender_id: msg.uid,
+      })
+    );
+  };
+
+  const declineInvite = () => {
+    sendIfPossible(
+      JSON.stringify({
+        event_type: "DECLINE_INVITATION",
+        msg_id: msg.ID,
+        sender_id: msg.uid,
+      })
+    );
+  };
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   return (
@@ -173,7 +192,8 @@ export default function PrivateMessage({
               <div className={classes.invitationButtons}>
                 <button
                   //msg.content is the room id for invitations
-                  onClick={() => acceptInvite(msg.uid, msg.ID, msg.content)}
+                  //onClick={() => acceptInvite(msg.uid, msg.ID, msg.content)}
+                  onClick={() => acceptInvite()}
                   aria-label="Accept invitation"
                   name="Accept invitation"
                 >
@@ -181,7 +201,8 @@ export default function PrivateMessage({
                 </button>
                 <button
                   //msg.content is the room id for invitations
-                  onClick={() => declineInvite(msg.uid, msg.ID, msg.content)}
+                  //onClick={() => declineInvite(msg.uid, msg.ID, msg.content)}
+                  onClick={() => declineInvite()}
                   aria-label="Decline invitation"
                   name="Decline invitation"
                 >

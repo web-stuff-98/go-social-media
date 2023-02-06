@@ -62,8 +62,9 @@ type RoomMessageUpdate struct {
 
 // TYPE: ACCEPT_INVITATION/DECLINE_INVITATION
 type AcceptDeclineInvitation struct {
-	Type  string `json:"TYPE"`
-	MsgId string `json:"msg_id"`
+	Type     string `json:"TYPE"`
+	MsgId    string `json:"msg_id"`
+	SenderId string `json:"sender_id"`
 }
 
 // TYPE: OPEN_SUBSCRIPTION/CLOSE_SUBSCRIPTION

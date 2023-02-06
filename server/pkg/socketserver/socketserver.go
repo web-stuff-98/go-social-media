@@ -52,6 +52,10 @@ type ExclusiveSubscriptionDataMessageMulti struct {
 	Data    []byte
 	Exclude map[primitive.ObjectID]bool
 }
+type QueuedMessage struct {
+	Conn *websocket.Conn
+	Data []byte
+}
 type UserDataMessage struct {
 	Uid  primitive.ObjectID
 	Data interface{}
@@ -77,6 +81,9 @@ type SocketServer struct {
 	SendDataToSubscriptionExclusive  chan ExclusiveSubscriptionDataMessage
 	SendDataToSubscriptions          chan SubscriptionDataMessageMulti
 	SendDataToSubscriptionsExclusive chan ExclusiveSubscriptionDataMessageMulti
+
+	// Because of concurrent write to websocket connection error, I queue all messages, didn't read enough before starting
+	MessageSendQueue chan QueuedMessage
 
 	VidChatOpenChan  chan VidChatOpenData
 	VidChatCloseChan chan *websocket.Conn
@@ -105,6 +112,8 @@ func Init(colls *db.Collections) (*SocketServer, error) {
 		SendDataToSubscriptionExclusive:  make(chan ExclusiveSubscriptionDataMessage),
 		SendDataToSubscriptions:          make(chan SubscriptionDataMessageMulti),
 		SendDataToSubscriptionsExclusive: make(chan ExclusiveSubscriptionDataMessageMulti),
+
+		MessageSendQueue: make(chan QueuedMessage),
 
 		VidChatOpenChan:  make(chan VidChatOpenData),
 		VidChatCloseChan: make(chan *websocket.Conn),

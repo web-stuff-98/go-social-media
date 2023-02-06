@@ -233,14 +233,9 @@ func (h handler) InviteToRoom(w http.ResponseWriter, r *http.Request) {
 			responseMessage(w, http.StatusInternalServerError, "Internal error")
 			return
 		} else {
-			h.SocketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-				Name: "inbox=" + recipientId.Hex(),
-				Data: outBytes,
-			}
-			// Also send the message to the sender because they need to be able to see their own message
-			h.SocketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-				Name: "inbox=" + user.ID.Hex(),
-				Data: outBytes,
+			h.SocketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+				Names: []string{"inbox=" + recipientId.Hex(), "inbox=" + user.ID.Hex()},
+				Data:  outBytes,
 			}
 		}
 	}
@@ -330,19 +325,17 @@ func (h handler) AcceptRoomInvite(w http.ResponseWriter, r *http.Request) {
 		Data:  outBytes,
 	}
 
-	go func() {
-		if outChangeBytes, err := json.Marshal(socketmodels.OutChangeMessage{
-			Type:   "CHANGE",
-			Method: "INSERT",
-			Entity: "MEMBER",
-			Data:   `{"ID":"` + user.ID.Hex() + `"}`,
-		}); err != nil {
-			h.SocketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-				Name: "room_private_data=" + room.ID.Hex(),
-				Data: outChangeBytes,
-			}
+	if outChangeBytes, err := json.Marshal(socketmodels.OutChangeMessage{
+		Type:   "CHANGE",
+		Method: "INSERT",
+		Entity: "MEMBER",
+		Data:   `{"ID":"` + user.ID.Hex() + `"}`,
+	}); err != nil {
+		h.SocketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+			Name: "room_private_data=" + room.ID.Hex(),
+			Data: outChangeBytes,
 		}
-	}()
+	}
 
 	responseMessage(w, http.StatusOK, "Invitation accepted")
 }
