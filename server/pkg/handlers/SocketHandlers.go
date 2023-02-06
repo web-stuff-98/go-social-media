@@ -213,7 +213,7 @@ func privateMessage(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *
 	}
 	hasConvsOpenWith := <-hasConvsOpenWithRecv
 	addNotification := !hasConvsOpenWith
-	close(hasConvsOpenWithRecv)
+	defer close(hasConvsOpenWithRecv)
 
 	if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, bson.M{
 		"$push": bson.M{
@@ -544,8 +544,8 @@ func vidJoin(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *sockets
 			RecvChan:  allUsersRecv,
 		}
 		received := <-allUsersRecv
+		defer close(allUsersRecv)
 		allUsers = received
-		close(allUsersRecv)
 	} else {
 		// The only other user is the user receiving the direct video.
 		// First check if the other user has video chat open in the conversation before
@@ -557,8 +557,8 @@ func vidJoin(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *sockets
 			RecvChan: allUsersRecv,
 		}
 		received := <-allUsersRecv
+		defer close(allUsersRecv)
 		allUsers = received
-		close(allUsersRecv)
 	}
 	ss.VidChatOpenChan <- socketserver.VidChatOpenData{
 		Id:   joinID,
@@ -598,8 +598,8 @@ func vidExit(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *sockets
 			RecvChan:  allUsersRecv,
 		}
 		received := <-allUsersRecv
+		defer close(allUsersRecv)
 		allUsers = received
-		close(allUsersRecv)
 		for _, v := range allUsers {
 			if oid, err := primitive.ObjectIDFromHex(v); err != nil {
 				return err

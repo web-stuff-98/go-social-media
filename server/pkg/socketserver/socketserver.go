@@ -17,13 +17,6 @@ import (
 )
 
 /*
-	I added mutexes to the maps, you must use the channel to retrieve data.
-
-	Before it was just maps without any concurrency protection, the server would
-	crash every few minutes because of race conditions. It's fixed now, but the
-	amount of code is getting crazy and I will probably be very confused if I
-	come back to this project after a long time.
-
 	Uid can always be left as primitive.NilObjectID, users are not required
 	to be authenticated to connect or open subscriptions, but there is an auth
 	check for users down below, to make sure users cannot subscribe to other users
@@ -658,7 +651,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			defer func() {
 				r := recover()
 				if r != nil {
-					log.Println("Recovered from panic in get user has convesations open with other user chan :", r)
+					log.Println("Recovered from panic in get user has conversations open with other user chan :", r)
 				}
 			}()
 			data := <-socketServer.GetUserConversationsOpenWith

@@ -115,7 +115,7 @@ func watchUserDeletes(db *mongo.Database, ss *socketserver.SocketServer, as *att
 			var roomMsgs models.RoomMessages
 			if err := db.Collection("room_messages").FindOneAndUpdate(context.Background(), roomId, bson.M{"$pull": bson.M{"messages": bson.M{"uid": uid}}}).Decode(&roomMsgs); err == nil {
 				for _, rm := range roomMsgs.Messages {
-					if rm.HasAttachment {
+					if rm.HasAttachment && rm.Uid == uid {
 						as.DeleteChunksChan <- rm.ID
 						db.Collection("attachment_metadata").DeleteOne(context.Background(), bson.M{"_id": rm.ID})
 					}

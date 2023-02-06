@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -626,9 +625,6 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	filter := bson.M{"image_pending": false}
 	if len(tags) == 0 {
 		if term != "" && term != " " {
@@ -651,15 +647,15 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	cursor, curerr := h.Collections.PostCollection.Find(ctx, filter, findOptions)
+	cursor, curerr := h.Collections.PostCollection.Find(r.Context(), filter, findOptions)
+	defer cursor.Close(r.Context())
 	if curerr != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
 	}
-	defer cursor.Close(ctx)
 
 	var posts []models.Post
-	for cursor.Next(ctx) {
+	for cursor.Next(r.Context()) {
 		var post models.Post
 		err := cursor.Decode(&post)
 		if err != nil {

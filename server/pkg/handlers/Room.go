@@ -234,8 +234,8 @@ func (h handler) InviteToRoom(w http.ResponseWriter, r *http.Request) {
 		UidB:     user.ID,
 	}
 	hasConvsOpenWith := <-hasConvsOpenWithRecv
-	addNotification := !hasConvsOpenWith
 	close(hasConvsOpenWithRecv)
+	addNotification := !hasConvsOpenWith
 
 	if addNotification {
 		if _, err := h.Collections.NotificationsCollection.UpdateByID(context.TODO(), recipientId, bson.M{
