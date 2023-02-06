@@ -28,9 +28,7 @@ export default function PageContent({
 
   const [scrollY, setScrollY] = useState(0);
 
-  const handleScroll = (e: Event) => {
-    setScrollY(window.scrollY);
-  };
+  const handleScroll = () => setScrollY(window.scrollY);
 
   useEffect(() => {
     window.addEventListener("scroll", handleScroll);
