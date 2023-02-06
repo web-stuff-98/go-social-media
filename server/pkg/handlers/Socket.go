@@ -32,9 +32,7 @@ var upgrader = websocket.Upgrader{
 	Voting and commenting and room invites are done in the API handlers, I could have put that in here but I didn't
 
 	Todo:
-	 - probably write some functions for better error handling
-	 - maybe write some functions and refactor so that there aren't so many if statements and lots of indentation
-	(basically rewrite everything so that there aren't tonnes of if statements, indentation and generic error handling)
+	 - rewrite everything so that there aren't tonnes of if statements, indentation and generic error handling
 */
 
 func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, attachmentServer *attachmentserver.AttachmentServer, uid *primitive.ObjectID, colls *db.Collections) {
