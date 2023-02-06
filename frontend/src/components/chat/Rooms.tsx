@@ -41,7 +41,7 @@ export default function Rooms() {
   const handleSearch = useMemo(
     () => debounce(() => updatePage(), 300),
     // eslint-disable-next-line
-    [searchInput, page]
+    [searchInput, page, onlyOwnRooms]
   );
 
   const updatePage = async () => {
