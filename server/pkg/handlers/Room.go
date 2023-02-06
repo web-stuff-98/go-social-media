@@ -227,16 +227,15 @@ func (h handler) InviteToRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	addNotification := true
-	if openConvs, ok := h.SocketServer.OpenConversations[recipientId]; ok {
-		for oi := range openConvs {
-			if oi == user.ID {
-				// Recipient has conversation open. Don't create the notification
-				addNotification = false
-				break
-			}
-		}
+	hasConvsOpenWithRecv := make(chan bool)
+	h.SocketServer.GetUserConversationsOpenWith <- socketserver.GetUserConversationsOpenWith{
+		RecvChan: hasConvsOpenWithRecv,
+		Uid:      recipientId,
+		UidB:     user.ID,
 	}
+	hasConvsOpenWith := <-hasConvsOpenWithRecv
+	addNotification := !hasConvsOpenWith
+	close(hasConvsOpenWithRecv)
 
 	if addNotification {
 		if _, err := h.Collections.NotificationsCollection.UpdateByID(context.TODO(), recipientId, bson.M{
@@ -503,6 +502,11 @@ func (h handler) BanUserFromRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.SocketServer.RemoveUserFromSubscription <- socketserver.RemoveUserFromSubscription{
+		Name: "room=" + room.ID.Hex(),
+		Uid:  uid,
+	}
+
 	outChangeBytes, err := json.Marshal(socketmodels.OutChangeMessage{
 		Type:   "CHANGE",
 		Method: "INSERT",
@@ -512,15 +516,6 @@ func (h handler) BanUserFromRoom(w http.ResponseWriter, r *http.Request) {
 	h.SocketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 		Name: "room_private_data=" + room.ID.Hex(),
 		Data: outChangeBytes,
-	}
-
-	if subs, ok := h.SocketServer.Subscriptions["room="+room.ID.Hex()]; ok {
-		for c, oi := range subs {
-			if oi == uid {
-				delete(h.SocketServer.Subscriptions["room="+room.ID.Hex()], c)
-				break
-			}
-		}
 	}
 
 	h.SocketServer.SendDataToUser <- socketserver.UserDataMessage{

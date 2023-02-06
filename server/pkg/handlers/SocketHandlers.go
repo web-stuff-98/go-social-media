@@ -133,6 +133,7 @@ func openConv(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *socket
 	if convUid, err := primitive.ObjectIDFromHex(data.Uid); err != nil {
 		return err
 	} else {
+		// YOU NEED A CHANNEL TO ADD A USER TO OPEN CONVERSATIONS
 		if _, ok := ss.OpenConversations[uid]; ok {
 			ss.OpenConversations[uid][convUid] = struct{}{}
 		} else {
@@ -158,6 +159,7 @@ func exitConv(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *socket
 	if convUid, err := primitive.ObjectIDFromHex(data.Uid); err != nil {
 		return err
 	} else {
+		// YOU NEED A CHANNEL TO REMOVE A USER FROM OPEN CONVERSATIONS
 		if _, ok := ss.OpenConversations[uid]; ok {
 			delete(ss.OpenConversations[uid], convUid)
 		}
@@ -207,6 +209,7 @@ func privateMessage(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *
 		return err
 	}
 	addNotification := true
+	// YOU NEED A TWO WAY CHANNEL TO CHECK IF A USER IS IN OPENCONVERSATIONS
 	if openConvs, ok := ss.OpenConversations[recipientId]; ok {
 		for oi := range openConvs {
 			if oi == uid {
@@ -538,6 +541,7 @@ func vidJoin(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *sockets
 		}
 		// Find all the users connected to the room, check if they have video chat
 		// open in the room, if they do add to allUsers
+		// NEED A SOCKETSERVER TWO-WAY CHANNEL TO GET ALL OTHER USERS CONNECTED TO A SUBSCRIPTION
 		for k, v := range ss.Subscriptions {
 			if strings.ReplaceAll(k, "room=", "") == data.JoinID {
 				for _, oi := range v {
@@ -561,6 +565,7 @@ func vidJoin(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *sockets
 		// The only other user is the user receiving the direct video.
 		// First check if the other user has video chat open in the conversation before
 		// forming the WebRTC connection.
+		// NEED A SOCKETSERVER TWO-WAY CHANNEL TO GET THE VID CHAT OPEN STATUS OF ANOTHER USER
 		hasOpen := false
 		for c, oi := range ss.Connections {
 			if oi == joinID {
@@ -606,6 +611,7 @@ func vidExit(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *sockets
 			return err
 		}
 		// Find all the users connected to the room
+		// NEED A SOCKETSERVER TWO-WAY CHANNEL TO RETRIEVE ALL USERS CONNECTED TO A ROOM
 		for k, v := range ss.Subscriptions {
 			if strings.ReplaceAll(k, "room=", "") == data.ID {
 				for _, oi := range v {

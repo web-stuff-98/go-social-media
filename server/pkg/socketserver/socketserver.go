@@ -17,11 +17,11 @@ import (
 )
 
 /*
+	I added mutexes to the maps, you must use the channel to retrieve data.
 
-
-	All messages are put through the queue channel before being sent, to avoid
-	the concurrent write to websocket error which I did not anticipate. Write to
-	websocket can only be done from one goroutine.
+	Before it was just maps without any concurrency protection, the server would
+	crash every few minutes because of race conditions. It's fixed now, but the
+	amount of code is getting crazy.
 
 	Uid can always be left as primitive.NilObjectID, users are not required
 	to be authenticated to connect or open subscriptions, but there is an auth
@@ -29,6 +29,65 @@ import (
 	inboxes/notifications or subscribe to rooms without being authenticated.
 */
 
+/*--------------- SOCKET SERVER STRUCT ---------------*/
+type SocketServer struct {
+	Connections                 Connections
+	Subscriptions               Subscriptions
+	ConnectionSubscriptionCount ConnectionsSubscriptionCount
+
+	RegisterConn   chan ConnectionInfo
+	UnregisterConn chan ConnectionInfo
+
+	RegisterSubscriptionConn   chan SubscriptionConnectionInfo
+	UnregisterSubscriptionConn chan SubscriptionConnectionInfo
+
+	SendDataToSubscription           chan SubscriptionDataMessage
+	SendDataToSubscriptionExclusive  chan ExclusiveSubscriptionDataMessage
+	SendDataToSubscriptions          chan SubscriptionDataMessageMulti
+	SendDataToSubscriptionsExclusive chan ExclusiveSubscriptionDataMessageMulti
+	RemoveUserFromSubscription       chan RemoveUserFromSubscription
+
+	// websocket Write/Read must be done from 1 goroutine. Queue all of them to be executed in a loop.
+	// this is Golang noob me trying to fix concurrency problems not realizing I should have been using mutexes
+	MessageSendQueue chan QueuedMessage
+
+	VidChatOpenChan  chan VidChatOpenData
+	VidChatCloseChan chan *websocket.Conn
+	VidChatStatus    VidChatStatus
+
+	// openConversations is a map including all the users that have the "inbox" section of their chat open.
+	// probably needs renaming. The "inbox" section on the frontend was originally called "conversations"
+	OpenConversations            OpenConversations
+	GetUserConversationsOpenWith chan GetUserConversationsOpenWith
+
+	SendDataToUser chan UserDataMessage
+
+	DestroySubscription chan string
+}
+
+/*--------------- MUTEX PROTECTED MAPS ---------------*/
+type Connections struct {
+	data  map[*websocket.Conn]primitive.ObjectID
+	mutex sync.Mutex
+}
+type Subscriptions struct {
+	data  map[string]map[*websocket.Conn]primitive.ObjectID
+	mutex sync.Mutex
+}
+type ConnectionsSubscriptionCount struct {
+	data  map[*websocket.Conn]uint8 //Max subscriptions is 128... nice number half max uint8
+	mutex sync.Mutex
+}
+type VidChatStatus struct {
+	data  map[*websocket.Conn]VidChatOpenData
+	mutex sync.Mutex
+}
+type OpenConversations struct {
+	data  map[primitive.ObjectID]map[primitive.ObjectID]struct{}
+	mutex sync.Mutex
+}
+
+/*--------------- MISC STRUCTS ---------------*/
 type ConnectionInfo struct {
 	Conn        *websocket.Conn
 	Uid         primitive.ObjectID
@@ -71,67 +130,27 @@ type VidChatOpenData struct {
 	Id   primitive.ObjectID
 }
 
-type Connections struct {
-	conns map[*websocket.Conn]primitive.ObjectID
-	mutex sync.Mutex
+/*--------------- CHANNEL STRUCTS (some from above should probably be moved here) ---------------*/
+type GetUserConversationsOpenWith struct {
+	RecvChan chan<- bool
+	Uid      primitive.ObjectID
+	UidB     primitive.ObjectID
 }
-type Subscriptions struct {
-	subs  map[string]map[*websocket.Conn]primitive.ObjectID
-	mutex sync.Mutex
-}
-type ConnectionsSubscriptionCount struct {
-	counts map[*websocket.Conn]uint8 //Max subscriptions is 128... nice number half max uint8
-	mutex  sync.Mutex
-}
-type VidChatStatus struct {
-	data  map[*websocket.Conn]VidChatOpenData
-	mutex sync.Mutex
-}
-type OpenConversations struct {
-	data  map[primitive.ObjectID]map[primitive.ObjectID]struct{}
-	mutex sync.Mutex
-}
-
-type SocketServer struct {
-	Connections                 Connections
-	Subscriptions               Subscriptions
-	ConnectionSubscriptionCount ConnectionsSubscriptionCount
-
-	RegisterConn   chan ConnectionInfo
-	UnregisterConn chan ConnectionInfo
-
-	RegisterSubscriptionConn   chan SubscriptionConnectionInfo
-	UnregisterSubscriptionConn chan SubscriptionConnectionInfo
-
-	SendDataToSubscription           chan SubscriptionDataMessage
-	SendDataToSubscriptionExclusive  chan ExclusiveSubscriptionDataMessage
-	SendDataToSubscriptions          chan SubscriptionDataMessageMulti
-	SendDataToSubscriptionsExclusive chan ExclusiveSubscriptionDataMessageMulti
-
-	// websocket Write/Read must be done from 1 goroutine. Queue all of them to be executed in a loop.
-	MessageSendQueue chan QueuedMessage
-
-	VidChatOpenChan  chan VidChatOpenData
-	VidChatCloseChan chan *websocket.Conn
-	VidChatStatus    VidChatStatus
-
-	OpenConversations OpenConversations
-
-	SendDataToUser chan UserDataMessage
-
-	DestroySubscription chan string
+type RemoveUserFromSubscription struct {
+	Name string
+	Uid  primitive.ObjectID
 }
 
 func Init(colls *db.Collections) (*SocketServer, error) {
 	socketServer := &SocketServer{
 		Connections: Connections{
-			conns: make(map[*websocket.Conn]primitive.ObjectID),
+			data: make(map[*websocket.Conn]primitive.ObjectID),
 		},
 		Subscriptions: Subscriptions{
-			subs: make(map[string]map[*websocket.Conn]primitive.ObjectID),
+			data: make(map[string]map[*websocket.Conn]primitive.ObjectID),
 		},
 		ConnectionSubscriptionCount: ConnectionsSubscriptionCount{
-			counts: make(map[*websocket.Conn]uint8),
+			data: make(map[*websocket.Conn]uint8),
 		},
 
 		RegisterConn:   make(chan ConnectionInfo),
@@ -144,6 +163,7 @@ func Init(colls *db.Collections) (*SocketServer, error) {
 		SendDataToSubscriptionExclusive:  make(chan ExclusiveSubscriptionDataMessage),
 		SendDataToSubscriptions:          make(chan SubscriptionDataMessageMulti),
 		SendDataToSubscriptionsExclusive: make(chan ExclusiveSubscriptionDataMessageMulti),
+		RemoveUserFromSubscription:       make(chan RemoveUserFromSubscription),
 
 		MessageSendQueue: make(chan QueuedMessage),
 
@@ -156,6 +176,7 @@ func Init(colls *db.Collections) (*SocketServer, error) {
 		OpenConversations: OpenConversations{
 			data: make(map[primitive.ObjectID]map[primitive.ObjectID]struct{}),
 		},
+		GetUserConversationsOpenWith: make(chan GetUserConversationsOpenWith),
 
 		SendDataToUser: make(chan UserDataMessage),
 
@@ -172,13 +193,13 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			defer func() {
 				r := recover()
 				if r != nil {
-					log.Println("Recovered from panic in WS registration : ", r)
+					log.Println("Recovered from panic in WS registration :", r)
 				}
 			}()
 			connData := <-socketServer.RegisterConn
 			if connData.Conn != nil {
 				socketServer.Connections.mutex.Lock()
-				socketServer.Connections.conns[connData.Conn] = connData.Uid
+				socketServer.Connections.data[connData.Conn] = connData.Uid
 				socketServer.Connections.mutex.Unlock()
 			}
 		}
@@ -189,11 +210,11 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			defer func() {
 				r := recover()
 				if r != nil {
-					log.Println("Recovered from panic in WS deregistration : ", r)
+					log.Println("Recovered from panic in WS deregistration :", r)
 				}
 			}()
 			connData := <-socketServer.UnregisterConn
-			for conn := range socketServer.Connections.conns {
+			for conn := range socketServer.Connections.data {
 				if conn == connData.Conn {
 					socketServer.Connections.mutex.Lock()
 					socketServer.Subscriptions.mutex.Lock()
@@ -207,13 +228,13 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 						socketServer.ConnectionSubscriptionCount.mutex.Unlock()
 						socketServer.OpenConversations.mutex.Unlock()
 					}()
-					delete(socketServer.Connections.conns, conn)
+					delete(socketServer.Connections.data, conn)
 					delete(socketServer.VidChatStatus.data, conn)
-					delete(socketServer.ConnectionSubscriptionCount.counts, conn)
+					delete(socketServer.ConnectionSubscriptionCount.data, conn)
 					if connData.Uid != primitive.NilObjectID {
 						delete(socketServer.OpenConversations.data, connData.Uid)
 					}
-					for _, r := range socketServer.Subscriptions.subs {
+					for _, r := range socketServer.Subscriptions.data {
 						for c := range r {
 							if c == connData.Conn {
 								delete(r, c)
@@ -232,7 +253,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			defer func() {
 				r := recover()
 				if r != nil {
-					log.Println("Recovered from panic in queued socket messages : ", r)
+					log.Println("Recovered from panic in queued socket messages :", r)
 				}
 			}()
 			data := <-socketServer.MessageSendQueue
@@ -245,7 +266,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			defer func() {
 				r := recover()
 				if r != nil {
-					log.Println("Recovered from panic in subscription registration : ", r)
+					log.Println("Recovered from panic in subscription registration :", r)
 				}
 			}()
 			connData := <-socketServer.RegisterSubscriptionConn
@@ -351,22 +372,22 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					}
 				}
 				// Make sure users cannot open too many subscriptions
-				count, countOk := socketServer.ConnectionSubscriptionCount.counts[connData.Conn]
+				count, countOk := socketServer.ConnectionSubscriptionCount.data[connData.Conn]
 				if count >= 128 {
 					allow = false
 				}
 				// Passed all checks, add the connection to the subscription
 				if allow {
 					socketServer.Subscriptions.mutex.Lock()
-					if socketServer.Subscriptions.subs[connData.Name] == nil {
-						socketServer.Subscriptions.subs[connData.Name] = make(map[*websocket.Conn]primitive.ObjectID)
+					if socketServer.Subscriptions.data[connData.Name] == nil {
+						socketServer.Subscriptions.data[connData.Name] = make(map[*websocket.Conn]primitive.ObjectID)
 					}
-					socketServer.Subscriptions.subs[connData.Name][connData.Conn] = connData.Uid
+					socketServer.Subscriptions.data[connData.Name][connData.Conn] = connData.Uid
 					socketServer.ConnectionSubscriptionCount.mutex.Lock()
 					if countOk {
-						socketServer.ConnectionSubscriptionCount.counts[connData.Conn]++
+						socketServer.ConnectionSubscriptionCount.data[connData.Conn]++
 					} else {
-						socketServer.ConnectionSubscriptionCount.counts[connData.Conn] = 1
+						socketServer.ConnectionSubscriptionCount.data[connData.Conn] = 1
 					}
 					defer func() {
 						socketServer.Subscriptions.mutex.Unlock()
@@ -382,7 +403,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			defer func() {
 				r := recover()
 				if r != nil {
-					log.Println("Recovered from panic in subscription disconnect registration : ", r)
+					log.Println("Recovered from panic in subscription disconnect registration :", r)
 				}
 			}()
 			connData := <-socketServer.UnregisterSubscriptionConn
@@ -391,17 +412,17 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				err = fmt.Errorf("Connection was nil")
 			}
 			if err != nil {
-				if _, ok := socketServer.Subscriptions.subs[connData.Name]; ok {
+				if _, ok := socketServer.Subscriptions.data[connData.Name]; ok {
 					socketServer.Subscriptions.mutex.Lock()
-					delete(socketServer.Subscriptions.subs[connData.Name], connData.Conn)
+					delete(socketServer.Subscriptions.data[connData.Name], connData.Conn)
 					socketServer.Subscriptions.mutex.Unlock()
 				}
 				socketServer.VidChatStatus.mutex.Lock()
 				delete(socketServer.VidChatStatus.data, connData.Conn)
 				socketServer.VidChatStatus.mutex.Unlock()
-				if _, ok := socketServer.ConnectionSubscriptionCount.counts[connData.Conn]; ok {
+				if _, ok := socketServer.ConnectionSubscriptionCount.data[connData.Conn]; ok {
 					socketServer.ConnectionSubscriptionCount.mutex.Lock()
-					socketServer.ConnectionSubscriptionCount.counts[connData.Conn]--
+					socketServer.ConnectionSubscriptionCount.data[connData.Conn]--
 					socketServer.ConnectionSubscriptionCount.mutex.Unlock()
 				}
 			}
@@ -413,11 +434,11 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			defer func() {
 				r := recover()
 				if r != nil {
-					log.Println("Recovered from panic in subscription data channel : ", r)
+					log.Println("Recovered from panic in subscription data channel :", r)
 				}
 			}()
 			subsData := <-socketServer.SendDataToSubscription
-			for k, s := range socketServer.Subscriptions.subs {
+			for k, s := range socketServer.Subscriptions.data {
 				if k == subsData.Name {
 					for conn := range s {
 						socketServer.MessageSendQueue <- QueuedMessage{
@@ -436,11 +457,11 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			defer func() {
 				r := recover()
 				if r != nil {
-					log.Println("Recovered from panic in exclusive subscription data channel : ", r)
+					log.Println("Recovered from panic in exclusive subscription data channel :", r)
 				}
 			}()
 			subsData := <-socketServer.SendDataToSubscriptionExclusive
-			for k, s := range socketServer.Subscriptions.subs {
+			for k, s := range socketServer.Subscriptions.data {
 				if k == subsData.Name {
 					for conn, oid := range s {
 						if subsData.Exclude[oid] != true {
@@ -461,12 +482,12 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			defer func() {
 				r := recover()
 				if r != nil {
-					log.Println("Recovered from panic in subscription data channel : ", r)
+					log.Println("Recovered from panic in subscription data channel :", r)
 				}
 			}()
 			subsData := <-socketServer.SendDataToSubscriptions
 			for _, v := range subsData.Names {
-				for k, s := range socketServer.Subscriptions.subs {
+				for k, s := range socketServer.Subscriptions.data {
 					if k == v {
 						for conn := range s {
 							socketServer.MessageSendQueue <- QueuedMessage{
@@ -486,12 +507,12 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			defer func() {
 				r := recover()
 				if r != nil {
-					log.Println("Recovered from panic in exclusive subscription data channel : ", r)
+					log.Println("Recovered from panic in exclusive subscription data channel :", r)
 				}
 			}()
 			subsData := <-socketServer.SendDataToSubscriptionsExclusive
 			for _, v := range subsData.Names {
-				for k, s := range socketServer.Subscriptions.subs {
+				for k, s := range socketServer.Subscriptions.data {
 					if k == v {
 						for conn, oid := range s {
 							if subsData.Exclude[oid] != true {
@@ -513,11 +534,11 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			defer func() {
 				r := recover()
 				if r != nil {
-					log.Println("Recovered from panic in send data to user channel : ", r)
+					log.Println("Recovered from panic in send data to user channel :", r)
 				}
 			}()
 			data := <-socketServer.SendDataToUser
-			for conn, uid := range socketServer.Connections.conns {
+			for conn, uid := range socketServer.Connections.data {
 				if data.Uid == uid {
 					var m map[string]interface{}
 					outBytesNoTypeKey, err := json.Marshal(data.Data)
@@ -537,19 +558,43 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			}
 		}
 	}()
+	/* ----- Remove a user from subscription ----- */
+	go func() {
+		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in remove user from subscription channel :", r)
+				}
+			}()
+			data := <-socketServer.RemoveUserFromSubscription
+			if subs, ok := socketServer.Subscriptions.data[data.Name]; ok {
+				for c, oi := range subs {
+					if oi == data.Uid {
+						defer func() {
+							socketServer.Subscriptions.mutex.Unlock()
+						}()
+						socketServer.Subscriptions.mutex.Lock()
+						delete(socketServer.Subscriptions.data[data.Name], c)
+						break
+					}
+				}
+			}
+		}
+	}()
 	/* ----- Destroy subscription ----- */
 	go func() {
 		for {
 			subsName := <-socketServer.DestroySubscription
-			for c := range socketServer.Subscriptions.subs[subsName] {
-				if _, ok := socketServer.ConnectionSubscriptionCount.counts[c]; ok {
+			for c := range socketServer.Subscriptions.data[subsName] {
+				if _, ok := socketServer.ConnectionSubscriptionCount.data[c]; ok {
 					socketServer.ConnectionSubscriptionCount.mutex.Lock()
-					socketServer.ConnectionSubscriptionCount.counts[c]--
+					socketServer.ConnectionSubscriptionCount.data[c]--
 					socketServer.ConnectionSubscriptionCount.mutex.Unlock()
 				}
 			}
 			socketServer.Subscriptions.mutex.Lock()
-			delete(socketServer.Subscriptions.subs, subsName)
+			delete(socketServer.Subscriptions.data, subsName)
 			socketServer.Subscriptions.mutex.Unlock()
 		}
 	}()
@@ -575,6 +620,21 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			delete(socketServer.VidChatStatus.data, data)
 		}
 	}()
+	/* ----- Get user has conversations open with other user channel ----- */
+	go func() {
+		for {
+			data := <-socketServer.GetUserConversationsOpenWith
+			if openConvs, ok := socketServer.OpenConversations.data[data.Uid]; ok {
+				for oi := range openConvs {
+					if oi == data.UidB {
+						data.RecvChan <- true
+						break
+					}
+				}
+			}
+			data.RecvChan <- false
+		}
+	}()
 
 	/* -------- Cleanup ticker -------- */
 	cleanupTicker := time.NewTicker(20 * time.Minute)
@@ -587,7 +647,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			select {
 			case <-cleanupTicker.C:
 				// Destroy empty subscriptions
-				for k, v := range socketServer.Subscriptions.subs {
+				for k, v := range socketServer.Subscriptions.data {
 					if len(v) == 0 {
 						socketServer.DestroySubscription <- k
 					}
