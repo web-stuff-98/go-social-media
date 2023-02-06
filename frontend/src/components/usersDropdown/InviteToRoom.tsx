@@ -52,7 +52,7 @@ export default function InviteToRoom({
       <ul id="rooms list" className={classes.roomsList}>
         <label htmlFor="rooms list">Send invitation to</label>
         {rooms.map((room) => (
-          <li>
+          <li key={room.ID}>
             <button
               onClick={() => sendInvitation(room.ID)}
               style={

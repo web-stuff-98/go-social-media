@@ -87,6 +87,10 @@ export default function Room() {
     setMessageInput("");
   };
 
+  useEffect(() => {
+    messagesBottomRef.current?.scrollIntoView({ behavior: "auto" });
+  }, [room?.messages]);
+
   const handleMessage = useCallback(async (e: MessageEvent) => {
     const data = JSON.parse(e.data);
     if (!data["DATA"]) return;
@@ -205,6 +209,7 @@ export default function Room() {
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesBottomRef = useRef<HTMLDivElement>(null);
   return (
     <div className={classes.container}>
       {room ? (
@@ -222,6 +227,7 @@ export default function Room() {
                   msg={msg}
                 />
               ))}
+              <div className={classes.messagesBottomRef} />
             </div>
           ) : (
             <p style={{ textAlign: "center" }}>

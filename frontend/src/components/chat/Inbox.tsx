@@ -116,6 +116,11 @@ export default function Inbox() {
     }
   };
 
+  useEffect(() => {
+    if (inbox[selectedConversationIndexRef.current])
+      messagesBottomRef.current?.scrollIntoView({ behavior: "auto" });
+  }, [inbox[selectedConversationIndexRef.current]]);
+
   const handleMessage = useCallback(async (e: MessageEvent) => {
     const data = JSON.parse(e.data);
     if (!data["DATA"]) return;
@@ -155,7 +160,6 @@ export default function Inbox() {
             return [...newInbox];
           });
         } else {
-          console.log("Recipient ID doesn't match")
           // If there's no current conversation create one
           setInbox((inbox) => {
             let newInbox = inbox;
@@ -319,6 +323,7 @@ export default function Inbox() {
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesBottomRef = useRef<HTMLDivElement>(null);
   return (
     <>
       <div data-testid="Users list" className={classes.users}>
@@ -362,13 +367,19 @@ export default function Inbox() {
           {selectedConversation && <VideoChat id={selectedConversation} />}
           <div className={classes.messages}>
             {selectedConversation ? (
-              inbox[selectedConversationIndex].messages.map((msg) => (
-                <PrivateMessage
-                  key={msg.ID}
-                  reverse={msg.uid !== currentUser?.ID}
-                  msg={msg}
+              <>
+                {inbox[selectedConversationIndex].messages.map((msg) => (
+                  <PrivateMessage
+                    key={msg.ID}
+                    reverse={msg.uid !== currentUser?.ID}
+                    msg={msg}
+                  />
+                ))}
+                <div
+                  ref={messagesBottomRef}
+                  className={classes.messagesBottomRef}
                 />
-              ))
+              </>
             ) : (
               <div className={classes.emptyInboxMessage}>
                 You can click on a users image to start a conversation
