@@ -59,7 +59,9 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       );
     }
     if (sendQueue.length !== 0) {
-      sendQueue.forEach((msg) => socket?.send(msg));
+      sendQueue.forEach((msg) => {
+        socket?.send(msg);
+      });
       setSendQueue([]);
     }
   };

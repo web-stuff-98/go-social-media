@@ -244,12 +244,12 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				socketServer.OpenConversations.mutex.Unlock()
 			}()
 			socketServer.Connections.mutex.Lock()
+			socketServer.Subscriptions.mutex.Lock()
+			socketServer.VidChatStatus.mutex.Lock()
+			socketServer.ConnectionSubscriptionCount.mutex.Lock()
+			socketServer.OpenConversations.mutex.Lock()
 			for conn := range socketServer.Connections.data {
 				if conn == connData.Conn {
-					socketServer.Subscriptions.mutex.Lock()
-					socketServer.VidChatStatus.mutex.Lock()
-					socketServer.ConnectionSubscriptionCount.mutex.Lock()
-					socketServer.OpenConversations.mutex.Lock()
 					delete(socketServer.Connections.data, conn)
 					delete(socketServer.VidChatStatus.data, conn)
 					delete(socketServer.ConnectionSubscriptionCount.data, conn)
@@ -279,6 +279,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}()
 			data := <-socketServer.MessageSendQueue
+			log.Println("DATA OUTGOING:", string(data.Data))
 			data.Conn.WriteMessage(websocket.TextMessage, data.Data)
 		}
 	}()
