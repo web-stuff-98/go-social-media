@@ -48,8 +48,6 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, attac
 
 		eventType, eventTypeOk := data["event_type"]
 
-		log.Println("EVENT_TYPE:", eventType)
-
 		if eventTypeOk {
 			err := HandleSocketEvent(eventType.(string), p, conn, *uid, socketServer, attachmentServer, colls)
 			if err != nil {

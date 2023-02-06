@@ -236,13 +236,6 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}()
 			connData := <-socketServer.UnregisterConn
-			defer func() {
-				socketServer.Connections.mutex.Unlock()
-				socketServer.Subscriptions.mutex.Unlock()
-				socketServer.VidChatStatus.mutex.Unlock()
-				socketServer.ConnectionSubscriptionCount.mutex.Unlock()
-				socketServer.OpenConversations.mutex.Unlock()
-			}()
 			socketServer.Connections.mutex.Lock()
 			socketServer.Subscriptions.mutex.Lock()
 			socketServer.VidChatStatus.mutex.Lock()
@@ -267,6 +260,11 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					break
 				}
 			}
+			socketServer.Connections.mutex.Unlock()
+			socketServer.Subscriptions.mutex.Unlock()
+			socketServer.VidChatStatus.mutex.Unlock()
+			socketServer.ConnectionSubscriptionCount.mutex.Unlock()
+			socketServer.OpenConversations.mutex.Unlock()
 		}
 	}()
 	/* ----- Send messages in queue ----- */
@@ -279,7 +277,6 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}()
 			data := <-socketServer.MessageSendQueue
-			log.Println("DATA OUTGOING:", string(data.Data))
 			data.Conn.WriteMessage(websocket.TextMessage, data.Data)
 		}
 	}()
