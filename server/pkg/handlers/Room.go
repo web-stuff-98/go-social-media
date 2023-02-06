@@ -354,7 +354,7 @@ func (h handler) AcceptRoomInvite(w http.ResponseWriter, r *http.Request) {
 		Data:  outBytes,
 	}
 
-	if outChangeBytes, err := json.Marshal(socketmodels.OutChangeMessage{
+	if outPrivateDataChangeBytes, err := json.Marshal(socketmodels.OutChangeMessage{
 		Type:   "CHANGE",
 		Method: "INSERT",
 		Entity: "MEMBER",
@@ -362,8 +362,18 @@ func (h handler) AcceptRoomInvite(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		h.SocketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
 			Name: "room_private_data=" + room.ID.Hex(),
-			Data: outChangeBytes,
+			Data: outPrivateDataChangeBytes,
 		}
+	}
+
+	h.SocketServer.SendDataToUser <- socketserver.UserDataMessage{
+		Uid: user.ID,
+		Data: socketmodels.OutChangeMessage{
+			Method: "UPDATE",
+			Entity: "ROOM",
+			Data:   `{"ID":"` + room.ID.Hex() + `","can_access":true}`,
+		},
+		Type: "CHANGE",
 	}
 
 	responseMessage(w, http.StatusOK, "Invitation accepted")
@@ -506,11 +516,21 @@ func (h handler) BanUserFromRoom(w http.ResponseWriter, r *http.Request) {
 
 	if subs, ok := h.SocketServer.Subscriptions["room="+room.ID.Hex()]; ok {
 		for c, oi := range subs {
-			if oi == user.ID {
+			if oi == uid {
 				delete(h.SocketServer.Subscriptions["room="+room.ID.Hex()], c)
 				break
 			}
 		}
+	}
+
+	h.SocketServer.SendDataToUser <- socketserver.UserDataMessage{
+		Uid: uid,
+		Data: socketmodels.OutChangeMessage{
+			Method: "UPDATE",
+			Entity: "ROOM",
+			Data:   `{"ID":"` + room.ID.Hex() + `","can_access":false}`,
+		},
+		Type: "CHANGE",
 	}
 
 	responseMessage(w, http.StatusOK, "User banned")
