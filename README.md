@@ -6,8 +6,7 @@ This is also my 2nd Go project.
 
 It will generate a seed when it gets a visitor and retain it until it goes to sleep.
 
-I have added invites and room customization but I am not done with that yet, so it's not
-in production
+There are bugs
 
 ## Features
  - Private & group video chat

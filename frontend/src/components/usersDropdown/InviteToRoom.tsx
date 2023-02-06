@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { IRoomCard } from "../../interfaces/ChatInterfaces";
 import { getOwnRooms, inviteToRoom } from "../../services/rooms";
 import { useModal } from "../../context/ModalContext";
+import { IResMsg } from "../../interfaces/GeneralInterfaces";
+import ResMsg from "../shared/ResMsg";
 
 export default function InviteToRoom({
   closeUserDropdown,
@@ -14,17 +16,29 @@ export default function InviteToRoom({
   const { openModal } = useModal();
 
   const [rooms, setRooms] = useState<IRoomCard[]>([]);
+  const [resMsg, setResMsg] = useState<IResMsg>({
+    msg: "",
+    err: false,
+    pen: false,
+  });
 
   const getRooms = async () => {
     try {
+      setResMsg({ msg: "", err: false, pen: true });
       const rooms = await getOwnRooms();
       setRooms(rooms);
+      if (rooms.length === 0) {
+        setResMsg({ msg: "You have no rooms", err: true, pen: false });
+      } else {
+        setResMsg({ msg: "", err: false, pen: false });
+      }
     } catch (e) {
       openModal("Message", {
         msg: `${e}`,
         err: true,
         pen: false,
       });
+      setResMsg({ msg: "", err: false, pen: false });
       closeUserDropdown();
     }
   };
@@ -67,6 +81,7 @@ export default function InviteToRoom({
           </li>
         ))}
       </ul>
+      <ResMsg resMsg={resMsg} />
     </div>
   );
 }
