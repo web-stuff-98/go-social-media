@@ -29,7 +29,7 @@ var upgrader = websocket.Upgrader{
 /*
 	Socket event handling.
 
-	Voting and commenting and room invites are done in the API handlers, I could have put that in here but I didn't
+	Voting and commenting are done in the API handlers, I could have put that in here but I didn't
 
 	Todo:
 	 - rewrite everything so that there aren't tonnes of if statements, indentation and generic error handling
