@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -16,6 +17,8 @@ import (
 )
 
 /*
+
+
 	All messages are put through the queue channel before being sent, to avoid
 	the concurrent write to websocket error which I did not anticipate. Write to
 	websocket can only be done from one goroutine.
@@ -68,10 +71,31 @@ type VidChatOpenData struct {
 	Id   primitive.ObjectID
 }
 
+type Connections struct {
+	conns map[*websocket.Conn]primitive.ObjectID
+	mutex sync.Mutex
+}
+type Subscriptions struct {
+	subs  map[string]map[*websocket.Conn]primitive.ObjectID
+	mutex sync.Mutex
+}
+type ConnectionsSubscriptionCount struct {
+	counts map[*websocket.Conn]uint8 //Max subscriptions is 128... nice number half max uint8
+	mutex  sync.Mutex
+}
+type VidChatStatus struct {
+	data  map[*websocket.Conn]VidChatOpenData
+	mutex sync.Mutex
+}
+type OpenConversations struct {
+	data  map[primitive.ObjectID]map[primitive.ObjectID]struct{}
+	mutex sync.Mutex
+}
+
 type SocketServer struct {
-	Connections                 map[*websocket.Conn]primitive.ObjectID
-	Subscriptions               map[string]map[*websocket.Conn]primitive.ObjectID
-	ConnectionSubscriptionCount map[*websocket.Conn]uint8 //Max subscriptions is 128... nice number half max uint8
+	Connections                 Connections
+	Subscriptions               Subscriptions
+	ConnectionSubscriptionCount ConnectionsSubscriptionCount
 
 	RegisterConn   chan ConnectionInfo
 	UnregisterConn chan ConnectionInfo
@@ -89,9 +113,9 @@ type SocketServer struct {
 
 	VidChatOpenChan  chan VidChatOpenData
 	VidChatCloseChan chan *websocket.Conn
-	VidChatStatus    map[*websocket.Conn]VidChatOpenData
+	VidChatStatus    VidChatStatus
 
-	OpenConversations map[primitive.ObjectID]map[primitive.ObjectID]struct{}
+	OpenConversations OpenConversations
 
 	SendDataToUser chan UserDataMessage
 
@@ -100,9 +124,15 @@ type SocketServer struct {
 
 func Init(colls *db.Collections) (*SocketServer, error) {
 	socketServer := &SocketServer{
-		Connections:                 make(map[*websocket.Conn]primitive.ObjectID),
-		Subscriptions:               make(map[string]map[*websocket.Conn]primitive.ObjectID),
-		ConnectionSubscriptionCount: make(map[*websocket.Conn]uint8),
+		Connections: Connections{
+			conns: make(map[*websocket.Conn]primitive.ObjectID),
+		},
+		Subscriptions: Subscriptions{
+			subs: make(map[string]map[*websocket.Conn]primitive.ObjectID),
+		},
+		ConnectionSubscriptionCount: ConnectionsSubscriptionCount{
+			counts: make(map[*websocket.Conn]uint8),
+		},
 
 		RegisterConn:   make(chan ConnectionInfo),
 		UnregisterConn: make(chan ConnectionInfo),
@@ -119,9 +149,13 @@ func Init(colls *db.Collections) (*SocketServer, error) {
 
 		VidChatOpenChan:  make(chan VidChatOpenData),
 		VidChatCloseChan: make(chan *websocket.Conn),
-		VidChatStatus:    make(map[*websocket.Conn]VidChatOpenData),
+		VidChatStatus: VidChatStatus{
+			data: make(map[*websocket.Conn]VidChatOpenData),
+		},
 
-		OpenConversations: make(map[primitive.ObjectID]map[primitive.ObjectID]struct{}),
+		OpenConversations: OpenConversations{
+			data: make(map[primitive.ObjectID]map[primitive.ObjectID]struct{}),
+		},
 
 		SendDataToUser: make(chan UserDataMessage),
 
@@ -143,7 +177,9 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			}()
 			connData := <-socketServer.RegisterConn
 			if connData.Conn != nil {
-				socketServer.Connections[connData.Conn] = connData.Uid
+				socketServer.Connections.mutex.Lock()
+				socketServer.Connections.conns[connData.Conn] = connData.Uid
+				socketServer.Connections.mutex.Unlock()
 			}
 		}
 	}()
@@ -157,15 +193,27 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}()
 			connData := <-socketServer.UnregisterConn
-			for conn := range socketServer.Connections {
+			for conn := range socketServer.Connections.conns {
 				if conn == connData.Conn {
-					delete(socketServer.Connections, conn)
-					delete(socketServer.VidChatStatus, conn)
-					delete(socketServer.ConnectionSubscriptionCount, conn)
+					socketServer.Connections.mutex.Lock()
+					socketServer.Subscriptions.mutex.Lock()
+					socketServer.VidChatStatus.mutex.Lock()
+					socketServer.ConnectionSubscriptionCount.mutex.Lock()
+					socketServer.OpenConversations.mutex.Lock()
+					defer func() {
+						socketServer.Connections.mutex.Unlock()
+						socketServer.Subscriptions.mutex.Unlock()
+						socketServer.VidChatStatus.mutex.Unlock()
+						socketServer.ConnectionSubscriptionCount.mutex.Unlock()
+						socketServer.OpenConversations.mutex.Unlock()
+					}()
+					delete(socketServer.Connections.conns, conn)
+					delete(socketServer.VidChatStatus.data, conn)
+					delete(socketServer.ConnectionSubscriptionCount.counts, conn)
 					if connData.Uid != primitive.NilObjectID {
-						delete(socketServer.OpenConversations, connData.Uid)
+						delete(socketServer.OpenConversations.data, connData.Uid)
 					}
-					for _, r := range socketServer.Subscriptions {
+					for _, r := range socketServer.Subscriptions.subs {
 						for c := range r {
 							if c == connData.Conn {
 								delete(r, c)
@@ -303,21 +351,27 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					}
 				}
 				// Make sure users cannot open too many subscriptions
-				count, countOk := socketServer.ConnectionSubscriptionCount[connData.Conn]
+				count, countOk := socketServer.ConnectionSubscriptionCount.counts[connData.Conn]
 				if count >= 128 {
 					allow = false
 				}
 				// Passed all checks, add the connection to the subscription
 				if allow {
-					if socketServer.Subscriptions[connData.Name] == nil {
-						socketServer.Subscriptions[connData.Name] = make(map[*websocket.Conn]primitive.ObjectID)
+					socketServer.Subscriptions.mutex.Lock()
+					if socketServer.Subscriptions.subs[connData.Name] == nil {
+						socketServer.Subscriptions.subs[connData.Name] = make(map[*websocket.Conn]primitive.ObjectID)
 					}
-					socketServer.Subscriptions[connData.Name][connData.Conn] = connData.Uid
+					socketServer.Subscriptions.subs[connData.Name][connData.Conn] = connData.Uid
+					socketServer.ConnectionSubscriptionCount.mutex.Lock()
 					if countOk {
-						socketServer.ConnectionSubscriptionCount[connData.Conn]++
+						socketServer.ConnectionSubscriptionCount.counts[connData.Conn]++
 					} else {
-						socketServer.ConnectionSubscriptionCount[connData.Conn] = 1
+						socketServer.ConnectionSubscriptionCount.counts[connData.Conn] = 1
 					}
+					defer func() {
+						socketServer.Subscriptions.mutex.Unlock()
+						socketServer.ConnectionSubscriptionCount.mutex.Unlock()
+					}()
 				}
 			}
 		}
@@ -337,12 +391,18 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				err = fmt.Errorf("Connection was nil")
 			}
 			if err != nil {
-				if _, ok := socketServer.Subscriptions[connData.Name]; ok {
-					delete(socketServer.Subscriptions[connData.Name], connData.Conn)
+				if _, ok := socketServer.Subscriptions.subs[connData.Name]; ok {
+					socketServer.Subscriptions.mutex.Lock()
+					delete(socketServer.Subscriptions.subs[connData.Name], connData.Conn)
+					socketServer.Subscriptions.mutex.Unlock()
 				}
-				delete(socketServer.VidChatStatus, connData.Conn)
-				if _, ok := socketServer.ConnectionSubscriptionCount[connData.Conn]; ok {
-					socketServer.ConnectionSubscriptionCount[connData.Conn]--
+				socketServer.VidChatStatus.mutex.Lock()
+				delete(socketServer.VidChatStatus.data, connData.Conn)
+				socketServer.VidChatStatus.mutex.Unlock()
+				if _, ok := socketServer.ConnectionSubscriptionCount.counts[connData.Conn]; ok {
+					socketServer.ConnectionSubscriptionCount.mutex.Lock()
+					socketServer.ConnectionSubscriptionCount.counts[connData.Conn]--
+					socketServer.ConnectionSubscriptionCount.mutex.Unlock()
 				}
 			}
 		}
@@ -357,7 +417,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}()
 			subsData := <-socketServer.SendDataToSubscription
-			for k, s := range socketServer.Subscriptions {
+			for k, s := range socketServer.Subscriptions.subs {
 				if k == subsData.Name {
 					for conn := range s {
 						socketServer.MessageSendQueue <- QueuedMessage{
@@ -380,7 +440,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}()
 			subsData := <-socketServer.SendDataToSubscriptionExclusive
-			for k, s := range socketServer.Subscriptions {
+			for k, s := range socketServer.Subscriptions.subs {
 				if k == subsData.Name {
 					for conn, oid := range s {
 						if subsData.Exclude[oid] != true {
@@ -406,7 +466,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			}()
 			subsData := <-socketServer.SendDataToSubscriptions
 			for _, v := range subsData.Names {
-				for k, s := range socketServer.Subscriptions {
+				for k, s := range socketServer.Subscriptions.subs {
 					if k == v {
 						for conn := range s {
 							socketServer.MessageSendQueue <- QueuedMessage{
@@ -431,7 +491,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			}()
 			subsData := <-socketServer.SendDataToSubscriptionsExclusive
 			for _, v := range subsData.Names {
-				for k, s := range socketServer.Subscriptions {
+				for k, s := range socketServer.Subscriptions.subs {
 					if k == v {
 						for conn, oid := range s {
 							if subsData.Exclude[oid] != true {
@@ -457,7 +517,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				}
 			}()
 			data := <-socketServer.SendDataToUser
-			for conn, uid := range socketServer.Connections {
+			for conn, uid := range socketServer.Connections.conns {
 				if data.Uid == uid {
 					var m map[string]interface{}
 					outBytesNoTypeKey, err := json.Marshal(data.Data)
@@ -481,26 +541,38 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 	go func() {
 		for {
 			subsName := <-socketServer.DestroySubscription
-			for c := range socketServer.Subscriptions[subsName] {
-				if _, ok := socketServer.ConnectionSubscriptionCount[c]; ok {
-					socketServer.ConnectionSubscriptionCount[c]--
+			for c := range socketServer.Subscriptions.subs[subsName] {
+				if _, ok := socketServer.ConnectionSubscriptionCount.counts[c]; ok {
+					socketServer.ConnectionSubscriptionCount.mutex.Lock()
+					socketServer.ConnectionSubscriptionCount.counts[c]--
+					socketServer.ConnectionSubscriptionCount.mutex.Unlock()
 				}
 			}
-			delete(socketServer.Subscriptions, subsName)
+			socketServer.Subscriptions.mutex.Lock()
+			delete(socketServer.Subscriptions.subs, subsName)
+			socketServer.Subscriptions.mutex.Unlock()
 		}
 	}()
 	/* ----- Vid chat opened chan ----- */
 	go func() {
 		for {
 			data := <-socketServer.VidChatOpenChan
-			socketServer.VidChatStatus[data.Conn] = data
+			defer func() {
+				socketServer.VidChatStatus.mutex.Unlock()
+			}()
+			socketServer.VidChatStatus.mutex.Lock()
+			socketServer.VidChatStatus.data[data.Conn] = data
 		}
 	}()
 	/* ----- Vid chat closed chan ----- */
 	go func() {
 		for {
 			data := <-socketServer.VidChatCloseChan
-			delete(socketServer.VidChatStatus, data)
+			defer func() {
+				socketServer.VidChatStatus.mutex.Unlock()
+			}()
+			socketServer.VidChatStatus.mutex.Lock()
+			delete(socketServer.VidChatStatus.data, data)
 		}
 	}()
 
@@ -515,7 +587,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			select {
 			case <-cleanupTicker.C:
 				// Destroy empty subscriptions
-				for k, v := range socketServer.Subscriptions {
+				for k, v := range socketServer.Subscriptions.subs {
 					if len(v) == 0 {
 						socketServer.DestroySubscription <- k
 					}
