@@ -52,7 +52,7 @@ export default function RoomCard({ r }: { r: IRoomCard }) {
               backgroundImage: `url(${imgURL || r.img_blur})`,
             }
           : {}),
-        ...(r.private && r.author_id !== user?.ID
+        ...(!r.can_access
           ? { filter: "opacity(0.5)", pointerEvents: "none" }
           : {}),
       }}
