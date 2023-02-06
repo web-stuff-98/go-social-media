@@ -336,157 +336,6 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, attac
 						}
 					}
 				}
-			} else if eventType == "ACCEPT_INVITATION" {
-				var inMsg socketmodels.AcceptDeclineInvitation
-				if err := json.Unmarshal(p, &inMsg); err != nil {
-					log.Println("A ERR :", err)
-					sendErrorMessageThroughSocket(conn)
-				} else {
-					if senderId, err := primitive.ObjectIDFromHex(inMsg.SenderId); err != nil {
-						log.Println("B ERR :", err)
-						sendErrorMessageThroughSocket(conn)
-					} else {
-						if msgId, err := primitive.ObjectIDFromHex(inMsg.MsgId); err != nil {
-							log.Println("C ERR :", err)
-							sendErrorMessageThroughSocket(conn)
-						} else {
-							inbox := &models.Inbox{}
-							msg := &models.PrivateMessage{}
-							foundMsg := false
-							if err := colls.InboxCollection.FindOne(context.Background(), bson.M{"_id": uid}).Decode(&inbox); err != nil {
-								log.Println("D ERR :", err)
-								sendErrorMessageThroughSocket(conn)
-							} else {
-								for _, pm := range inbox.Messages {
-									if pm.ID == msgId {
-										msg = &pm
-										foundMsg = true
-										break
-									}
-								}
-								if !foundMsg {
-									log.Println("E ERR :", err)
-									sendErrorMessageThroughSocket(conn)
-								} else {
-									if !msg.IsInvitation || msg.Uid == *uid || msg.Uid != senderId {
-										log.Println("F ERR :", err)
-										sendErrorMessageThroughSocket(conn)
-									} else {
-										if res := colls.InboxCollection.FindOneAndUpdate(context.Background(), bson.M{
-											"_id":          uid,
-											"messages._id": msgId,
-										}, bson.M{
-											"$set": bson.M{"messages.$.invitation_accepted": true},
-										}); res.Err() != nil {
-											log.Println("G ERR :", err)
-											sendErrorMessageThroughSocket(conn)
-										} else {
-											if roomId, err := primitive.ObjectIDFromHex(msg.Content); err != nil {
-												log.Println("H ERR :", err)
-												sendErrorMessageThroughSocket(conn)
-											} else {
-												if res := colls.RoomPrivateDataCollection.FindOneAndUpdate(context.Background(), bson.M{
-													"_id": roomId,
-												}, bson.M{
-													"$addToSet": bson.M{"members": uid},
-													"$pull":     bson.M{"banned": uid},
-												}); res.Err() != nil {
-													log.Println("I ERR :", err)
-													sendErrorMessageThroughSocket(conn)
-												} else {
-													data := make(map[string]interface{})
-													data["ID"] = msgId.Hex()
-													data["invitation_accepted"] = true
-													data["recipient_id"] = uid.Hex()
-													dataBytes, _ := json.Marshal(data)
-													outBytes, _ := json.Marshal(socketmodels.OutMessage{
-														Type: "PRIVATE_MESSAGE_UPDATE",
-														Data: string(dataBytes),
-													})
-													Names := []string{"inbox=" + uid.Hex(), "inbox=" + msg.Uid.Hex()}
-													log.Println(Names)
-													socketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
-														Names: Names,
-														Data:  outBytes,
-													}
-													outChangeBytes, _ := json.Marshal(socketmodels.OutChangeMessage{
-														Type:   "CHANGE",
-														Method: "INSERT",
-														Entity: "MEMBER",
-														Data:   `{"ID":"` + uid.Hex() + `"}`,
-													})
-													socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-														Name: "room_private_data=" + roomId.Hex(),
-														Data: outChangeBytes,
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			} else if eventType == "DECLINE_INVITATION" {
-				var inMsg socketmodels.AcceptDeclineInvitation
-				if err := json.Unmarshal(p, &inMsg); err != nil {
-					sendErrorMessageThroughSocket(conn)
-				} else {
-					if senderId, err := primitive.ObjectIDFromHex(inMsg.SenderId); err != nil {
-						sendErrorMessageThroughSocket(conn)
-					} else {
-						if msgId, err := primitive.ObjectIDFromHex(inMsg.MsgId); err != nil {
-							sendErrorMessageThroughSocket(conn)
-						} else {
-							inbox := &models.Inbox{}
-							msg := &models.PrivateMessage{}
-							foundMsg := false
-							if err := colls.InboxCollection.FindOne(context.Background(), bson.M{"_id": uid}).Decode(&inbox); err != nil {
-								sendErrorMessageThroughSocket(conn)
-							} else {
-								for _, pm := range inbox.Messages {
-									if pm.ID == msgId {
-										msg = &pm
-										foundMsg = true
-										break
-									}
-								}
-								if !foundMsg {
-									sendErrorMessageThroughSocket(conn)
-								} else {
-									if !msg.IsInvitation || msg.Uid == *uid || msg.Uid != senderId {
-										sendErrorMessageThroughSocket(conn)
-									} else {
-										if res := colls.InboxCollection.FindOneAndUpdate(context.Background(), bson.M{
-											"_id":          uid,
-											"messages._id": msgId,
-										}, bson.M{
-											"$set": bson.M{"messages.$.invitation_declined": true},
-										}); res.Err() != nil {
-											sendErrorMessageThroughSocket(conn)
-										} else {
-											data := make(map[string]interface{})
-											data["ID"] = msgId.Hex()
-											data["invitation_declined"] = true
-											data["recipient_id"] = uid.Hex()
-											dataBytes, _ := json.Marshal(data)
-											outBytes, _ := json.Marshal(socketmodels.OutMessage{
-												Type: "PRIVATE_MESSAGE_UPDATE",
-												Data: string(dataBytes),
-											})
-											socketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
-												Names: []string{"inbox=" + uid.Hex(), "inbox=" + msg.Uid.Hex()},
-												Data:  outBytes,
-											}
-											log.Println("SENT")
-										}
-									}
-								}
-							}
-						}
-					}
-				}
 			} else if eventType == "ROOM_MESSAGE" {
 				if *uid == primitive.NilObjectID {
 					sendErrorMessageThroughSocket(conn)
@@ -829,3 +678,158 @@ func (h handler) WebSocketEndpoint(w http.ResponseWriter, r *http.Request) {
 	}()
 	reader(ws, h.SocketServer, h.AttachmentServer, &uid, h.Collections)
 }
+
+/*
+ else if eventType == "ACCEPT_INVITATION" {
+				var inMsg socketmodels.AcceptDeclineInvitation
+				if err := json.Unmarshal(p, &inMsg); err != nil {
+					log.Println("A ERR :", err)
+					sendErrorMessageThroughSocket(conn)
+				} else {
+					if senderId, err := primitive.ObjectIDFromHex(inMsg.SenderId); err != nil {
+						log.Println("B ERR :", err)
+						sendErrorMessageThroughSocket(conn)
+					} else {
+						if msgId, err := primitive.ObjectIDFromHex(inMsg.MsgId); err != nil {
+							log.Println("C ERR :", err)
+							sendErrorMessageThroughSocket(conn)
+						} else {
+							inbox := &models.Inbox{}
+							msg := &models.PrivateMessage{}
+							foundMsg := false
+							if err := colls.InboxCollection.FindOne(context.Background(), bson.M{"_id": uid}).Decode(&inbox); err != nil {
+								log.Println("D ERR :", err)
+								sendErrorMessageThroughSocket(conn)
+							} else {
+								for _, pm := range inbox.Messages {
+									if pm.ID == msgId {
+										msg = &pm
+										foundMsg = true
+										break
+									}
+								}
+								if !foundMsg {
+									log.Println("E ERR :", err)
+									sendErrorMessageThroughSocket(conn)
+								} else {
+									if !msg.IsInvitation || msg.Uid == *uid || msg.Uid != senderId {
+										log.Println("F ERR :", err)
+										sendErrorMessageThroughSocket(conn)
+									} else {
+										if res := colls.InboxCollection.FindOneAndUpdate(context.Background(), bson.M{
+											"_id":          uid,
+											"messages._id": msgId,
+										}, bson.M{
+											"$set": bson.M{"messages.$.invitation_accepted": true},
+										}); res.Err() != nil {
+											log.Println("G ERR :", err)
+											sendErrorMessageThroughSocket(conn)
+										} else {
+											if roomId, err := primitive.ObjectIDFromHex(msg.Content); err != nil {
+												log.Println("H ERR :", err)
+												sendErrorMessageThroughSocket(conn)
+											} else {
+												if res := colls.RoomPrivateDataCollection.FindOneAndUpdate(context.Background(), bson.M{
+													"_id": roomId,
+												}, bson.M{
+													"$addToSet": bson.M{"members": uid},
+													"$pull":     bson.M{"banned": uid},
+												}); res.Err() != nil {
+													log.Println("I ERR :", err)
+													sendErrorMessageThroughSocket(conn)
+												} else {
+													data := make(map[string]interface{})
+													data["ID"] = msgId.Hex()
+													data["invitation_accepted"] = true
+													data["recipient_id"] = uid.Hex()
+													dataBytes, _ := json.Marshal(data)
+													outBytes, _ := json.Marshal(socketmodels.OutMessage{
+														Type: "PRIVATE_MESSAGE_UPDATE",
+														Data: string(dataBytes),
+													})
+													Names := []string{"inbox=" + uid.Hex(), "inbox=" + msg.Uid.Hex()}
+													log.Println(Names)
+													socketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+														Names: Names,
+														Data:  outBytes,
+													}
+													outChangeBytes, _ := json.Marshal(socketmodels.OutChangeMessage{
+														Type:   "CHANGE",
+														Method: "INSERT",
+														Entity: "MEMBER",
+														Data:   `{"ID":"` + uid.Hex() + `"}`,
+													})
+													socketServer.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
+														Name: "room_private_data=" + roomId.Hex(),
+														Data: outChangeBytes,
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			} else if eventType == "DECLINE_INVITATION" {
+				var inMsg socketmodels.AcceptDeclineInvitation
+				if err := json.Unmarshal(p, &inMsg); err != nil {
+					sendErrorMessageThroughSocket(conn)
+				} else {
+					if senderId, err := primitive.ObjectIDFromHex(inMsg.SenderId); err != nil {
+						sendErrorMessageThroughSocket(conn)
+					} else {
+						if msgId, err := primitive.ObjectIDFromHex(inMsg.MsgId); err != nil {
+							sendErrorMessageThroughSocket(conn)
+						} else {
+							inbox := &models.Inbox{}
+							msg := &models.PrivateMessage{}
+							foundMsg := false
+							if err := colls.InboxCollection.FindOne(context.Background(), bson.M{"_id": uid}).Decode(&inbox); err != nil {
+								sendErrorMessageThroughSocket(conn)
+							} else {
+								for _, pm := range inbox.Messages {
+									if pm.ID == msgId {
+										msg = &pm
+										foundMsg = true
+										break
+									}
+								}
+								if !foundMsg {
+									sendErrorMessageThroughSocket(conn)
+								} else {
+									if !msg.IsInvitation || msg.Uid == *uid || msg.Uid != senderId {
+										sendErrorMessageThroughSocket(conn)
+									} else {
+										if res := colls.InboxCollection.FindOneAndUpdate(context.Background(), bson.M{
+											"_id":          uid,
+											"messages._id": msgId,
+										}, bson.M{
+											"$set": bson.M{"messages.$.invitation_declined": true},
+										}); res.Err() != nil {
+											sendErrorMessageThroughSocket(conn)
+										} else {
+											data := make(map[string]interface{})
+											data["ID"] = msgId.Hex()
+											data["invitation_declined"] = true
+											data["recipient_id"] = uid.Hex()
+											dataBytes, _ := json.Marshal(data)
+											outBytes, _ := json.Marshal(socketmodels.OutMessage{
+												Type: "PRIVATE_MESSAGE_UPDATE",
+												Data: string(dataBytes),
+											})
+											socketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+												Names: []string{"inbox=" + uid.Hex(), "inbox=" + msg.Uid.Hex()},
+												Data:  outBytes,
+											}
+											log.Println("SENT")
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+*/
