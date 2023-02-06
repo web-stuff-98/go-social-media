@@ -18,11 +18,9 @@ function App() {
             <UserdropdownProvider>
               <AuthProvider>
                 <AttachmentProvider>
-                  <PostsProvider>
-                    <UsersProvider>
-                      <Layout />
-                    </UsersProvider>
-                  </PostsProvider>
+                  <UsersProvider>
+                    <Layout />
+                  </UsersProvider>
                 </AttachmentProvider>
               </AuthProvider>
             </UserdropdownProvider>

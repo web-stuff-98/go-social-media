@@ -9,8 +9,8 @@ import NotFound from "./routes/NotFound";
 import Policy from "./routes/Policy";
 import Settings from "./routes/Settings";
 import Editor from "./routes/Editor";
-import Blog from "./routes/Blog";
 import Page from "./routes/Page";
+import BlogWithContext from "./routes/BlogWithContext";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -22,7 +22,7 @@ root.render(
         <Route index element={<Home />} />
         <Route path="post/:slug" element={<Page />} />
         <Route path="login" element={<Login />} />
-        <Route path="blog/:page" element={<Blog />} />
+        <Route path="blog/:page" element={<BlogWithContext />} />
         <Route path="policy" element={<Policy />} />
         <Route path="settings" element={<Settings />} />
         <Route path="register" element={<Register />} />
