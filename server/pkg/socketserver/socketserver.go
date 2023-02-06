@@ -18,6 +18,10 @@ import (
 /*
 	This is for the chat. It handles JSON messages only.
 
+	All messages are put through the queue channel before being sent, to avoid
+	the concurrent write to websocket error which I did not anticipate. Write to
+	websocket can only be done from one goroutine.
+
 	Uid can always be left as primitive.NilObjectID, users are not required
 	to be authenticated to connect or open subscriptions, but there is an auth
 	check for users down below, to make sure users cannot subscribe to other users
@@ -82,7 +86,8 @@ type SocketServer struct {
 	SendDataToSubscriptions          chan SubscriptionDataMessageMulti
 	SendDataToSubscriptionsExclusive chan ExclusiveSubscriptionDataMessageMulti
 
-	// Because of concurrent write to websocket connection error, I queue all messages, didn't read enough before starting
+	// Because of concurrent write to websocket connection error, queue all messages, didn't read enough before starting
+	// websocket Write/Read must be done from 1 goroutine.
 	MessageSendQueue chan QueuedMessage
 
 	VidChatOpenChan  chan VidChatOpenData
@@ -174,6 +179,19 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					break
 				}
 			}
+		}
+	}()
+	/* ----- Send messages in queue ----- */
+	go func() {
+		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in queued socket messages : ", r)
+				}
+			}()
+			data := <-socketServer.MessageSendQueue
+			data.Conn.WriteMessage(websocket.TextMessage, data.Data)
 		}
 	}()
 	/* ----- Subscription connection registration (also check the authorization if subscription requires it) ----- */
@@ -345,7 +363,10 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			for k, s := range socketServer.Subscriptions {
 				if k == subsData.Name {
 					for conn := range s {
-						conn.WriteMessage(websocket.TextMessage, subsData.Data)
+						socketServer.MessageSendQueue <- QueuedMessage{
+							Conn: conn,
+							Data: subsData.Data,
+						}
 					}
 					break
 				}
@@ -366,7 +387,10 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				if k == subsData.Name {
 					for conn, oid := range s {
 						if subsData.Exclude[oid] != true {
-							conn.WriteMessage(websocket.TextMessage, subsData.Data)
+							socketServer.MessageSendQueue <- QueuedMessage{
+								Conn: conn,
+								Data: subsData.Data,
+							}
 						}
 					}
 					break
@@ -388,7 +412,10 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				for k, s := range socketServer.Subscriptions {
 					if k == v {
 						for conn := range s {
-							conn.WriteMessage(websocket.TextMessage, subsData.Data)
+							socketServer.MessageSendQueue <- QueuedMessage{
+								Conn: conn,
+								Data: subsData.Data,
+							}
 						}
 						break
 					}
@@ -411,7 +438,10 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					if k == v {
 						for conn, oid := range s {
 							if subsData.Exclude[oid] != true {
-								conn.WriteMessage(websocket.TextMessage, subsData.Data)
+								socketServer.MessageSendQueue <- QueuedMessage{
+									Conn: conn,
+									Data: subsData.Data,
+								}
 							}
 						}
 						break
@@ -438,7 +468,10 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					m["TYPE"] = data.Type
 					outBytes, err := json.Marshal(m)
 					if err == nil {
-						conn.WriteMessage(websocket.TextMessage, outBytes)
+						socketServer.MessageSendQueue <- QueuedMessage{
+							Conn: conn,
+							Data: outBytes,
+						}
 					} else {
 						log.Println("Error marshaling data to be sent to user :", err)
 					}
