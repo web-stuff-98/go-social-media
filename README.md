@@ -2,11 +2,8 @@
 
 This is my Golang social media personal project. I made tests for the React components.
 
-This is also my 2nd Go project.
-
-It will generate a seed when it gets a visitor and retain it until it goes to sleep.
-
-There are bugs
+This is also my 2nd Go project. There are race conditions which cause the server to crash after a while.
+I have finished all its features so now I'm trying to fix those race conditions.
 
 ## Features
  - Private & group video chat

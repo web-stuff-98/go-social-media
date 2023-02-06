@@ -404,7 +404,7 @@ func main() {
 
 	if os.Getenv("PRODUCTION") == "true" {
 		DB.Drop(context.Background())
-		go seed.SeedDB(Collections, 50, 50, 50, protectedUids, protectedPids, protectedRids)
+		go seed.SeedDB(Collections, 50, 750, 50, protectedUids, protectedPids, protectedRids)
 		// Seeds already been generated, so just get everything already in the database instead
 		/*pcursor, _ := Collections.PostCollection.Find(context.Background(), bson.M{})
 		for pcursor.Next(context.Background()) {
