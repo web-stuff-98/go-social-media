@@ -71,6 +71,7 @@
     box-sizing: border-box;
     border-bottom: 2px outset var(--base-medium);
     border-top: 1px inset rgb(64, 64, 64);
+    transition: height 100ms ease;
 
     .menuIcon {
       padding-left: 0.4rem;
@@ -84,7 +85,7 @@
       position: absolute;
       left: 0;
       bottom: 0;
-      padding-top: 1.5px;
+      padding-top: 3px;
       svg {
         font-size: 1.5rem;
         fill: white;

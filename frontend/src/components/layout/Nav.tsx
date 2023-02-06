@@ -1,7 +1,7 @@
 import classes from "../../styles/components/Layout.module.scss";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useInterface } from "../../context/InterfaceContext";
 import { MdMenu } from "react-icons/md";
 import User from "../shared/User";
@@ -13,6 +13,7 @@ export default function Nav() {
   } = useInterface();
 
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileLinksFadeIn, setMobileLinksFadeIn] = useState(false);
 
   const NavLink = ({ to, name }: { to: string; name: string }) => (
     <Link to={to}>
@@ -33,6 +34,16 @@ export default function Nav() {
       <span style={darkMode ? {} : { color: "black" }}>Logout</span>
     </button>
   );
+
+  useEffect(() => {
+    if (mobileOpen) {
+      setTimeout(() => {
+        setMobileLinksFadeIn(mobileOpen);
+      }, 200);
+    } else {
+      setMobileLinksFadeIn(false)
+    }
+  }, [mobileOpen]);
 
   return (
     <nav
@@ -65,16 +76,22 @@ export default function Nav() {
       )}
       {(!isMobile || mobileOpen) && (
         <div
-          style={
-            mobileOpen && isMobile
+          style={{
+            ...(mobileOpen && isMobile
               ? {
                   flexDirection: "column",
                   alignItems: "flex-start",
                   width: "fit-content",
                   marginBottom: "calc(var(--nav-height) + var(--padding))",
                 }
-              : {}
-          }
+              : {}),
+            ...(isMobile
+              ? {
+                  filter: mobileLinksFadeIn ? "opacity(1)" : "opacity(0)",
+                  transition: mobileLinksFadeIn ? "filter 200ms ease" : "none",
+                }
+              : {}),
+          }}
           className={classes.navLinks}
         >
           <NavLink to="/" name="Home" />
