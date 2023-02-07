@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -65,7 +64,7 @@ func (h handler) HandleAttachmentMetadata(w http.ResponseWriter, r *http.Request
 	}
 	chunkIDs = append(chunkIDs, primitive.NilObjectID)
 
-	totalChunks := int(math.Ceil(float64(metadataInput.Size) / 1 * 1024 * 1024))
+	totalChunks := int(math.Ceil(float64(metadataInput.Size) / (1 * 1024 * 1024)))
 	h.AttachmentServer.UploadStatusChan <- attachmentserver.UploadStatus{
 		Status: attachmentserver.Upload{
 			ChunksDone:        0,
@@ -227,7 +226,6 @@ func (h handler) UploadAttachmentChunk(w http.ResponseWriter, r *http.Request) {
 			MsgID: msgId,
 			Uid:   user.ID,
 		}
-		log.Println("B:", err)
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
 	}

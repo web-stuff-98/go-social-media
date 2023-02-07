@@ -100,7 +100,6 @@ export const AttachmentProvider = ({ children }: { children: ReactNode }) => {
           headers: { "Content-Type": "application/octet-stream" },
           data,
         });
-        await new Promise((resolve) => setTimeout(resolve, 300))
       }
     } catch (error) {
       openModal("Message", {
