@@ -98,7 +98,9 @@ func RunServer(colls *db.Collections, SocketServer *socketserver.SocketServer, A
 					var firstChunk models.AttachmentChunk
 					if err := colls.AttachmentChunksCollection.FindOne(context.Background(), bson.M{"_id": msgId}).Decode(&firstChunk); err == nil {
 						// Found the chunk. Recursively delete chained chunks
+						AttachmentServer.Uploaders.mutex.Lock()
 						recursivelyDeleteChunks(firstChunk.ID, colls)
+						AttachmentServer.Uploaders.mutex.Unlock()
 					}
 				}
 			} else {

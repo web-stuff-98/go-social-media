@@ -15,7 +15,8 @@
     span {
       border: none;
       background: lime;
-      transition: width 400ms linear;
+      box-shadow: 0px 0px 6px lime, 0px 0px 3px lime;
+      transition: width 600ms linear;
     }
   }
 }
