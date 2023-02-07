@@ -196,7 +196,7 @@ export default function Inbox() {
             selectedConversationIndexRef.current
           ].messages.findIndex((msg) => msg.ID === data.DATA.ID);
           if (i !== -1) {
-            newInbox[selectedConversationIndexRef.current].messages.splice(i);
+            newInbox[selectedConversationIndexRef.current].messages.splice(i, 1);
             return [...newInbox];
           } else {
             return inbox;
