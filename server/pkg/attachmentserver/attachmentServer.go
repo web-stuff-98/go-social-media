@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/web-stuff-98/go-social-media/pkg/db"
@@ -19,6 +20,18 @@ import (
 	For attachment uploads
 */
 
+/*--------------- ATTACHMENT SERVER STRUCT ---------------*/
+type AttachmentServer struct {
+	Uploaders Uploaders
+
+	UploadFailedChan   chan UploadStatusInfo
+	UploadCompleteChan chan UploadStatusInfo
+	UploadProgressChan chan UploadStatusInfo
+
+	DeleteChunksChan chan primitive.ObjectID
+}
+
+/*--------------- STRUCTS ---------------*/
 type Upload struct {
 	ChunksDone        int
 	TotalChunks       int // +1... starts at 0
@@ -32,19 +45,17 @@ type UploadStatusInfo struct {
 	Uid   primitive.ObjectID
 }
 
-type AttachmentServer struct {
-	Uploaders map[primitive.ObjectID]map[primitive.ObjectID]Upload
-
-	UploadFailedChan   chan UploadStatusInfo
-	UploadCompleteChan chan UploadStatusInfo
-	UploadProgressChan chan UploadStatusInfo
-
-	DeleteChunksChan chan primitive.ObjectID
+/*--------------- MUTEX PROTECTED MAPS ---------------*/
+type Uploaders struct {
+	data  map[primitive.ObjectID]map[primitive.ObjectID]Upload
+	mutex sync.Mutex
 }
 
 func Init(colls *db.Collections, SocketServer *socketserver.SocketServer) (*AttachmentServer, error) {
 	AttachmentServer := &AttachmentServer{
-		Uploaders: make(map[primitive.ObjectID]map[primitive.ObjectID]Upload),
+		Uploaders: Uploaders{
+			data: make(map[primitive.ObjectID]map[primitive.ObjectID]Upload),
+		},
 
 		UploadFailedChan:   make(chan UploadStatusInfo),
 		UploadCompleteChan: make(chan UploadStatusInfo),
@@ -81,8 +92,9 @@ func RunServer(colls *db.Collections, SocketServer *socketserver.SocketServer, A
 	go func() {
 		for {
 			info := <-AttachmentServer.UploadFailedChan
-			if _, uploaderOk := AttachmentServer.Uploaders[info.Uid]; uploaderOk {
-				if upload, uploadOk := AttachmentServer.Uploaders[info.Uid][info.MsgID]; uploadOk {
+			AttachmentServer.Uploaders.mutex.Lock()
+			if _, uploaderOk := AttachmentServer.Uploaders.data[info.Uid]; uploaderOk {
+				if upload, uploadOk := AttachmentServer.Uploaders.data[info.Uid][info.MsgID]; uploadOk {
 					outBytes, _ := json.Marshal(socketmodels.OutMessage{
 						Type: "ATTACHMENT_PROGRESS",
 						Data: `{"ID":"` + info.MsgID.Hex() + `","failed":true,"pending":false}`,
@@ -93,16 +105,18 @@ func RunServer(colls *db.Collections, SocketServer *socketserver.SocketServer, A
 					}
 				}
 			}
+			AttachmentServer.Uploaders.mutex.Unlock()
 			AttachmentServer.DeleteChunksChan <- info.MsgID
-			go colls.AttachmentMetadataCollection.UpdateByID(context.Background(), info.MsgID, bson.M{"$set": bson.M{"failed": true, "pending": false}})
+			colls.AttachmentMetadataCollection.UpdateByID(context.Background(), info.MsgID, bson.M{"$set": bson.M{"failed": true, "pending": false}})
 		}
 	}()
 	/* ------ Handle attachment complete ------ */
 	go func() {
 		for {
 			info := <-AttachmentServer.UploadCompleteChan
-			if _, uploaderOk := AttachmentServer.Uploaders[info.Uid]; uploaderOk {
-				if upload, uploadOk := AttachmentServer.Uploaders[info.Uid][info.MsgID]; uploadOk {
+			AttachmentServer.Uploaders.mutex.Lock()
+			if _, uploaderOk := AttachmentServer.Uploaders.data[info.Uid]; uploaderOk {
+				if upload, uploadOk := AttachmentServer.Uploaders.data[info.Uid][info.MsgID]; uploadOk {
 					outBytes, _ := json.Marshal(socketmodels.OutMessage{
 						Type: "ATTACHMENT_PROGRESS",
 						Data: `{"ID":"` + info.MsgID.Hex() + `","failed":false,"pending":false}`,
@@ -113,15 +127,17 @@ func RunServer(colls *db.Collections, SocketServer *socketserver.SocketServer, A
 					}
 				}
 			}
-			go colls.AttachmentMetadataCollection.UpdateByID(context.Background(), info.MsgID, bson.M{"$set": bson.M{"failed": false, "pending": false}})
+			AttachmentServer.Uploaders.mutex.Unlock()
+			colls.AttachmentMetadataCollection.UpdateByID(context.Background(), info.MsgID, bson.M{"$set": bson.M{"failed": false, "pending": false}})
 		}
 	}()
 	/* ------ Handle attachment progress ------ */
 	go func() {
 		for {
 			info := <-AttachmentServer.UploadProgressChan
-			if _, uploaderOk := AttachmentServer.Uploaders[info.Uid]; uploaderOk {
-				if upload, uploadOk := AttachmentServer.Uploaders[info.Uid][info.MsgID]; uploadOk {
+			AttachmentServer.Uploaders.mutex.Lock()
+			if _, uploaderOk := AttachmentServer.Uploaders.data[info.Uid]; uploaderOk {
+				if upload, uploadOk := AttachmentServer.Uploaders.data[info.Uid][info.MsgID]; uploadOk {
 					outBytes, _ := json.Marshal(socketmodels.OutMessage{
 						Type: "ATTACHMENT_PROGRESS",
 						Data: `{"ID":"` + info.MsgID.Hex() + `","failed":false,"pending":true,"ratio":` + getProgressString(upload) + `}`,
@@ -132,6 +148,7 @@ func RunServer(colls *db.Collections, SocketServer *socketserver.SocketServer, A
 					}
 				}
 			}
+			AttachmentServer.Uploaders.mutex.Unlock()
 		}
 	}()
 }
@@ -151,7 +168,7 @@ func recursivelyDeleteChunks(chunkID primitive.ObjectID, colls *db.Collections) 
 }
 
 func cleanUp(as *AttachmentServer, colls *db.Collections) {
-	cleanupTicker := time.NewTicker(2 * time.Minute)
+	cleanupTicker := time.NewTicker(20 * time.Minute)
 	quitCleanup := make(chan struct{})
 	defer func() {
 		quitCleanup <- struct{}{}
@@ -161,9 +178,10 @@ func cleanUp(as *AttachmentServer, colls *db.Collections) {
 			select {
 			case <-cleanupTicker.C:
 				// Go through every Uploader, delete ones that aren't uploading anything
-				for oi, v := range as.Uploaders {
+				as.Uploaders.mutex.Lock()
+				for oi, v := range as.Uploaders.data {
 					if len(v) == 0 {
-						delete(as.Uploaders, oi)
+						delete(as.Uploaders.data, oi)
 					} else {
 						// If upload info stored in memory hasn't been updated delete it
 						for msgId, u := range v {
@@ -172,11 +190,12 @@ func cleanUp(as *AttachmentServer, colls *db.Collections) {
 								if u.ChunksDone < u.TotalChunks-1 {
 									recursivelyDeleteChunks(msgId, colls)
 								}
-								delete(as.Uploaders[oi], msgId)
+								delete(as.Uploaders.data[oi], msgId)
 							}
 						}
 					}
 				}
+				as.Uploaders.mutex.Unlock()
 			case <-quitCleanup:
 				cleanupTicker.Stop()
 				return
