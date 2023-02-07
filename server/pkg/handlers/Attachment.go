@@ -65,15 +65,16 @@ func (h handler) HandleAttachmentMetadata(w http.ResponseWriter, r *http.Request
 	chunkIDs = append(chunkIDs, primitive.NilObjectID)
 
 	totalChunks := int(math.Ceil(float64(metadataInput.Size) / 1 * 1024 * 1024))
-	if _, ok := h.AttachmentServer.Uploaders[user.ID]; !ok {
-		h.AttachmentServer.Uploaders[user.ID] = make(map[primitive.ObjectID]attachmentserver.Upload)
-	}
-	h.AttachmentServer.Uploaders[user.ID][msgId] = attachmentserver.Upload{
-		ChunksDone:        0,
-		TotalChunks:       totalChunks,
-		ChunkIDs:          chunkIDs,
-		SubscriptionNames: metadataInput.SubscriptionNames,
-		LastUpdate:        time.Now(),
+	h.AttachmentServer.UploadStatusChan <- attachmentserver.UploadStatus{
+		Status: attachmentserver.Upload{
+			ChunksDone:        0,
+			TotalChunks:       totalChunks,
+			ChunkIDs:          chunkIDs,
+			SubscriptionNames: metadataInput.SubscriptionNames,
+			LastUpdate:        time.Now(),
+		},
+		MsgId: msgId,
+		Uid:   user.ID,
 	}
 
 	//First validate the message exists by finding it in the recipient inbox / chatroom
@@ -165,11 +166,19 @@ func (h handler) UploadAttachmentChunk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uploads, ok := h.AttachmentServer.Uploaders[user.ID]
+	/*uploads, ok := h.AttachmentServer.Uploaders[user.ID]
 	if !ok {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
+	}*/
+
+	recvChan := make(chan map[primitive.ObjectID]attachmentserver.Upload)
+	h.AttachmentServer.GetUploaderStatus <- attachmentserver.GetUploaderStatus{
+		RecvChan: recvChan,
+		Uid:      user.ID,
 	}
+	uploads := <-recvChan
+
 	upload, ok := uploads[msgId]
 	if !ok {
 		h.AttachmentServer.UploadFailedChan <- attachmentserver.UploadStatusInfo{
@@ -238,7 +247,10 @@ func (h handler) UploadAttachmentChunk(w http.ResponseWriter, r *http.Request) {
 
 	upload.ChunksDone++
 	upload.LastUpdate = time.Now()
-	h.AttachmentServer.Uploaders[user.ID][msgId] = upload
+	h.AttachmentServer.UploadStatusChan <- attachmentserver.UploadStatus{
+		Uid:    user.ID,
+		Status: upload,
+	}
 
 	responseMessage(w, http.StatusCreated, "Chunk created")
 }

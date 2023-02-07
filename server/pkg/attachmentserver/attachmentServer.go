@@ -27,6 +27,9 @@ type AttachmentServer struct {
 	UploadFailedChan   chan UploadStatusInfo
 	UploadCompleteChan chan UploadStatusInfo
 	UploadProgressChan chan UploadStatusInfo
+	UploadStatusChan   chan UploadStatus
+
+	GetUploaderStatus chan GetUploaderStatus
 
 	DeleteChunksChan chan primitive.ObjectID
 }
@@ -45,10 +48,22 @@ type UploadStatusInfo struct {
 	Uid   primitive.ObjectID
 }
 
+type UploadStatus struct {
+	Status Upload
+	MsgId  primitive.ObjectID
+	Uid    primitive.ObjectID
+}
+
 /*--------------- MUTEX PROTECTED MAPS ---------------*/
 type Uploaders struct {
 	data  map[primitive.ObjectID]map[primitive.ObjectID]Upload
 	mutex sync.Mutex
+}
+
+/*--------------- CHANNEL STRUCTS ---------------*/
+type GetUploaderStatus struct {
+	RecvChan chan<- map[primitive.ObjectID]Upload
+	Uid      primitive.ObjectID
 }
 
 func Init(colls *db.Collections, SocketServer *socketserver.SocketServer) (*AttachmentServer, error) {
@@ -60,6 +75,9 @@ func Init(colls *db.Collections, SocketServer *socketserver.SocketServer) (*Atta
 		UploadFailedChan:   make(chan UploadStatusInfo),
 		UploadCompleteChan: make(chan UploadStatusInfo),
 		UploadProgressChan: make(chan UploadStatusInfo),
+		UploadStatusChan:   make(chan UploadStatus),
+
+		GetUploaderStatus: make(chan GetUploaderStatus),
 
 		DeleteChunksChan: make(chan primitive.ObjectID),
 	}
@@ -147,6 +165,32 @@ func RunServer(colls *db.Collections, SocketServer *socketserver.SocketServer, A
 						Data:  outBytes,
 					}
 				}
+			}
+			AttachmentServer.Uploaders.mutex.Unlock()
+		}
+	}()
+	/* ------ Handle attachment status ------ */
+	go func() {
+		for {
+			data := <-AttachmentServer.UploadStatusChan
+			AttachmentServer.Uploaders.mutex.Lock()
+			if _, ok := AttachmentServer.Uploaders.data[data.Uid]; !ok {
+				AttachmentServer.Uploaders.data[data.MsgId] = make(map[primitive.ObjectID]Upload)
+			}
+			AttachmentServer.Uploaders.data[data.Uid][data.MsgId] = data.Status
+			AttachmentServer.Uploaders.mutex.Unlock()
+		}
+	}()
+	/* ------ Handle get uploader status ------ */
+	go func() {
+		for {
+			data := <-AttachmentServer.GetUploaderStatus
+			AttachmentServer.Uploaders.mutex.Lock()
+			uploads, ok := AttachmentServer.Uploaders.data[data.Uid]
+			if ok {
+				data.RecvChan <- uploads
+			} else {
+				data.RecvChan <- make(map[primitive.ObjectID]Upload)
 			}
 			AttachmentServer.Uploaders.mutex.Unlock()
 		}
