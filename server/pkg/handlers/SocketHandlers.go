@@ -267,8 +267,7 @@ func privateMessageDelete(b []byte, conn *websocket.Conn, uid primitive.ObjectID
 	if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, bson.M{
 		"$pull": bson.M{
 			"messages": bson.M{
-				"_id":       msgId,
-				"author_id": uid,
+				"_id": msgId,
 			},
 		},
 	}); err != nil {
@@ -396,7 +395,7 @@ func roomMessage(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *soc
 		Name: "room=" + roomId.Hex(),
 		Data: outBytes,
 	}
-	colls.UserCollection.UpdateByID(context.Background(), uid, bson.M{"$addToSet": bson.M{"rooms_in": roomId}})
+	colls.UserCollection.UpdateByID(context.Background(), uid, bson.M{"$addToSet": bson.M{"rooms_messages_in": roomId}})
 	return nil
 }
 
@@ -413,7 +412,13 @@ func roomMessageDelete(b []byte, conn *websocket.Conn, uid primitive.ObjectID, s
 	if err != nil {
 		return err
 	}
-	if _, err := colls.RoomMessagesCollection.UpdateByID(context.TODO(), roomId, bson.M{"$pull": bson.M{"messages": bson.M{"_id": msgId, "author_id": uid}}}); err != nil {
+	if _, err := colls.RoomMessagesCollection.UpdateByID(context.TODO(), roomId, bson.M{
+		"$pull": bson.M{
+			"messages": bson.M{
+				"_id": msgId,
+			},
+		},
+	}); err != nil {
 		return err
 	}
 	as.DeleteChunksChan <- msgId
