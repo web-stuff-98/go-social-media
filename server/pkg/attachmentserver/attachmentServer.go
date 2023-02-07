@@ -57,7 +57,7 @@ type UploadStatus struct {
 /*--------------- MUTEX PROTECTED MAPS ---------------*/
 type Uploaders struct {
 	data  map[primitive.ObjectID]map[primitive.ObjectID]Upload
-	mutex sync.Mutex
+	mutex sync.RWMutex
 }
 
 /*--------------- CHANNEL STRUCTS ---------------*/
@@ -110,7 +110,7 @@ func RunServer(colls *db.Collections, SocketServer *socketserver.SocketServer, A
 	go func() {
 		for {
 			info := <-AttachmentServer.UploadFailedChan
-			AttachmentServer.Uploaders.mutex.Lock()
+			AttachmentServer.Uploaders.mutex.RLock()
 			if _, uploaderOk := AttachmentServer.Uploaders.data[info.Uid]; uploaderOk {
 				if upload, uploadOk := AttachmentServer.Uploaders.data[info.Uid][info.MsgID]; uploadOk {
 					outBytes, _ := json.Marshal(socketmodels.OutMessage{
@@ -123,16 +123,16 @@ func RunServer(colls *db.Collections, SocketServer *socketserver.SocketServer, A
 					}
 				}
 			}
-			AttachmentServer.Uploaders.mutex.Unlock()
-			AttachmentServer.DeleteChunksChan <- info.MsgID
+			AttachmentServer.Uploaders.mutex.RUnlock()
 			colls.AttachmentMetadataCollection.UpdateByID(context.Background(), info.MsgID, bson.M{"$set": bson.M{"failed": true, "pending": false}})
+			AttachmentServer.DeleteChunksChan <- info.MsgID
 		}
 	}()
 	/* ------ Handle attachment complete ------ */
 	go func() {
 		for {
 			info := <-AttachmentServer.UploadCompleteChan
-			AttachmentServer.Uploaders.mutex.Lock()
+			AttachmentServer.Uploaders.mutex.RLock()
 			if _, uploaderOk := AttachmentServer.Uploaders.data[info.Uid]; uploaderOk {
 				if upload, uploadOk := AttachmentServer.Uploaders.data[info.Uid][info.MsgID]; uploadOk {
 					outBytes, _ := json.Marshal(socketmodels.OutMessage{
@@ -145,7 +145,7 @@ func RunServer(colls *db.Collections, SocketServer *socketserver.SocketServer, A
 					}
 				}
 			}
-			AttachmentServer.Uploaders.mutex.Unlock()
+			AttachmentServer.Uploaders.mutex.RUnlock()
 			colls.AttachmentMetadataCollection.UpdateByID(context.Background(), info.MsgID, bson.M{"$set": bson.M{"failed": false, "pending": false}})
 		}
 	}()
@@ -153,7 +153,7 @@ func RunServer(colls *db.Collections, SocketServer *socketserver.SocketServer, A
 	go func() {
 		for {
 			info := <-AttachmentServer.UploadProgressChan
-			AttachmentServer.Uploaders.mutex.Lock()
+			AttachmentServer.Uploaders.mutex.RLock()
 			if _, uploaderOk := AttachmentServer.Uploaders.data[info.Uid]; uploaderOk {
 				if upload, uploadOk := AttachmentServer.Uploaders.data[info.Uid][info.MsgID]; uploadOk {
 					outBytes, _ := json.Marshal(socketmodels.OutMessage{
@@ -166,10 +166,10 @@ func RunServer(colls *db.Collections, SocketServer *socketserver.SocketServer, A
 					}
 				}
 			}
-			AttachmentServer.Uploaders.mutex.Unlock()
+			AttachmentServer.Uploaders.mutex.RUnlock()
 		}
 	}()
-	/* ------ Handle attachment status ------ */
+	/* ------ Handle set attachment status ------ */
 	go func() {
 		for {
 			data := <-AttachmentServer.UploadStatusChan
@@ -185,14 +185,14 @@ func RunServer(colls *db.Collections, SocketServer *socketserver.SocketServer, A
 	go func() {
 		for {
 			data := <-AttachmentServer.GetUploaderStatus
-			AttachmentServer.Uploaders.mutex.Lock()
+			AttachmentServer.Uploaders.mutex.RLock()
 			uploads, ok := AttachmentServer.Uploaders.data[data.Uid]
+			AttachmentServer.Uploaders.mutex.RUnlock()
 			if ok {
 				data.RecvChan <- uploads
 			} else {
 				data.RecvChan <- make(map[primitive.ObjectID]Upload)
 			}
-			AttachmentServer.Uploaders.mutex.Unlock()
 		}
 	}()
 }

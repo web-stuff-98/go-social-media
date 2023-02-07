@@ -49,7 +49,7 @@ export default function Attachment({
               Upload failed
             </div>
           )}
-          {!pending && (
+          {!pending && !failed && (
             <>
               {
                 {
