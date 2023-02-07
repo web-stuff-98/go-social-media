@@ -172,6 +172,9 @@ export default function Comment({
               initialValue={comment.content}
               onSubmit={async (c: string) => {
                 try {
+                  if (!c) throw new Error("You cannot submit an empty comment");
+                  if (c.length > 200)
+                    throw new Error("Comment length maximum 200 characters");
                   updateComment(postId, comment.ID, c);
                 } catch (e) {
                   setErr(`${e}`);
@@ -213,7 +216,20 @@ export default function Comment({
         <div className={classes.commentForm}>
           <CommentForm
             autoFocus
-            onSubmit={(c: string) => submitComment(c, postId, replyingTo)}
+            onSubmit={async (c: string) => {
+              try {
+                if (!c) throw new Error("You cannot submit an empty comment");
+                if (c.length > 200)
+                  throw new Error("Comment length maximum 200 characters");
+                submitComment(c, postId, replyingTo);
+              } catch (e) {
+                openModal("Message", {
+                  msg: `${e}`,
+                  err: true,
+                  pen: false,
+                });
+              }
+            }}
             onClickOutside={() => setReplyingTo("")}
             ariaLabel="Reply to comment input"
           />

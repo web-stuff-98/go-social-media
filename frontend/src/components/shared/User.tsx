@@ -85,7 +85,7 @@ export default function User({
       {user && (
         <>
           <button
-            tabIndex={0}
+            tabIndex={currentUser && uid === currentUser?.ID ? -1 : 0}
             role="button"
             aria-label={`Open menu on user ${user.username}`}
             style={{
