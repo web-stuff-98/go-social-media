@@ -84,10 +84,14 @@ export default function User({
     >
       {user && (
         <>
-          <button
+          <div
             tabIndex={currentUser && uid === currentUser?.ID ? -1 : 0}
             role="button"
-            aria-label={`Open menu on user ${user.username}`}
+            aria-label={
+              currentUser && uid === currentUser?.ID
+                ? ""
+                : `Open menu on user ${user.username}`
+            }
             style={{
               ...(user.base64pfp
                 ? { backgroundImage: `url(${user.base64pfp})` }
@@ -123,7 +127,7 @@ export default function User({
                 className={classes.pfpIcon}
               />
             )}
-          </button>
+          </div>
           {AdditionalStuff && (
             <div className={classes.additionalStuff}>{AdditionalStuff}</div>
           )}
