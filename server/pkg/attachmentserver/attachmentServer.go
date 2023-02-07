@@ -214,7 +214,7 @@ func recursivelyDeleteChunks(chunkID primitive.ObjectID, colls *db.Collections) 
 }
 
 func cleanUp(as *AttachmentServer, colls *db.Collections) {
-	cleanupTicker := time.NewTicker(20 * time.Minute)
+	cleanupTicker := time.NewTicker(5 * time.Minute)
 	quitCleanup := make(chan struct{})
 	defer func() {
 		quitCleanup <- struct{}{}
