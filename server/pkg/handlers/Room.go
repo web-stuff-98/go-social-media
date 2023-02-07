@@ -234,7 +234,6 @@ func (h handler) InviteToRoom(w http.ResponseWriter, r *http.Request) {
 		UidB:     user.ID,
 	}
 	hasConvsOpenWith := <-hasConvsOpenWithRecv
-	close(hasConvsOpenWithRecv)
 	addNotification := !hasConvsOpenWith
 
 	if addNotification {

@@ -117,6 +117,7 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
                     <b>{modalData.msg}</b>
                     <div className={classes.buttons}>
                       <button
+                        name="Cancel"
                         aria-label="Cancel"
                         onClick={() => {
                           if (modalData.cancellationCallback)
@@ -127,6 +128,7 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
                         Cancel
                       </button>
                       <button
+                        name="Confirm"
                         aria-label="Confirm"
                         onClick={() => {
                           if (modalData.confirmationCallback)
