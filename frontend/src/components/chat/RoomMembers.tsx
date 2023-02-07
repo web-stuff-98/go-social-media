@@ -49,10 +49,12 @@ export default function RoomMembers() {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
     getData();
     openSubscription(`room_private_data=${roomId}`);
     return () => {
       closeSubscription(`room_private_data=${roomId}`);
+      controller.abort();
     };
     // eslint-disable-next-line
   }, []);

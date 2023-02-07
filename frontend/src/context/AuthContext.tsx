@@ -78,6 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
     makeRequest("/api/account/refresh", {
       withCredentials: true,
       method: "POST",
@@ -89,10 +90,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(undefined);
         reconnectSocket();
       });
+    return () => {
+      controller.abort();
+    };
     // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
     const i = setInterval(async () => {
       try {
         const data = await makeRequest("/api/account/refresh", {
@@ -107,6 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, 90000);
     return () => {
       clearInterval(i);
+      controller.abort();
     };
   }, [user]);
 

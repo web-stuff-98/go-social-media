@@ -52,7 +52,7 @@ describe("chat menu section", () => {
       name: "Rooms",
     });
     const roomEditorMenuButton = screen.getByRole("button", {
-      name: "Editor",
+      name: "Room editor",
     });
 
     expect(inboxMenuButton).toBeInTheDocument();
@@ -92,13 +92,13 @@ describe("chat menu section", () => {
     await RenderComponent();
 
     const roomEditorMenuButton = screen.getByRole("button", {
-      name: "Editor",
+      name: "Room editor",
     });
 
     await act(async () => {
       roomEditorMenuButton.click();
     });
 
-    expect(screen.getByText("Editor")).toBeInTheDocument();
+    expect(screen.getByText("Room editor")).toBeInTheDocument();
   });
 });

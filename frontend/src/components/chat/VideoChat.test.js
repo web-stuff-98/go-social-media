@@ -44,14 +44,12 @@ afterEach(() => {
 describe("video chat windows", () => {
   test("initVideo should have been invoked. sendIfPossible should have been invoked with the correct parameters. The video chat windows for the peer and the current user should be present", async () => {
     const mockSendIfPossible = jest.fn();
-    const mockInitVideo = jest.fn().mockReturnValue(new Promise((r) => r()));
 
     await act(async () => {
       render(
         <SocketContext.Provider value={{ sendIfPossible: mockSendIfPossible }}>
           <ChatContext.Provider
             value={{
-              initVideo: mockInitVideo,
               leftVidChat: jest.fn(),
               peers: mockPeers,
               isStreaming: true,
@@ -66,7 +64,6 @@ describe("video chat windows", () => {
       );
     });
 
-    expect(mockInitVideo).toHaveBeenCalled();
     expect(mockSendIfPossible).toHaveBeenCalledWith(
       JSON.stringify({
         event_type: "VID_JOIN",

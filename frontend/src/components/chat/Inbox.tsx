@@ -55,7 +55,11 @@ export default function Inbox() {
 
   useEffect(() => {
     if (!currentUser) return;
+    const controller = new AbortController();
     loadConvs();
+    return () => {
+      controller.abort();
+    };
     // eslint-disable-next-line
   }, [currentUser]);
 
@@ -423,8 +427,7 @@ export default function Inbox() {
             required
           />
           <IconBtn
-            onClick={() => handleSubmit()}
-            type="button"
+            type="submit"
             testid="Send button"
             name="Send"
             ariaLabel="Send message"

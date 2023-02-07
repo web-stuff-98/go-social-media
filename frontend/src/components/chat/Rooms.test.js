@@ -42,7 +42,7 @@ describe("chatrooms menu component", () => {
       name: "Next page",
     });
     const paginationControlsPrevBtn = screen.getByRole("button", {
-      name: "Prev page",
+      name: "Previous page",
     });
 
     expect(paginationControlsContainer).toBeInTheDocument();

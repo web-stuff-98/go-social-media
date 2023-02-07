@@ -26,7 +26,11 @@ export default function Editor() {
 
   useEffect(() => {
     if (!slug) return;
+    const controller = new AbortController();
     loadPostIntoEditor(slug);
+    return () => {
+      controller.abort();
+    };
     // eslint-disable-next-line
   }, [slug]);
 

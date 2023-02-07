@@ -61,19 +61,17 @@ export default function Attachment({
                     />
                   ),
                   file: (
-                    <>
-                      <a
-                        aria-label="Download attachment"
-                        className={classes.download}
-                        style={reverse ? { flexDirection: "row-reverse" } : {}}
-                        download
-                        href={`${baseURL}/api/attachment/download/${msgId}`}
-                        ref={hiddenDownloadLink}
-                      >
-                        <AiOutlineDownload />
-                        Attachment
-                      </a>
-                    </>
+                    <a
+                      aria-label="Download attachment"
+                      className={classes.download}
+                      style={reverse ? { flexDirection: "row-reverse" } : {}}
+                      download
+                      href={`${baseURL}/api/attachment/download/${msgId}`}
+                      ref={hiddenDownloadLink}
+                    >
+                      <AiOutlineDownload />
+                      Attachment
+                    </a>
                   ),
                   /*video: (
                     <div className={classes.videoPlayerContainer}>

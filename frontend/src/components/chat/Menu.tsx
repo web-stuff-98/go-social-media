@@ -5,7 +5,10 @@ export default function Menu() {
   const { setSection } = useChat();
 
   const MenuButton = ({ section }: { section: ChatSection }) => (
-    <button name={section} onClick={() => setSection(section)}>
+    <button
+      name={section === "Editor" ? "Room editor" : section}
+      onClick={() => setSection(section)}
+    >
       {section === "Editor" ? "Room editor" : section}
     </button>
   );

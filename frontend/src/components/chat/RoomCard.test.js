@@ -31,6 +31,7 @@ const mockRoomCard = {
   author_id: "1",
   img_blur: "placeholder",
   img_url: "placeholder url",
+  can_access: true,
 };
 
 const mockUser = {

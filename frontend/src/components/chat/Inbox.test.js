@@ -5,6 +5,7 @@ import * as chatServices from "../../services/chat";
 import { AuthContext } from "../../context/AuthContext";
 import { UsersContext } from "../../context/UsersContext";
 import { SocketContext } from "../../context/SocketContext";
+import React from "react";
 
 let container = null;
 
@@ -18,6 +19,9 @@ const mockMessage = {
   recipient_id: "1",
   attachment_progress: undefined,
   attachment_metadata: undefined,
+  invitation: false,
+  invitation_accepted: false,
+  invitation_declined: false,
 };
 
 const mockUser = { ID: "1", username: "username" };
@@ -46,6 +50,12 @@ async function RenderComponent() {
   chatServices.getConversations = jest.fn().mockResolvedValueOnce(["2"]);
   chatServices.getConversation = jest.fn().mockResolvedValueOnce([mockMessage]);
   return await act(async () => {
+    const mockChildMethod = jest.fn();
+    jest.spyOn(React, "useRef").mockReturnValue({
+      current: {
+        childMethod: mockChildMethod,
+      },
+    });
     render(
       <SocketContext.Provider value={{ sendIfPossible: sendIfPossibleMock }}>
         <AuthContext.Provider value={{ user: mockUser }}>
@@ -61,8 +71,14 @@ async function RenderComponent() {
   });
 }
 
-describe("conversations chat section", () => {
-  test("should render the conversations section with the user list, the messages list and the message form, getConversations should have been triggered, and the conversations list should be present", async () => {
+describe("inbox chat section", () => {
+  test("should render the inbox section with the user list, the messages list and the message form, getConversations should have been triggered, and the conversations list should be present", async () => {
+    const mockChildMethod = jest.fn();
+    jest.spyOn(React, "useRef").mockReturnValue({
+      current: {
+        childMethod: mockChildMethod,
+      },
+    });
     await RenderComponent();
 
     const usersList = screen.getByTestId("Users list");
@@ -76,6 +92,12 @@ describe("conversations chat section", () => {
   });
 
   test("clicking on a conversation should open up the users messages", async () => {
+    const mockChildMethod = jest.fn();
+    jest.spyOn(React, "useRef").mockReturnValue({
+      current: {
+        childMethod: mockChildMethod,
+      },
+    });
     await RenderComponent();
 
     const conversationUserButton = await screen.findByTestId(
@@ -93,6 +115,12 @@ describe("conversations chat section", () => {
   });
 
   test("opening a conversation then filling out the message input and clicking the send button should invoke the sendIfPossible function", async () => {
+    const mockChildMethod = jest.fn();
+    jest.spyOn(React, "useRef").mockReturnValue({
+      current: {
+        childMethod: mockChildMethod,
+      },
+    });
     await RenderComponent();
 
     // getByRole and findByRole wasn't working here for some reason. getByTestId works fine.

@@ -304,7 +304,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     Boolean(newPosts.findIndex((p) => p.ID === id));
 
   const handleMessage = useCallback((e: MessageEvent) => {
-    if(!page) return
+    if (!page) return;
     const data = JSON.parse(e.data);
     if (!data["DATA"]) return;
     data["DATA"] = JSON.parse(data["DATA"]);

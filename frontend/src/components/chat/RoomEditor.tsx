@@ -48,7 +48,11 @@ export default function RoomEditor() {
 
   useEffect(() => {
     if (!editRoomId) return;
+    const controller = new AbortController()
     loadRoom();
+    return () => {
+      controller.abort();
+    }
     // eslint-disable-next-line
   }, [editRoomId]);
 

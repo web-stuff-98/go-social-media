@@ -34,7 +34,11 @@ export default function Rooms() {
 
   useEffect(() => {
     setResMsg({ msg: "", err: false, pen: true });
+    const controller = new AbortController();
     handleSearch();
+    return () => {
+      controller.abort();
+    };
     // eslint-disable-next-line
   }, [pageNum, searchInput, onlyOwnRooms]);
 

@@ -12,7 +12,7 @@ describe("the attachment component", () => {
     expect(progressElement.toBeInTheDocument);
   });
 
-  test("the attachment is complete and if the attachment is not recognized as an image a button with a hidden download link should be present", () => {
+  test("the attachment is complete and if the attachment is not recognized a download link should be present", () => {
     render(
       <Attachment
         metaData={{ type: "application/pdf" }}
@@ -20,12 +20,8 @@ describe("the attachment component", () => {
       />
     );
 
-    const buttonElement = screen.getByRole("button", {
-      name: "Download attachment",
-    });
-    const linkElement = screen.getByRole("link", { hidden: true });
+    const linkElement = screen.getByRole("link")
 
-    expect(buttonElement).toBeInTheDocument();
     expect(linkElement).toBeInTheDocument();
   });
 

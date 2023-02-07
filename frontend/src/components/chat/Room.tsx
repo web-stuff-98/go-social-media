@@ -61,9 +61,11 @@ export default function Room() {
 
   useEffect(() => {
     openSubscription(`room=${roomId}`);
+    const controller = new AbortController();
     loadRoom();
     return () => {
       closeSubscription(`room=${roomId}`);
+      controller.abort();
     };
     // eslint-disable-next-line
   }, []);

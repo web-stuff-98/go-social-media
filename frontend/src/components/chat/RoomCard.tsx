@@ -27,11 +27,15 @@ export default function RoomCard({ r }: { r: IRoomCard }) {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
     if (r.img_blur) {
       loadImage();
     } else {
       setImgURL("");
     }
+    return () => {
+      controller.abort();
+    };
     // eslint-disable-next-line
   }, [r.img_blur]);
 
