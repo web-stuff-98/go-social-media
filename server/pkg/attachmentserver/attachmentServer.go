@@ -175,7 +175,7 @@ func RunServer(colls *db.Collections, SocketServer *socketserver.SocketServer, A
 			data := <-AttachmentServer.UploadStatusChan
 			AttachmentServer.Uploaders.mutex.Lock()
 			if _, ok := AttachmentServer.Uploaders.data[data.Uid]; !ok {
-				AttachmentServer.Uploaders.data[data.MsgId] = make(map[primitive.ObjectID]Upload)
+				AttachmentServer.Uploaders.data[data.Uid] = make(map[primitive.ObjectID]Upload)
 			}
 			AttachmentServer.Uploaders.data[data.Uid][data.MsgId] = data.Status
 			AttachmentServer.Uploaders.mutex.Unlock()
