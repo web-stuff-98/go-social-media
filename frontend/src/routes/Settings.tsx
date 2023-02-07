@@ -77,10 +77,10 @@ export default function Settings() {
     <ProtectedRoute user={user}>
       <form className={classes.container}>
         <div className={classes.heading}>
-          <BsGearWide aria-hidden={true} />
+          <BsGearWide />
           <h1>Settings</h1>
         </div>
-        <hr aria-hidden={true} />
+        <hr aria-hidden="true" />
         <input
           onChange={handlePfpInput}
           type="file"

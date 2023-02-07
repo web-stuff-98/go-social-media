@@ -52,7 +52,7 @@ export default function Blog() {
                 post={p}
               />
             ))}
-            <div aria-hidden={true} className={classes.endFix} />
+            <div aria-hidden="true" className={classes.endFix} />
           </>
         )}
         <div style={{ margin: "auto" }}>

@@ -26,11 +26,13 @@
       height: 2px;
       background: var(--base-heavy);
       border-radius: 1px;
+      margin-bottom: 0.7rem;
     }
 
     .toggler {
+      margin-bottom: 0.7rem;
       transition: left 100ms linear, background-color 200ms ease;
-      height: 8px;
+      height: 4px;
       width: 1rem;
       border-radius: 2px;
       background-color: var(--text-color);
@@ -38,6 +40,18 @@
       position: absolute;
       box-shadow: 0px 2px 3px black;
       left: 0;
+    }
+
+    .offLabel, .onLabel{
+      position: absolute;
+      bottom: 0;
+      font-size: 0.6rem;
+    }
+    .offLabel {
+      left: 0;
+    }
+    .onLabel {
+      right: 0;
     }
   }
 }

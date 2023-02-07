@@ -47,6 +47,7 @@ export default function Comment({
 
   useEffect(() => {
     if (currentParentComment && currentParentComment === comment.parent_id) setRepliesOpen(true);
+    // eslint-disable-next-line
   }, [currentParentComment]);
 
   return (

@@ -123,6 +123,7 @@ export default function Inbox() {
   useEffect(() => {
     if (inbox[selectedConversationIndexRef.current])
       messagesBottomRef.current?.scrollIntoView({ behavior: "auto" });
+    // eslint-disable-next-line
   }, [inbox[selectedConversationIndexRef.current]]);
 
   const handleMessage = useCallback(async (e: MessageEvent) => {

@@ -59,6 +59,7 @@ export default function InviteToRoom({
 
   useEffect(() => {
     getRooms();
+    // eslint-disable-next-line
   }, []);
 
   return (

@@ -13,7 +13,7 @@ export default function Toggle({
     <div className={classes.container}>
       <label htmlFor={label}>{label}</label>
       <button
-      type="button"
+        type="button"
         onClick={() => setToggledOn(!toggledOn)}
         aria-label={label}
         id={label}
@@ -21,13 +21,15 @@ export default function Toggle({
       >
         <span className={classes.sliderBar} />
         <span
-          style={
-            toggledOn
-              ? { left: "calc(100% - 1rem)", backgroundColor: "lime" }
-              : {}
-          }
+          style={toggledOn ? { left: "calc(100% - 1rem)" } : {}}
           className={classes.toggler}
         />
+        <span aria-hidden="true" className={classes.offLabel}>
+          Off
+        </span>
+        <span aria-hidden="true" className={classes.onLabel}>
+          On
+        </span>
       </button>
     </div>
   );
