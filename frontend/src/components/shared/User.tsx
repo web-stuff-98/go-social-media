@@ -84,7 +84,10 @@ export default function User({
     >
       {user && (
         <>
-          <span
+          <button
+            tabIndex={0}
+            role="button"
+            aria-label={`Open menu on user ${user.username}`}
             style={{
               ...(user.base64pfp
                 ? { backgroundImage: `url(${user.base64pfp})` }
@@ -120,7 +123,7 @@ export default function User({
                 className={classes.pfpIcon}
               />
             )}
-          </span>
+          </button>
           {AdditionalStuff && (
             <div className={classes.additionalStuff}>{AdditionalStuff}</div>
           )}

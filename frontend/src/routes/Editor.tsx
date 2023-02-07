@@ -111,9 +111,10 @@ export default function Editor() {
       {!resMsg.pen && (
         <>
           <FormikInputAndLabel
+            autoFocus
             name="title"
             id="title"
-            ariaLabel="title"
+            ariaLabel="Create blog post title input"
             touched={formik.touched.title}
             validationErrs={validationErrs}
             value={formik.values.title}
@@ -123,7 +124,7 @@ export default function Editor() {
           <FormikInputAndLabel
             name="description"
             id="description"
-            ariaLabel="description"
+            ariaLabel="Create blog post description"
             touched={formik.touched.description}
             validationErrs={validationErrs}
             value={formik.values.description}
@@ -133,7 +134,7 @@ export default function Editor() {
           <FormikInputAndLabel
             name="tags"
             id="tags"
-            ariaLabel="tags"
+            ariaLabel="Create blog post tags input. Start each tag with #. Maximum 8 tags."
             touched={formik.touched.tags}
             validationErrs={validationErrs}
             value={formik.values.tags}

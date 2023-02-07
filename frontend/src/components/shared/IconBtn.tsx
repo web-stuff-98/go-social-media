@@ -13,7 +13,7 @@ const IconBtn = ({
   svgStyle = {},
   onClick = () => {},
   type = "button",
-  ...props
+  tabIndex,
 }: {
   testid?: string;
   Icon: IconType;
@@ -24,17 +24,18 @@ const IconBtn = ({
   svgStyle?: CSSProperties;
   onClick?: Function;
   disabled?: boolean;
-  type?: string;
+  type?: "button" | "submit";
+  tabIndex?: number;
 }) => (
   <button
-    {...props}
+    {...(tabIndex ? { tabIndex } : {})}
     style={{
       ...style,
       ...(!disabled ?? false
         ? { cursor: "pointer" }
         : { filter: "opacity(0.5)", pointerEvents: "none" }),
     }}
-    type="button"
+    type={type || "button"}
     name={name}
     aria-label={ariaLabel}
     className={classes.container}

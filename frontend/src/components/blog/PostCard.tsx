@@ -103,6 +103,7 @@ export default function PostCard({
               className={classes.imageContainer}
             >
               <img
+                aria-hidden="true"
                 onClick={() => navigate(`/post/${post.slug}`)}
                 alt={post.title}
                 style={isMobile ? { width: "40%", minWidth: "40%" } : {}}
@@ -154,9 +155,13 @@ export default function PostCard({
               )}
             </div>
             <div ref={textContainerRef} className={classes.textTags}>
-              <h1>{post.title}</h1>
-              <h3>{post.description}</h3>
-              <div className={classes.tags}>
+              <h1 tabIndex={0}>{post.title}</h1>
+              <h3 tabIndex={1}>{post.description}</h3>
+              <div
+                aria-label="Post tags"
+                role="contentinfo"
+                className={classes.tags}
+              >
                 {post.tags.map((t) => (
                   <button
                     data-testid={t}

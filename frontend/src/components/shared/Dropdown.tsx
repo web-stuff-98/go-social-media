@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import classes from "../../styles/components/shared/Dropdown.module.scss";
 
@@ -33,6 +33,19 @@ export default function Dropdown({
   const rootItemContainerRef = useRef<HTMLDivElement>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      setDropdownOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   const renderItem = (
     name: string,
     children: ReactNode,
@@ -49,6 +62,7 @@ export default function Dropdown({
         className={light ? "lightButton" : ""}
         key={name}
         type="button"
+        role="menuitem"
         style={
           list
             ? {
@@ -129,6 +143,8 @@ export default function Dropdown({
     <div
       onMouseLeave={() => setDropdownOpen(false)}
       className={classes.container}
+      role="menu"
+      aria-expanded={dropdownOpen ? "true" : "false"}
     >
       <div className={classes.inner} ref={rootItemContainerRef}>
         {renderItem(

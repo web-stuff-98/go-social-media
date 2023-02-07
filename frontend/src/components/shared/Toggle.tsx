@@ -15,7 +15,7 @@ export default function Toggle({
       <button
         type="button"
         onClick={() => setToggledOn(!toggledOn)}
-        aria-label={label}
+        aria-label={`${label} toggled ${toggledOn ? "on" : "off"}`}
         id={label}
         className={classes.container}
       >

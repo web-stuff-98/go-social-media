@@ -48,6 +48,7 @@ export default function Register() {
   return (
     <form onSubmit={formik.handleSubmit} className={classes.container}>
       <FormikInputAndLabel
+        autoFocus
         name="username"
         id="username"
         ariaLabel="Username"
@@ -68,10 +69,10 @@ export default function Register() {
         onChange={formik.handleChange}
         onBlur={formik.handleBlur}
       />
-      <button type="submit">Create account</button>
       <a href="/policy">
         If you register you agree to the privacy / cookies policy.
       </a>
+      <button type="submit">Create account</button>
       <ResMsg resMsg={resMsg} />
     </form>
   );

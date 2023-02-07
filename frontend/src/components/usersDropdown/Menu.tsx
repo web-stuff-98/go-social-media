@@ -12,6 +12,8 @@ export default function Menu({
   return (
     <div className={classes.menu}>
       <button
+        autoFocus
+        tabIndex={0}
         aria-label="Message user"
         onClick={() => setDropdownSectionTo("DirectMessage")}
       >
@@ -19,6 +21,7 @@ export default function Menu({
         Direct message
       </button>
       <button
+        tabIndex={1}
         aria-label="Invite to room"
         onClick={() => setDropdownSectionTo("InviteToRoom")}
       >
@@ -26,6 +29,7 @@ export default function Menu({
         Invite to room
       </button>
       <button
+        tabIndex={2}
         aria-label="Ban from room"
         onClick={() => setDropdownSectionTo("BanFromRoom")}
       >

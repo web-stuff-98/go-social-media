@@ -13,6 +13,7 @@ export default function ResMsg({
     <>
       {(resMsg.msg || resMsg.pen) && (
         <div
+          aria-label="Loading"
           style={resMsg.pen ? { paddingTop: "var(--padding)" } : {}}
           className={resMsg.err ? formClasses.resMsgErr : formClasses.resMsg}
         >

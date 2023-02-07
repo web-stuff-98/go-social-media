@@ -55,7 +55,8 @@ export default function Attachment({
                 {
                   image: (
                     <img
-                      alt={metaData?.name}
+                      alt={`image named ${metaData?.name}`}
+                      aria-label={`image named ${metaData?.name}`}
                       className={classes.image}
                       src={`${baseURL}/api/attachment/download/${msgId}`}
                     />

@@ -5,9 +5,9 @@ export default function Policy() {
     <div className={classes.container}>
       <h1 style={{ marginBottom: "0" }}>Privacy & Cookies policy</h1>
       <hr style={{ marginTop: "0" }} />
-      <p style={{ padding: "0" }}>
+      <p aria-live="assertive" style={{ padding: "0" }}>
         This website uses cookies to facilitate logins. Accounts and all
-        associated data are deleted automatically after 20 - 25 minutes. Your IP
+        associated data are deleted automatically after 20 to 25 minutes. Your IP
         address is stored temporarily in order for the rate limiter to function,
         which guards against spam and repeated login attempts. None of your
         information is shared with any 3rd party or used for any reason other

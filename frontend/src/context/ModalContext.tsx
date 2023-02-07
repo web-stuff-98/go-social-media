@@ -105,6 +105,7 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
           <>
             <div className={classes.backdrop} />
             <div
+              role="alert"
               onClick={() => {
                 if (!modalData.pen) closeModal();
               }}
@@ -114,7 +115,7 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
                 {/* Confirmation modal */}
                 {showModal && modalType === "Confirm" && (
                   <>
-                    <b>{modalData.msg}</b>
+                    <b aria-live="assertive" role="alertdialog">{modalData.msg}</b>
                     <div className={classes.buttons}>
                       <button
                         name="Cancel"
@@ -128,6 +129,7 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
                         Cancel
                       </button>
                       <button
+                      autoFocus
                         name="Confirm"
                         aria-label="Confirm"
                         onClick={() => {
@@ -148,8 +150,9 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
                       <ImSpinner8 className={classes.spinner} />
                     )}
                     {modalData.err && <BiError className={classes.error} />}
-                    <b>{modalData.msg}</b>
+                    <b aria-live="assertive" role="alertdialog">{modalData.msg}</b>
                     <button
+                    autoFocus
                       className={classes.closeButton}
                       aria-label="Close message"
                       name="Close message"

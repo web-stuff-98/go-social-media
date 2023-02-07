@@ -37,7 +37,7 @@ export default function Login() {
         setResMsg({ msg: "Logging in", err: false, pen: true });
         login(vals.username, vals.password);
         setResMsg({ msg: "", err: false, pen: false });
-        navigate("/blog/1")
+        navigate("/blog/1");
       } catch (e) {
         setResMsg({ msg: `${e}`, err: true, pen: false });
       }
@@ -47,6 +47,7 @@ export default function Login() {
   return (
     <form onSubmit={formik.handleSubmit} className={classes.container}>
       <FormikInputAndLabel
+        autoFocus
         name="username"
         id="username"
         ariaLabel="Username"
@@ -67,10 +68,10 @@ export default function Login() {
         onBlur={formik.handleBlur}
         validationErrs={validationErrs}
       />
-      <button type="submit">Login</button>
       <a href="/policy">
         If you login you agree to the privacy / cookies policy.
       </a>
+      <button type="submit">Login</button>
       <ResMsg resMsg={resMsg} />
     </form>
   );

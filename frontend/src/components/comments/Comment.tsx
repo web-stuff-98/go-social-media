@@ -46,7 +46,8 @@ export default function Comment({
   const childComments = getReplies(comment.ID);
 
   useEffect(() => {
-    if (currentParentComment && currentParentComment === comment.parent_id) setRepliesOpen(true);
+    if (currentParentComment && currentParentComment === comment.parent_id)
+      setRepliesOpen(true);
     // eslint-disable-next-line
   }, [currentParentComment]);
 
@@ -177,7 +178,7 @@ export default function Comment({
                 }
               }}
               onClickOutside={() => setIsEditing(false)}
-              placeholder="Edit comment..."
+              ariaLabel="Edit comment input"
             />
           ) : (
             <>{comment.content}</>
@@ -214,7 +215,7 @@ export default function Comment({
             autoFocus
             onSubmit={(c: string) => submitComment(c, postId, replyingTo)}
             onClickOutside={() => setReplyingTo("")}
-            placeholder="Reply to comment..."
+            ariaLabel="Reply to comment input"
           />
         </div>
       )}

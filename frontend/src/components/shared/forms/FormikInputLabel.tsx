@@ -17,6 +17,7 @@ const FormikInputAndLabel = ({
   onChange,
   onBlur,
   password,
+  autoFocus,
 }: {
   name: string;
   id: string;
@@ -27,10 +28,12 @@ const FormikInputAndLabel = ({
   onChange: ChangeEventHandler<HTMLInputElement>;
   onBlur: FocusEventHandler<HTMLInputElement>;
   password?: boolean;
+  autoFocus?: boolean;
 }) => (
   <div className={classes.inputLabelWrapper}>
     <label htmlFor={id}>{capitalize(name)}</label>
     <input
+      autoFocus={autoFocus}
       type={password ? "password" : "text"}
       data-testid={id}
       name={name}

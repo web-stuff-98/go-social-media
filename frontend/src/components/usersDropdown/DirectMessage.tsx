@@ -39,11 +39,11 @@ export default function DirectMessage({
         onChange={(e: ChangeEvent<HTMLInputElement>) =>
           setMessageInput(e.target.value)
         }
-        placeholder="Direct message..."
+        aria-label="Message input"
         required
         type="text"
       />
-      <button aria-label="Send direct message">
+      <button aria-label="Send message">
         <MdSend />
       </button>
     </form>

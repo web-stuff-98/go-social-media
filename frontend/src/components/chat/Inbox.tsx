@@ -196,7 +196,10 @@ export default function Inbox() {
             selectedConversationIndexRef.current
           ].messages.findIndex((msg) => msg.ID === data.DATA.ID);
           if (i !== -1) {
-            newInbox[selectedConversationIndexRef.current].messages.splice(i, 1);
+            newInbox[selectedConversationIndexRef.current].messages.splice(
+              i,
+              1
+            );
             return [...newInbox];
           } else {
             return inbox;
@@ -386,7 +389,7 @@ export default function Inbox() {
                 />
               </>
             ) : (
-              <div className={classes.emptyInboxMessage}>
+              <div aria-live="assertive" className={classes.emptyInboxMessage}>
                 You can click on a users image to start a conversation
               </div>
             )}
@@ -421,6 +424,7 @@ export default function Inbox() {
           <input
             data-testid="Message input"
             name="Message input"
+            aria-label="Send message input"
             value={messageInput}
             onChange={handleMessageInput}
             placeholder="Send a message..."

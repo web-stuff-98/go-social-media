@@ -13,6 +13,7 @@ export function CommentForm({
   initialValue = "",
   placeholder = "",
   onClickOutside = () => {},
+  ariaLabel,
 }: {
   loading?: boolean;
   error?: string;
@@ -21,6 +22,7 @@ export function CommentForm({
   initialValue?: string;
   placeholder?: string;
   onClickOutside?: Function;
+  ariaLabel?: string;
 }) {
   const [message, setMessage] = useState(initialValue);
   const [mouseInside, setMouseInside] = useState(false);
@@ -46,11 +48,13 @@ export function CommentForm({
 
   return (
     <form
+      aria-label="Comment form"
       data-testid="Comment form"
       className={classes.container}
       onSubmit={handleSubmit}
     >
       <input
+        {...(ariaLabel ? { ariaLabel } : {})}
         autoFocus={autoFocus}
         value={message}
         placeholder={placeholder}

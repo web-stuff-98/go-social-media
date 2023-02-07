@@ -50,8 +50,8 @@ export default function PageContent({
             backgroundPositionY: `${Math.floor(scrollY * 0.5)}px`,
           }}
         />
-        <div className={classes.text}>
-          <div className={classes.titleDescription}>
+        <div aria-live="assertive" className={classes.text}>
+          <div tabIndex={0} className={classes.titleDescription}>
             <h1 data-testid="Heading">{post.title}</h1>
             {!isMobile && <h2 data-testid="Subheading">{post.description}</h2>}
           </div>
@@ -148,6 +148,7 @@ export default function PageContent({
         </div>
       </div>
       <div
+        tabIndex={1}
         data-testid="Content"
         className={classes.html}
         dangerouslySetInnerHTML={{ __html: post.body }}

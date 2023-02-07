@@ -5,7 +5,7 @@ export default function Home() {
     <div className={classes.container}>
       <h1>Welcome</h1>
       <hr />
-      <p>
+      <p aria-live="assertive">
         New accounts are deleted automatically after 20 minutes. Logins use a
         simple username & password setup. You can create a new account or login
         using one of the example accounts. The usernames for the example
