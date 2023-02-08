@@ -457,12 +457,22 @@ func watchRoomInserts(db *mongo.Database, ss *socketserver.SocketServer) {
 		log.Panicln("CS ERR : ", err.Error())
 	}
 	for cs.Next(context.Background()) {
-		var changeEv bson.M
+		var changeEv struct {
+			DocumentKey struct {
+				ID primitive.ObjectID `bson:"_id"`
+			} `bson:"documentKey"`
+			FullDocument models.Room `bson:"fullDocument"`
+		}
 		err := cs.Decode(&changeEv)
 		if err != nil {
+			log.Println("CS DECODE ERROR : ", err)
 			log.Fatal(err)
 		}
-		data, err := bson.MarshalExtJSON(changeEv["fullDocument"].(bson.M), true, true)
+		data, err := bson.Marshal(changeEv.FullDocument)
+		if err != nil {
+			log.Println("CS JSON MARSHAL ERROR : ", err)
+			return
+		}
 
 		outBytes, err := json.Marshal(socketmodels.OutChangeMessage{
 			Type:   "CHANGE",
