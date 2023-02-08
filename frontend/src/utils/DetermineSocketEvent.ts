@@ -31,6 +31,14 @@ export type PrivateMessageUpdateData = {
     invitation_declined?: boolean;
   };
 };
+export type PrivateMessageInviteRespondedData = {
+  TYPE: "PRIVATE_MESSAGE_INVITE_RESPONDED";
+  DATA: {
+    ID: string; //msgId of invite
+    accepted: boolean;
+    recipient_id: string;
+  };
+};
 export type RoomMessageData = {
   TYPE: "ROOM_MESSAGE";
   DATA: IRoomMessage;
@@ -114,6 +122,12 @@ export function instanceOfPrivateMessageUpdateData(
   object: any
 ): object is PrivateMessageUpdateData {
   return object.TYPE === "PRIVATE_MESSAGE_UPDATE";
+}
+
+export function instanceOfPrivateMessageInviteResponded(
+  object: any
+): object is PrivateMessageInviteRespondedData {
+  return object.TYPE === "PRIVATE_MESSAGE_INVITE_RESPONDED";
 }
 
 export function instanceOfRoomMessageData(

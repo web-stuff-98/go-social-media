@@ -316,12 +316,30 @@ func (h handler) AcceptRoomInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if res := h.Collections.InboxCollection.FindOneAndUpdate(context.TODO(), bson.M{
+	inbox := &models.Inbox{}
+	h.Collections.InboxCollection.FindOne(context.TODO(), bson.M{"_id": user.ID}).Decode(&inbox)
+	found := false
+	for _, pm := range inbox.Messages {
+		if pm.ID == msgId {
+			found = true
+			if pm.IsDeclinedInvitation {
+				responseMessage(w, http.StatusBadRequest, "You have already declined this invitation")
+				return
+			}
+			break
+		}
+	}
+
+	if !found {
+		responseMessage(w, http.StatusNotFound, "Invitation not found")
+	}
+
+	if _, err := h.Collections.InboxCollection.UpdateOne(context.TODO(), bson.M{
 		"_id":          user.ID,
 		"messages._id": msgId,
 	}, bson.M{
 		"$set": bson.M{"messages.$.invitation_accepted": true},
-	}); res.Err() != nil {
+	}); err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
 	}
@@ -336,17 +354,15 @@ func (h handler) AcceptRoomInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := make(map[string]interface{})
-	data["ID"] = msgId.Hex()
-	data["invitation_accepted"] = true
-	data["recipient_id"] = user.ID.Hex()
-	dataBytes, err := json.Marshal(data)
-
+	outData := make(map[string]interface{})
+	outData["ID"] = msgId.Hex()
+	outData["accepted"] = true
+	outData["recipient_id"] = user.ID.Hex()
+	dataBytes, err := json.Marshal(outData)
 	outBytes, err := json.Marshal(socketmodels.OutMessage{
-		Type: "PRIVATE_MESSAGE_UPDATE",
+		Type: "PRIVATE_MESSAGE_INVITE_RESPONDED",
 		Data: string(dataBytes),
 	})
-
 	h.SocketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
 		Names: []string{"inbox=" + uid.Hex(), "inbox=" + user.ID.Hex()},
 		Data:  outBytes,
@@ -423,27 +439,43 @@ func (h handler) DeclineRoomInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if res := h.Collections.InboxCollection.FindOneAndUpdate(context.TODO(), bson.M{
+	inbox := &models.Inbox{}
+	h.Collections.InboxCollection.FindOne(context.TODO(), bson.M{"_id": user.ID}).Decode(&inbox)
+	found := false
+	for _, pm := range inbox.Messages {
+		if pm.ID == msgId {
+			found = true
+			if pm.IsAcceptedInvitation {
+				responseMessage(w, http.StatusBadRequest, "You have already accepted this invitation")
+				return
+			}
+			break
+		}
+	}
+
+	if !found {
+		responseMessage(w, http.StatusNotFound, "Invitation not found")
+	}
+
+	if _, err := h.Collections.InboxCollection.UpdateOne(context.TODO(), bson.M{
 		"_id":          user.ID,
 		"messages._id": msgId,
 	}, bson.M{
 		"$set": bson.M{"messages.$.invitation_declined": true},
-	}); res.Err() != nil {
+	}); err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
 	}
 
-	data := make(map[string]interface{})
-	data["ID"] = msgId.Hex()
-	data["invitation_declined"] = true
-	data["recipient_id"] = user.ID.Hex()
-	dataBytes, err := json.Marshal(data)
-
+	outData := make(map[string]interface{})
+	outData["ID"] = msgId.Hex()
+	outData["accepted"] = false
+	outData["recipient_id"] = user.ID.Hex()
+	dataBytes, err := json.Marshal(outData)
 	outBytes, err := json.Marshal(socketmodels.OutMessage{
-		Type: "PRIVATE_MESSAGE_UPDATE",
+		Type: "PRIVATE_MESSAGE_INVITE_RESPONDED",
 		Data: string(dataBytes),
 	})
-
 	h.SocketServer.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
 		Names: []string{"inbox=" + uid.Hex(), "inbox=" + user.ID.Hex()},
 		Data:  outBytes,

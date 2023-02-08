@@ -13,6 +13,7 @@ import {
   instanceOfAttachmentProgressData,
   instanceOfPrivateMessageData,
   instanceOfPrivateMessageDeleteData,
+  instanceOfPrivateMessageInviteResponded,
   instanceOfPrivateMessageUpdateData,
 } from "../../utils/DetermineSocketEvent";
 import { useModal } from "../../context/ModalContext";
@@ -215,7 +216,6 @@ export default function Inbox() {
           const i = inbox[
             selectedConversationIndexRef.current
           ].messages.findIndex((msg) => msg.ID === data.DATA.ID);
-          console.log(i);
           if (i !== -1) {
             newInbox[selectedConversationIndexRef.current].messages[i] = {
               ...newInbox[selectedConversationIndexRef.current].messages[i],
@@ -228,6 +228,26 @@ export default function Inbox() {
         });
       }
       return;
+    }
+    if (instanceOfPrivateMessageInviteResponded(data)) {
+      if (data.DATA.recipient_id === selectedConversationRef.current || data.DATA.recipient_id === currentUser?.ID) {
+        setInbox((inbox) => {
+          let newInbox = inbox;
+          const i = inbox[
+            selectedConversationIndexRef.current
+          ].messages.findIndex((msg) => msg.ID === data.DATA.ID);
+          if (i !== -1) {
+            newInbox[selectedConversationIndexRef.current].messages[i] = {
+              ...newInbox[selectedConversationIndexRef.current].messages[i],
+              invitation_accepted: data.DATA.accepted,
+              invitation_declined: !data.DATA.accepted,
+            };
+            return [...newInbox];
+          } else {
+            return inbox;
+          }
+        });
+      }
     }
     if (instanceOfAttachmentProgressData(data)) {
       if (selectedConversationIndexRef.current !== -1) {
@@ -309,7 +329,7 @@ export default function Inbox() {
         recipient_id: selectedConversation,
         has_attachment: file ? true : false,
         invitation_accepted: false,
-        invitation_declined:false,
+        invitation_declined: false,
       })
     );
     setMessageInput("");
