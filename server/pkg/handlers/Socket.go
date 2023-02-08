@@ -79,10 +79,7 @@ func (h handler) WebSocketEndpoint(w http.ResponseWriter, r *http.Request) {
 	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	uid := primitive.NilObjectID
 	if user != nil {
-		log.Println("Authenticated connection")
 		uid = user.ID
-	} else {
-		log.Println("Unauthenticated connection")
 	}
 	h.SocketServer.RegisterConn <- socketserver.ConnectionInfo{
 		Conn:        ws,
