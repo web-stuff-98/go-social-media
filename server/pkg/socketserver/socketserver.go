@@ -656,17 +656,17 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			}()
 			data := <-socketServer.GetUserConversationsOpenWith
 			socketServer.OpenConversations.mutex.Lock()
+			sendTrue := false
 			if openConvs, ok := socketServer.OpenConversations.data[data.Uid]; ok {
 				for oi := range openConvs {
 					if oi == data.UidB {
-						socketServer.OpenConversations.mutex.Unlock()
-						data.RecvChan <- true
+						sendTrue = true
 						break
 					}
 				}
 			}
 			socketServer.OpenConversations.mutex.Unlock()
-			data.RecvChan <- false
+			data.RecvChan <- sendTrue
 		}
 	}()
 	/* ----- Open conversation with other user chan ----- */
