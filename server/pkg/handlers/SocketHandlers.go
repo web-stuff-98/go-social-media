@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -168,11 +169,6 @@ func privateMessage(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *
 	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
-	inBytes, err := json.Marshal(data)
-	ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-		Name: "inbox=" + data.RecipientId,
-		Data: inBytes,
-	}
 	recipientId, err := primitive.ObjectIDFromHex(data.RecipientId)
 	if err != nil {
 		return err
@@ -205,6 +201,7 @@ func privateMessage(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *
 		return err
 	}
 
+	log.Println("CHANNEL")
 	hasConvsOpenWithRecv := make(chan bool)
 	ss.GetUserConversationsOpenWith <- socketserver.GetUserConversationsOpenWith{
 		RecvChan: hasConvsOpenWithRecv,
@@ -213,12 +210,14 @@ func privateMessage(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *
 	}
 	hasConvsOpenWith := <-hasConvsOpenWithRecv
 	addNotification := !hasConvsOpenWith
+	log.Println("CHANNEL CLEARED")
 
 	if _, err := colls.InboxCollection.UpdateByID(context.TODO(), recipientId, bson.M{
 		"$push": bson.M{
 			"messages": msg,
 		},
 	}); err != nil {
+		log.Println("ERR A")
 		return err
 	} else {
 		if addNotification {
@@ -243,6 +242,7 @@ func privateMessage(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *
 		if err != nil {
 			return err
 		}
+		log.Println("Sent data to subscriptions")
 		ss.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
 			Names: []string{"inbox=" + recipientId.Hex(), "inbox=" + uid.Hex()},
 			Data:  outBytes,

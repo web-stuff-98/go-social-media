@@ -23,6 +23,8 @@ export default function DirectMessage({
         event_type: "PRIVATE_MESSAGE",
         content: messageInput,
         recipient_id: uid,
+        invitation_accepted: false,
+        invitation_declined: false,
       })
     );
     setMessageInput("");

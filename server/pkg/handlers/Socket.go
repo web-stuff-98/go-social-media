@@ -30,6 +30,13 @@ var upgrader = websocket.Upgrader{
 
 func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, attachmentServer *attachmentserver.AttachmentServer, uid *primitive.ObjectID, colls *db.Collections) {
 	for {
+		defer func() {
+			r := recover()
+			if r != nil {
+				log.Println("Recovered from panic in WS reader loop : ", r)
+			}
+		}()
+
 		_, p, err := conn.ReadMessage()
 		if err != nil {
 			log.Println(err)
@@ -38,13 +45,6 @@ func reader(conn *websocket.Conn, socketServer *socketserver.SocketServer, attac
 
 		var data map[string]interface{}
 		json.Unmarshal(p, &data)
-
-		defer func() {
-			r := recover()
-			if r != nil {
-				log.Println("Recovered from panic in WS reader loop : ", r)
-			}
-		}()
 
 		eventType, eventTypeOk := data["event_type"]
 
@@ -79,7 +79,10 @@ func (h handler) WebSocketEndpoint(w http.ResponseWriter, r *http.Request) {
 	user, _, err := helpers.GetUserAndSessionFromRequest(r, *h.Collections)
 	uid := primitive.NilObjectID
 	if user != nil {
+		log.Println("Authenticated connection")
 		uid = user.ID
+	} else {
+		log.Println("Unauthenticated connection")
 	}
 	h.SocketServer.RegisterConn <- socketserver.ConnectionInfo{
 		Conn:        ws,

@@ -27,25 +27,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { openModal } = useModal();
 
   const login = async (username: string, password: string) => {
-    const user = await makeRequest("/api/account/login", {
+    await makeRequest("/api/account/login", {
       method: "POST",
       headers: { "Content-Type": "application/json;charset=UTF-8" },
       data: { username, password },
       withCredentials: true,
+    }).then((u) => {
+      reconnectSocket();
+      setUser(u);
     });
-    reconnectSocket();
-    setUser(user);
   };
 
   const register = async (username: string, password: string) => {
-    const user = await makeRequest("/api/account/register", {
+    await makeRequest("/api/account/register", {
       method: "POST",
       headers: { "Content-Type": "application/json;charset=UTF-8" },
       data: { username, password },
       withCredentials: true,
+    }).then((u) => {
+      setUser(u);
+      reconnectSocket();
     });
-    setUser(user);
-    reconnectSocket();
   };
 
   const logout = async () => {

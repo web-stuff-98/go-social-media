@@ -84,6 +84,7 @@ export default function Room() {
         content: messageInput,
         room_id: roomId,
         has_attachment: file ? true : false,
+        invitation:false,
       })
     );
     setMessageInput("");
@@ -130,6 +131,7 @@ export default function Room() {
     if (instanceOfRoomMessageUpdateData(data)) {
       setRoom((o) => {
         if (!o) return o;
+        console.log(data)
         let newMsgs = o.messages;
         const i = o.messages.findIndex((msg) => msg.ID === data.DATA.ID);
         if (i === -1) return o;

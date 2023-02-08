@@ -16,10 +16,13 @@ type OpenExitConv struct {
 
 // TYPE: PRIVATE_MESSAGE
 type PrivateMessage struct {
-	Type          string `json:"TYPE"`
-	RecipientId   string `json:"recipient_id"`
-	Content       string `json:"content"`
-	HasAttachment bool   `json:"has_attachment"`
+	Type                 string `json:"TYPE"`
+	RecipientId          string `json:"recipient_id"`
+	Content              string `json:"content"`
+	HasAttachment        bool   `json:"has_attachment"`
+	Invitation           bool   `json:"invitation"`
+	IsAcceptedInvitation bool   `json:"invitation_accepted"`
+	IsDeclinedInvitation bool   `json:"invitation_declined"`
 }
 
 // TYPE: PRIVATE_MESSAGE_DELETE

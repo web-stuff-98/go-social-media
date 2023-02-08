@@ -427,7 +427,7 @@ func main() {
 		}
 	} else {
 		DB.Drop(context.Background())
-		go seed.SeedDB(Collections, 10, 30, 5, protectedUids, protectedPids, protectedRids)
+		go seed.SeedDB(Collections, 10, 10, 5, protectedUids, protectedPids, protectedRids)
 	}
 
 	deleteAccountTicker := time.NewTicker(20 * time.Minute)

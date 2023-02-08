@@ -659,6 +659,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			if openConvs, ok := socketServer.OpenConversations.data[data.Uid]; ok {
 				for oi := range openConvs {
 					if oi == data.UidB {
+						socketServer.OpenConversations.mutex.Unlock()
 						data.RecvChan <- true
 						break
 					}

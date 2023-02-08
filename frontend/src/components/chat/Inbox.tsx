@@ -215,6 +215,7 @@ export default function Inbox() {
           const i = inbox[
             selectedConversationIndexRef.current
           ].messages.findIndex((msg) => msg.ID === data.DATA.ID);
+          console.log(i);
           if (i !== -1) {
             newInbox[selectedConversationIndexRef.current].messages[i] = {
               ...newInbox[selectedConversationIndexRef.current].messages[i],
@@ -307,6 +308,8 @@ export default function Inbox() {
         content: messageInput,
         recipient_id: selectedConversation,
         has_attachment: file ? true : false,
+        invitation_accepted: false,
+        invitation_declined:false,
       })
     );
     setMessageInput("");
