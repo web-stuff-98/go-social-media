@@ -72,7 +72,7 @@ export default function Rooms() {
   }, []);
 
   const nextPage = () => {
-    setPageNum(Math.min(pageNum + 1, Math.ceil(count / 30)));
+    setPageNum(Math.min(pageNum + 1, Math.ceil(count / 20)));
   };
 
   const prevPage = () => {
@@ -145,7 +145,7 @@ export default function Rooms() {
             ariaLabel="Previous page"
             Icon={BsChevronLeft}
           />
-          {pageNum}/{Math.ceil(count / 30)}
+          {pageNum}/{Math.ceil(count / 20)}
           <IconBtn
             onClick={nextPage}
             name="Next page"
