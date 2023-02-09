@@ -30,7 +30,7 @@ export const UsersContext = createContext<{
   updateUserData: (data: Omit<Partial<IUser>, "event_type">) => void;
 }>({
   users: [],
-  getUserData: () => ({ username: "", ID: "" }),
+  getUserData: () => ({ username: "", ID: "", online: false }),
   cacheUserData: () => {},
 
   userEnteredView: () => {},
@@ -167,7 +167,8 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
     data["DATA"] = JSON.parse(data["DATA"]);
     if (instanceOfChangeData(data)) {
       if (data.ENTITY === "USER") {
-        if (data.METHOD === "UPDATE_IMAGE") {
+        if (data.METHOD === "UPDATE_IMAGE" || data.METHOD === "UPDATE") {
+          console.log("RECIEVED USER UPDATE DATA:", data.DATA);
           updateUserData(data.DATA);
         }
       }

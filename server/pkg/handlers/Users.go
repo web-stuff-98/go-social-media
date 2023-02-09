@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/web-stuff-98/go-social-media/pkg/db/models"
+	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
 
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
@@ -32,6 +33,14 @@ func (h handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	recvChan := make(chan bool)
+	h.SocketServer.GetUserOnlineStatus <- socketserver.GetUserOnlineStatus{
+		RecvChan: recvChan,
+		Uid:      id,
+	}
+	isOnline := <-recvChan
+	user.IsOnline = isOnline
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

@@ -16,6 +16,7 @@ type User struct {
 	Password        string               `bson:"password" json:"-"`
 	Base64pfp       string               `bson:"-" json:"base64pfp,omitempty"`
 	RoomsMessagesIn []primitive.ObjectID `bson:"rooms_messages_in" json:"-"`
+	IsOnline        bool                 `bson:"-" json:"online"`
 }
 
 type Inbox struct {

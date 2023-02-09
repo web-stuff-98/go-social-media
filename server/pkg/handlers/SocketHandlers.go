@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -78,14 +77,6 @@ func openSubscription(b []byte, conn *websocket.Conn, uid primitive.ObjectID, ss
 		Uid:  uid,
 		Conn: conn,
 	}
-	// If opening a post page, remove the notifications for replies on the users comments
-	if strings.Contains(data.Name, "post_page=") {
-		colls.NotificationsCollection.UpdateByID(context.Background(), uid, bson.M{
-			"$pull": bson.M{
-				"notifications": bson.M{"type": "REPLY:" + strings.ReplaceAll(data.Name, "post_page=", "")},
-			},
-		})
-	}
 	return nil
 }
 
@@ -112,14 +103,6 @@ func openSubscriptions(b []byte, conn *websocket.Conn, uid primitive.ObjectID, s
 			Name: name,
 			Uid:  uid,
 			Conn: conn,
-		}
-		// If opening a post page, remove the notifications for replies on the users comments
-		if strings.Contains(name, "post_page=") {
-			colls.NotificationsCollection.UpdateByID(context.Background(), uid, bson.M{
-				"$pull": bson.M{
-					"notifications": bson.M{"type": "REPLY:" + strings.ReplaceAll(name, "post_page=", "")},
-				},
-			})
 		}
 	}
 	return nil

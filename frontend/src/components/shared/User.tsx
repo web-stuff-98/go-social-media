@@ -13,7 +13,7 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
 });
 
 export default function User({
-  user = { username: "Username", ID: "123" },
+  user = { username: "Username", ID: "123", online: false },
   uid = "",
   onClick = undefined,
   date,
@@ -86,11 +86,17 @@ export default function User({
         <>
           <div
             tabIndex={currentUser && uid === currentUser?.ID ? -1 : 0}
-            role="button"
+            {...(currentUser && currentUser.ID !== user.ID
+              ? {
+                  role: "button",
+                }
+              : {})}
             aria-label={
               currentUser && uid === currentUser?.ID
                 ? ""
-                : `Open menu on user ${user.username}`
+                : `Open menu on user ${user.username}, user is ${
+                    user.online ? "online" : "offline"
+                  }`
             }
             style={{
               ...(user.base64pfp
@@ -125,6 +131,12 @@ export default function User({
               <AiOutlineUser
                 style={light ? { fill: "white" } : {}}
                 className={classes.pfpIcon}
+              />
+            )}
+            {user.online && (
+              <span
+                style={reverse ? { right: "-2px" } : { left: "-2px" }}
+                className={classes.onlineIndicator}
               />
             )}
           </div>

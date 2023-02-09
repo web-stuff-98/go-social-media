@@ -375,41 +375,6 @@ func (h handler) CommentOnPost(w http.ResponseWriter, r *http.Request) {
 		Data: outBytes,
 	}
 
-	// Create notification for recipient if they aren't already on the post page
-	/*if parentId != "" {
-		var cmts models.PostComments
-		if err := h.Collections.PostCommentsCollection.FindOne(r.Context(), bson.M{"_id": postId}).Decode(&cmts); err != nil {
-			responseMessage(w, http.StatusInternalServerError, "Internal error")
-			return
-		} else {
-			replyingToSelf := false
-			var cmt models.PostComment
-			for _, pc := range cmts.Comments {
-				if pc.ID.Hex() == parentId {
-					cmt = pc
-					if cmt.Author == user.ID {
-						replyingToSelf = true
-					}
-					break
-				}
-			}
-			if !replyingToSelf {
-				for _, oi := range h.SocketServer.Subscriptions["post_page="+postId.Hex()] {
-					found := false
-					if oi == cmt.Author {
-						found = true
-						break
-					}
-					if !found {
-						h.Collections.NotificationsCollection.UpdateByID(r.Context(), cmt.Author, bson.M{"$push": bson.M{"notifications": models.Notification{
-							Type: "REPLY:" + postId.Hex() + ":" + user.ID.Hex(),
-						}}})
-					}
-				}
-			}
-		}
-	}*/
-
 	responseMessage(w, http.StatusCreated, "Comment added")
 }
 
@@ -1067,7 +1032,7 @@ func (h handler) UploadPostImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.ParseMultipartForm(32 << 20) // copy pasted this thing << something to do with binary shift whatever that is. Is used here to define maximum memory in bytes.
+	r.ParseMultipartForm(32 << 20) // binary shift maximum 20mb in bytes, i think
 
 	file, handler, err := r.FormFile("file")
 	if err != nil {

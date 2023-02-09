@@ -17,6 +17,7 @@
     background: none;
     background-size: cover;
     background-position: center;
+    position: relative;
 
     .pfpIcon {
       svg {
@@ -26,6 +27,17 @@
       color: var(--text-color);
       font-size: 1.5rem;
       fill: var(--text-color);
+    }
+
+    .onlineIndicator {
+      position: absolute;
+      top: -2px;
+      background: lime;
+      box-shadow: 0px 0px 3px black;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      border: 1px solid var(--text-color);
     }
   }
 

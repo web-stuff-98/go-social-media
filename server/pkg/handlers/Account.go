@@ -84,6 +84,8 @@ func (h handler) Register(w http.ResponseWriter, r *http.Request) {
 	cookie, err := helpers.GenerateCookieAndSession(inserted.InsertedID.(primitive.ObjectID), *h.Collections)
 	http.SetCookie(w, &cookie)
 
+	user.IsOnline = true
+
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(user)
@@ -135,6 +137,8 @@ func (h handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	cookie, err := helpers.GenerateCookieAndSession(user.ID, *h.Collections)
 	http.SetCookie(w, &cookie)
+
+	user.IsOnline = true
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -188,6 +192,8 @@ func (h handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	} else {
 		user.Base64pfp = "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(pfp.Binary.Data)
 	}
+
+	user.IsOnline = true
 
 	http.SetCookie(w, &cookie)
 	w.Header().Add("Content-Type", "application/json")

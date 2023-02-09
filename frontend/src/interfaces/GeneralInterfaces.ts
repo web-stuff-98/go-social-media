@@ -8,6 +8,7 @@ export interface IUser {
   ID: string;
   username: string;
   base64pfp?: string;
+  online?: boolean;
 }
 
 export interface IDimensions {

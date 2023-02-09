@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/web-stuff-98/go-social-media/pkg/db"
 	"github.com/web-stuff-98/go-social-media/pkg/db/models"
+	"github.com/web-stuff-98/go-social-media/pkg/socketmodels"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -28,6 +29,8 @@ type SocketServer struct {
 	Connections                 Connections
 	Subscriptions               Subscriptions
 	ConnectionSubscriptionCount ConnectionsSubscriptionCount
+	UserOnlineStatus            UserOnlineStatus
+	GetUserOnlineStatus         chan GetUserOnlineStatus
 
 	RegisterConn   chan ConnectionInfo
 	UnregisterConn chan ConnectionInfo
@@ -81,6 +84,10 @@ type VidChatStatus struct {
 }
 type OpenConversations struct {
 	data  map[primitive.ObjectID]map[primitive.ObjectID]struct{}
+	mutex sync.Mutex
+}
+type UserOnlineStatus struct {
+	data  map[primitive.ObjectID]bool
 	mutex sync.Mutex
 }
 
@@ -151,6 +158,10 @@ type VidChatGetOtherUserVidOpen struct {
 	Uid      primitive.ObjectID
 	UidB     primitive.ObjectID
 }
+type GetUserOnlineStatus struct {
+	RecvChan chan<- bool
+	Uid      primitive.ObjectID
+}
 
 func Init(colls *db.Collections) (*SocketServer, error) {
 	socketServer := &SocketServer{
@@ -163,6 +174,10 @@ func Init(colls *db.Collections) (*SocketServer, error) {
 		ConnectionSubscriptionCount: ConnectionsSubscriptionCount{
 			data: make(map[*websocket.Conn]uint8),
 		},
+		UserOnlineStatus: UserOnlineStatus{
+			data: make(map[primitive.ObjectID]bool),
+		},
+		GetUserOnlineStatus: make(chan GetUserOnlineStatus),
 
 		RegisterConn:   make(chan ConnectionInfo),
 		UnregisterConn: make(chan ConnectionInfo),
@@ -216,6 +231,23 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 				socketServer.Connections.mutex.Lock()
 				socketServer.Connections.data[connData.Conn] = connData.Uid
 				socketServer.Connections.mutex.Unlock()
+				if connData.Uid != primitive.NilObjectID {
+					socketServer.UserOnlineStatus.mutex.Lock()
+					socketServer.UserOnlineStatus.data[connData.Uid] = true
+					socketServer.UserOnlineStatus.mutex.Unlock()
+				}
+				outBytes, err := json.Marshal(socketmodels.OutChangeMessage{
+					Type:   "CHANGE",
+					Method: "UPDATE",
+					Data:   `{"ID":"` + connData.Uid.Hex() + `"` + `,"online":true}`,
+					Entity: "USER",
+				})
+				if err == nil {
+					socketServer.SendDataToSubscription <- SubscriptionDataMessage{
+						Name: "user=" + connData.Uid.Hex(),
+						Data: outBytes,
+					}
+				}
 			}
 		}
 	}()
@@ -253,11 +285,47 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 					break
 				}
 			}
+			if connData.Uid != primitive.NilObjectID {
+				socketServer.UserOnlineStatus.mutex.Lock()
+				delete(socketServer.UserOnlineStatus.data, connData.Uid)
+				socketServer.UserOnlineStatus.mutex.Unlock()
+				outBytes, err := json.Marshal(socketmodels.OutChangeMessage{
+					Type:   "CHANGE",
+					Method: "UPDATE",
+					Data:   `{"ID":"` + connData.Uid.Hex() + `"` + `,"online":false}`,
+					Entity: "USER",
+				})
+				if err == nil {
+					socketServer.SendDataToSubscription <- SubscriptionDataMessage{
+						Name: "user=" + connData.Uid.Hex(),
+						Data: outBytes,
+					}
+				}
+			}
 			socketServer.Connections.mutex.Unlock()
 			socketServer.Subscriptions.mutex.Unlock()
 			socketServer.VidChatStatus.mutex.Unlock()
 			socketServer.ConnectionSubscriptionCount.mutex.Unlock()
 			socketServer.OpenConversations.mutex.Unlock()
+		}
+	}()
+	/* ----- Get user online status ----- */
+	go func() {
+		for {
+			defer func() {
+				r := recover()
+				if r != nil {
+					log.Println("Recovered from panic in get user online status :", r)
+				}
+			}()
+			data := <-socketServer.GetUserOnlineStatus
+			socketServer.UserOnlineStatus.mutex.Lock()
+			if isOnline, ok := socketServer.UserOnlineStatus.data[data.Uid]; ok {
+				data.RecvChan <- isOnline
+			} else {
+				data.RecvChan <- false
+			}
+			socketServer.UserOnlineStatus.mutex.Unlock()
 		}
 	}()
 	/* ----- Send messages in queue ----- */
