@@ -20,6 +20,7 @@ export default function Header() {
       </div>
       <div className={classes.right}>
         <button
+          aria-label="Toggle dark mode"
           aria-controls="Toggle dark mode"
           onClick={() => iDispatch({ darkMode: !iState.darkMode })}
           className={classes.darkToggle}

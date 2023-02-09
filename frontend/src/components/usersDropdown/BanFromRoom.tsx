@@ -9,9 +9,11 @@ import ResMsg from "../shared/ResMsg";
 export default function BanFromRoom({
   closeUserDropdown,
   uid,
+  adjust,
 }: {
   closeUserDropdown: () => void;
   uid: string;
+  adjust: (delay: boolean) => void;
 }) {
   const { openModal } = useModal();
 
@@ -32,6 +34,7 @@ export default function BanFromRoom({
       } else {
         setResMsg({ msg: "", err: false, pen: false });
       }
+      adjust(true);
     } catch (e) {
       openModal("Message", {
         msg: `${e}`,

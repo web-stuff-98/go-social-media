@@ -122,7 +122,6 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
                   Menu: <Menu setDropdownSectionTo={setSection} />,
                   DirectMessage: (
                     <DirectMessage
-                      setDropdownSectionTo={setSection}
                       closeUserDropdown={closeUserDropdown}
                       uid={uid}
                     />
@@ -131,12 +130,14 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
                     <InviteToRoom
                       uid={uid}
                       closeUserDropdown={closeUserDropdown}
+                      adjust={adjust}
                     />
                   ),
                   BanFromRoom: (
                     <BanFromRoom
                       uid={uid}
                       closeUserDropdown={closeUserDropdown}
+                      adjust={adjust}
                     />
                   ),
                 }[section]

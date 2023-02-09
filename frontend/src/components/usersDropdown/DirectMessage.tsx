@@ -6,11 +6,9 @@ import useSocket from "../../context/SocketContext";
 import { MdSend } from "react-icons/md";
 
 export default function DirectMessage({
-  setDropdownSectionTo,
   closeUserDropdown,
   uid,
 }: {
-  setDropdownSectionTo: (section: UserMenuSection) => void;
   closeUserDropdown: () => void;
   uid: string;
 }) {
