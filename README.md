@@ -2,7 +2,7 @@
 
 This is my Golang social media personal project. I made tests for the React components. A couple of them are broken, but most pass.
 
-This is also my 2nd Go project. It has Mutex locks and uses channels so there are no race conditions. My other project was crap, but this one doesn't work properly yet either
+This is also my 2nd Go project. It has Mutex locks and uses channels so there are no race conditions. My other project was crap, this one just has a couple of very minor bugs that I haven't been bothered to fix yet
 
 ## Features
  - Private & group video chat

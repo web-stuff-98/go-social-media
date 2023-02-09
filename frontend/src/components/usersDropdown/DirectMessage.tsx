@@ -1,4 +1,3 @@
-import { UserMenuSection } from "../../context/UserdropdownContext";
 import classes from "../../styles/components/shared/Userdropdown.module.scss";
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
