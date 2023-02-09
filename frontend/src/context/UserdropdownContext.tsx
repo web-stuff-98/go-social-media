@@ -56,18 +56,27 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
       function internal() {
         if (!containerRef.current) throw new Error("NO CONTAINER REF!!!");
         const leftClickPos = Number(clickPos.left.replace("px", ""));
+        const topClickPos = Number(clickPos.top.replace("px", ""));
         const containerRightEndPos =
           leftClickPos + containerRef.current?.clientWidth;
+        const containerBottomEndPos =
+          topClickPos + containerRef.current?.clientHeight;
         const padPx = 3 + scrollbarWidth;
+        let left = clickPos.left;
+        let top = clickPos.top;
         if (containerRightEndPos + padPx > window.innerWidth) {
-          setClickPos({
-            left: `${
-              leftClickPos -
-              Math.abs(window.innerWidth - containerRightEndPos - padPx)
-            }px`,
-            top: clickPos.top,
-          });
+          left = `${
+            leftClickPos -
+            Math.abs(window.innerWidth - containerRightEndPos - padPx)
+          }px`;
         }
+        if (containerBottomEndPos + padPx > window.innerHeight) {
+          top = `${
+            topClickPos -
+            Math.abs(window.innerHeight - containerBottomEndPos - padPx)
+          }px`;
+        }
+        setClickPos({ left, top });
       }
     },
     // eslint-disable-next-line
