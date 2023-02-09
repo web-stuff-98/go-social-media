@@ -43,7 +43,7 @@ I built the frontend around Reacts Context API & SCSS. I prefer using as few lib
 
 # Server
 
-I used Go 1.2 for the backend, and hosted it using Heroku and Docker. I used net/http, gorilla mux router and gorilla websocket. I used MongoDB as the database and Redis for storing rate limiter data. I started with Gorm and postgres but changed my mind when I realized that doing cascading deletes and relationships is convoluted compared to using Prisma as a SQL ORM, or just using MongoDB and changestreams, I was going to go with Prisma to begin with but the Prisma ORM for Golang is defunct. I didn't write any tests for the Go server because I was more interested in just using Go, but I did run it with the -race option to check for data races and resolve them.
+I used Go for the backend, and hosted it using Heroku and Docker. I used net/http, gorilla mux router and gorilla websocket. I used MongoDB as the database and Redis for storing rate limiter data. I started with Gorm and postgres but changed my mind when I realized that doing cascading deletes and relationships is convoluted compared to using Prisma as a SQL ORM, or just using MongoDB and changestreams, I was going to go with Prisma to begin with but the Prisma ORM for Golang is defunct. I didn't write any tests for the Go server because I was more interested in just using Go, but I did run it with the -race option to check for data races and resolve them. I managed to get it to run on Heroku with Docker eventually by trying random commands that looked right and combining old medium articles and blog posts.
 
 ## Server stuff
 
