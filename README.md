@@ -2,9 +2,9 @@
 
 This is my Golang & React social media personal project. I made tests for the React components. A few of them are broken, but most pass.
 
-What is different about this project and my previous React projects is it uses useMemo & useCallback wherever possible, it runs faster, uses AbortControllers and re-uses a lot more code.
+What is different about this project and my previous React projects is it uses useMemo & useCallback wherever possible, it runs faster, uses AbortControllers, re-uses a lot more code, and it uses aria-labelling & tabindexes.
 
-This is also my 2nd Go project. It uses Mutex locks channels for accessing/modifying maps so there are no race conditions. My last Go project was crap, this one just has a couple of very minor bugs that I haven't been bothered to fix yet. I could have made this with Next & Prisma but I wanted to get better at Go.
+This is also my 2nd Go project. It uses Mutex locks channels for accessing/modifying maps so there are no race conditions. My last Go project didn't do that so it was crap, this one just has a couple of very minor bugs that I haven't been bothered to fix yet. I could have made it with Next & Prisma but I wanted to get better at Go.
 
 ## Features
 
