@@ -17,6 +17,13 @@ let container = null;
 beforeEach(() => {
   container = document.createElement("div");
   document.body.appendChild(container);
+  const mockIntersectionObserver = jest.fn();
+  mockIntersectionObserver.mockReturnValue({
+    observe: () => null,
+    unobserve: () => null,
+    disconnect: () => null,
+  });
+  window.IntersectionObserver = mockIntersectionObserver;
 });
 
 afterEach(() => {

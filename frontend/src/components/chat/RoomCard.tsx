@@ -2,7 +2,7 @@ import classes from "../../styles/components/chat/Rooms.module.scss";
 import IconBtn from "../shared/IconBtn";
 import { BiDoorOpen } from "react-icons/bi";
 import { AiFillEdit, AiFillLock } from "react-icons/ai";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getRoomImage } from "../../services/rooms";
 import useSocket from "../../context/SocketContext";
 import { useChat } from "./Chat";
@@ -26,7 +26,22 @@ export default function RoomCard({ r }: { r: IRoomCard }) {
     }
   };
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  const observer = new IntersectionObserver(([entry]) => {
+    setVisible(entry.isIntersecting);
+  });
+
   useEffect(() => {
+    observer.observe(containerRef.current!);
+    return () => {
+      observer.disconnect();
+    };
+    // eslint-disable-next-line
+  }, [containerRef.current]);
+
+  useEffect(() => {
+    if (!visible) return;
     const controller = new AbortController();
     if (r.img_blur) {
       loadImage();
@@ -37,7 +52,7 @@ export default function RoomCard({ r }: { r: IRoomCard }) {
       controller.abort();
     };
     // eslint-disable-next-line
-  }, [r.img_blur]);
+  }, [r.img_blur, visible]);
 
   useEffect(() => {
     openSubscription("room_card=" + r.ID);
@@ -49,6 +64,7 @@ export default function RoomCard({ r }: { r: IRoomCard }) {
 
   return (
     <div
+      ref={containerRef}
       data-testid="Container"
       style={{
         ...(r.img_blur

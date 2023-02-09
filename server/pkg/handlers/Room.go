@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -657,20 +658,23 @@ func (h handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := h.Collections.RoomCollection.FindOne(r.Context(), bson.M{
-		"name": bson.M{
-			"$regex":   roomInput.Name,
-			"$options": "i",
-		},
+	numRooms := 0
+	cur, err := h.Collections.RoomCollection.Find(r.Context(), bson.M{
 		"author_id": user.ID,
 	})
-	if res.Err() != nil {
-		if res.Err() != mongo.ErrNoDocuments {
-			responseMessage(w, http.StatusInternalServerError, "Internal error")
+	for cur.Next(r.Context()) {
+		numRooms++
+		room := &models.Room{}
+		cur.Decode(&room)
+		if strings.ToLower(room.Name) == strings.ToLower(roomInput.Name) {
+			responseMessage(w, http.StatusBadRequest, "You already have a room by that name")
+			cur.Close(r.Context())
 			return
 		}
-	} else {
-		responseMessage(w, http.StatusBadRequest, "You already have a room by that name")
+	}
+	cur.Close(r.Context())
+	if numRooms == 4 {
+		responseMessage(w, http.StatusBadRequest, "You can create a maximum of 8 rooms")
 		return
 	}
 

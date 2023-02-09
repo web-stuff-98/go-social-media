@@ -1,7 +1,6 @@
 /**
  * This is unused, but I will keep it because it might be useful.
- * I was going to add video streaming but the code wouldn't work
- * and MongoDB is way too slow to stream video data from.
+ * I was going to add video streaming but my code wouldn't work
  */
 
 const getDuration = (file: File) => {
