@@ -29,6 +29,8 @@ import (
 	Router stuff should be moved into a seperate file...
 
 	https://github.com/gorilla/mux#serving-single-page-applications
+
+	Rate limiting stuff maybe should not be route specific
 */
 
 type spaHandler struct {

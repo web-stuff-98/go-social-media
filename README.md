@@ -2,9 +2,7 @@
 
 This is my Golang & React social media personal project. I made tests for the React components. A few of them are broken, but most pass.
 
-What is different about this project and my previous React projects is it uses useMemo & useCallback wherever possible, it runs faster, uses AbortControllers, re-uses a lot more code, and it uses aria-labelling & tabindexes.
-
-This is also my 2nd Go project. It uses Mutex locks channels for accessing/modifying maps so there are no race conditions. My last Go project didn't do that so it was crap, this one just has a couple of very minor bugs that I haven't been bothered to fix yet. I could have made it with Next & Prisma but I wanted to get better at Go.
+Pagination count does not update properly when filtering by tags or search term. I will fix that soon.
 
 ## Features
 
@@ -42,11 +40,11 @@ I built the frontend around Reacts Context API & SCSS. I prefer installing as fe
 - Mobile responsive layout
 - Custom components for re-use of code
 
-# Backend
+# Server
 
 I used the latest version of Go for the backend, and hosted it using Heroku and Docker. I used net/http, gorilla mux router and gorilla websocket. I used MongoDB as the database and Redis for storing rate limiter data. I started with Gorm and postgres but changed my mind when I realized that doing cascading deletes and relationships is extraordinarily complicated compared to using MongoDB and changestreams. I didn't write any tests for the server because I was more interested in just using Go to make something rather than writing boring tests, but I did run it with the -race option to check for data races and resolve them.
 
-# Serverside stuff
+## Server stuff
 
 - Mutex locks & channels for thread safe maps
 - Private & public socket subscriptions
