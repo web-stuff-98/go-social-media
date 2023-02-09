@@ -21,7 +21,7 @@ import (
 	Uid can always be left as primitive.NilObjectID, users are not required
 	to be authenticated to connect or open subscriptions, but there is an auth
 	check for users down below, to make sure users cannot subscribe to other users
-	inboxes/notifications or subscribe to rooms without being authenticated.
+	inboxes/notifications or subscribe to rooms etc without being authenticated.
 */
 
 /*--------------- SOCKET SERVER STRUCT ---------------*/
@@ -91,7 +91,28 @@ type UserOnlineStatus struct {
 	mutex sync.Mutex
 }
 
-/*--------------- MISC STRUCTS ---------------*/
+/*--------------- CHANNEL STRUCTS ---------------*/
+type GetUserConversationsOpenWith struct {
+	RecvChan chan<- bool
+	Uid      primitive.ObjectID
+	UidB     primitive.ObjectID
+}
+type VidChatGetAllUsersInRoom struct {
+	RecvChan  chan<- []string // Hexes of other user ids
+	Uid       primitive.ObjectID
+	RoomIdHex string
+}
+type VidChatGetOtherUserVidOpen struct {
+	RecvChan chan<- []string // Array will be empty or contain the other user Id hex
+	Uid      primitive.ObjectID
+	UidB     primitive.ObjectID
+}
+type GetUserOnlineStatus struct {
+	RecvChan chan<- bool
+	Uid      primitive.ObjectID
+}
+
+/*--------------- OTHER STRUCTS ---------------*/
 type ConnectionInfo struct {
 	Conn        *websocket.Conn
 	Uid         primitive.ObjectID
@@ -140,27 +161,6 @@ type RemoveUserFromSubscription struct {
 type UserOpenCloseConversationWith struct {
 	Uid     primitive.ObjectID
 	ConvUid primitive.ObjectID
-}
-
-/*--------------- CHANNEL STRUCTS ---------------*/
-type GetUserConversationsOpenWith struct {
-	RecvChan chan<- bool
-	Uid      primitive.ObjectID
-	UidB     primitive.ObjectID
-}
-type VidChatGetAllUsersInRoom struct {
-	RecvChan  chan<- []string // Hexes of other user ids
-	Uid       primitive.ObjectID
-	RoomIdHex string
-}
-type VidChatGetOtherUserVidOpen struct {
-	RecvChan chan<- []string // Array will be empty or contain the other user Id hex
-	Uid      primitive.ObjectID
-	UidB     primitive.ObjectID
-}
-type GetUserOnlineStatus struct {
-	RecvChan chan<- bool
-	Uid      primitive.ObjectID
 }
 
 func Init(colls *db.Collections) (*SocketServer, error) {

@@ -34,7 +34,13 @@ type AttachmentServer struct {
 	DeleteChunksChan chan primitive.ObjectID
 }
 
-/*--------------- STRUCTS ---------------*/
+/*--------------- CHANNEL STRUCTS ---------------*/
+type GetUploaderStatus struct {
+	RecvChan chan<- map[primitive.ObjectID]Upload
+	Uid      primitive.ObjectID
+}
+
+/*--------------- OTHER STRUCTS ---------------*/
 type Upload struct {
 	ChunksDone        int
 	TotalChunks       int // +1... starts at 0
@@ -58,12 +64,6 @@ type UploadStatus struct {
 type Uploaders struct {
 	data  map[primitive.ObjectID]map[primitive.ObjectID]Upload
 	mutex sync.RWMutex
-}
-
-/*--------------- CHANNEL STRUCTS ---------------*/
-type GetUploaderStatus struct {
-	RecvChan chan<- map[primitive.ObjectID]Upload
-	Uid      primitive.ObjectID
 }
 
 func Init(colls *db.Collections, SocketServer *socketserver.SocketServer) (*AttachmentServer, error) {
