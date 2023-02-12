@@ -120,7 +120,7 @@ func (h handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(credentialsInput.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(credentialsInput.Password)); err != nil {
 		responseMessage(w, http.StatusUnauthorized, "Incorrect credentials")
 		return
 	}
