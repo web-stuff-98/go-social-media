@@ -74,14 +74,14 @@ func main() {
 		log.Fatal("Failed to set up attachment server ", err)
 	}
 
-	h := handlers.New(DB, Collections, SocketServer, AttachmentServer, &handlers.ProtectedIDs{
+	router := mux.NewRouter()
+	redisClient := rdb.Init()
+
+	h := handlers.New(DB, redisClient, Collections, SocketServer, AttachmentServer, &handlers.ProtectedIDs{
 		Uids: protectedUids,
 		Pids: protectedPids,
 		Rids: protectedRids,
 	})
-
-	router := mux.NewRouter()
-	redisClient := rdb.Init()
 
 	var origins []string
 	if os.Getenv("PRODUCTION") == "true" {

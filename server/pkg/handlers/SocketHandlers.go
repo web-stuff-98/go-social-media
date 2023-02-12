@@ -266,14 +266,9 @@ func privateMessageDelete(b []byte, conn *websocket.Conn, uid primitive.ObjectID
 	if err != nil {
 		return err
 	}
-	ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-		Name: "inbox=" + recipientId.Hex(),
-		Data: outBytes,
-	}
-	// Also send the message to the sender
-	ss.SendDataToSubscription <- socketserver.SubscriptionDataMessage{
-		Name: "inbox=" + uid.Hex(),
-		Data: outBytes,
+	ss.SendDataToSubscriptions <- socketserver.SubscriptionDataMessageMulti{
+		Names: []string{"inbox=" + recipientId.Hex(), "inbox=" + uid.Hex()},
+		Data:  outBytes,
 	}
 	return nil
 }
