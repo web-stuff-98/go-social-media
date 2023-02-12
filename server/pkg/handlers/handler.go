@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/go-redis/redis/v9"
 	"github.com/web-stuff-98/go-social-media/pkg/attachmentserver"
 	"github.com/web-stuff-98/go-social-media/pkg/db"
 	"github.com/web-stuff-98/go-social-media/pkg/socketserver"
@@ -29,12 +30,13 @@ type ProtectedIDs struct {
 
 type handler struct {
 	DB               *mongo.Database
+	RedisClient      *redis.Client
 	Collections      *db.Collections
 	SocketServer     *socketserver.SocketServer
 	AttachmentServer *attachmentserver.AttachmentServer
 	ProtectedIDs     *ProtectedIDs
 }
 
-func New(db *mongo.Database, collections *db.Collections, sserver *socketserver.SocketServer, aserver *attachmentserver.AttachmentServer, protectedIDs *ProtectedIDs) handler {
-	return handler{db, collections, sserver, aserver, protectedIDs}
+func New(db *mongo.Database, rdb *redis.Client, collections *db.Collections, sserver *socketserver.SocketServer, aserver *attachmentserver.AttachmentServer, protectedIDs *ProtectedIDs) handler {
+	return handler{db, rdb, collections, sserver, aserver, protectedIDs}
 }

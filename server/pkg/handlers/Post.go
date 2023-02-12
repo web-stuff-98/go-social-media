@@ -571,8 +571,6 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	findOptions := options.Find()
-	findOptions.SetLimit(int64(pageSize))
-	findOptions.SetSkip(int64(pageSize) * (int64(pageNumber) - 1))
 	if sortOrder == "DESC" {
 		if sortMode == "DATE" {
 			findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
@@ -612,6 +610,36 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
+	// Because countdocuments is expensive O(n), look for the value stored in cache first
+	// It's fine if the count is slightly out of date. Probably a better way to do this
+	var count int64
+	filterKey := "FIND-POSTS-FILTER-COUNT=" + fmt.Sprint(filter)
+	getFilterCmd := h.RedisClient.Get(r.Context(), filterKey)
+	if getFilterCmd.Err() == nil {
+		if cachedCount, err := strconv.Atoi(getFilterCmd.Val()); err == nil {
+			count = int64(cachedCount)
+		} else {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+			return
+		}
+	} else {
+		exactCount, err := h.Collections.PostCollection.CountDocuments(r.Context(), filter)
+		if err != nil {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+			return
+		}
+		count = exactCount
+		setCmd := h.RedisClient.Set(r.Context(), filterKey, fmt.Sprint(exactCount), time.Second*15)
+		if setCmd.Err() != nil {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+			return
+		}
+	}
+
+	findOptions.SetLimit(int64(pageSize))
+	findOptions.SetSkip(int64(pageSize) * (int64(pageNumber) - 1))
+
 	cursor, curerr := h.Collections.PostCollection.Find(r.Context(), filter, findOptions)
 	defer cursor.Close(r.Context())
 	if curerr != nil {
@@ -662,12 +690,6 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 			post.NegativeVoteCount = negativeVotes
 		}
 		posts = append(posts, post)
-	}
-
-	count, err := h.Collections.PostCollection.EstimatedDocumentCount(r.Context())
-	if err != nil {
-		responseMessage(w, http.StatusInternalServerError, "Internal error")
-		return
 	}
 
 	postBytes, err := json.Marshal(posts)
