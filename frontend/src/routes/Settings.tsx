@@ -88,6 +88,8 @@ export default function Settings() {
           accept=".jpeg,.jpg,.png"
         />
         <User
+          forceTabIndex
+          tabIndex={9}
           testid="User"
           uid={user?.ID!}
           user={user}
@@ -99,6 +101,7 @@ export default function Settings() {
           selection.
         </p>
         <button
+          tabIndex={10}
           aria-label="Delete account"
           name="Delete account"
           onClick={() =>

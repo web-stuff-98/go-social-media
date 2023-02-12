@@ -23,7 +23,7 @@ export default function Nav() {
   const NavBtn = ({ name, onClick }: { name: string; onClick: Function }) => (
     <button
       onClick={() => onClick()}
-      aria-label={name}
+      aria-label={name === "Logout" ? "Log out" : name}
       name={name}
       style={{
         background: "none",
@@ -47,6 +47,7 @@ export default function Nav() {
 
   return (
     <nav
+      id="nav"
       style={{
         ...(isMobile
           ? {

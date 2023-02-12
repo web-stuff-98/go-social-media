@@ -96,9 +96,10 @@ export default function PrivateMessage({
       className={classes.container}
       onMouseEnter={() => setMouseInside(true)}
       onMouseLeave={() => setMouseInside(false)}
+      tabIndex={0}
     >
       {msg.uid === user?.ID && !isEditing && !msg.invitation && (
-        <div className={classes.icons}>
+        <div tabIndex={2} className={classes.icons}>
           <IconBtn
             type="button"
             name="Edit message"
@@ -139,10 +140,12 @@ export default function PrivateMessage({
         data-testid="Content container"
         style={reverse ? { textAlign: "right" } : {}}
         className={classes.content}
+        tabIndex={1}
       >
         {isEditing ? (
           <form onSubmit={handleSubmitUpdate}>
             <textarea
+              autoFocus
               onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
                 setEditInput(e.target.value)
               }

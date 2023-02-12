@@ -14,7 +14,7 @@ export default function ChatTopTray({ closeChat }: { closeChat: () => void }) {
           <IconBtn
             onClick={() => setSection(ChatSection.MENU)}
             name="Chat menu"
-            ariaLabel="Chat menu"
+            ariaLabel="Go back to chat menu"
             Icon={MdMenu}
           />
         )}

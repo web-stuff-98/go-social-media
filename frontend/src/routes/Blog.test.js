@@ -60,7 +60,7 @@ describe("blog page", () => {
             getPageWithParams: [],
             getTagsFromParams: [],
             getSortModeFromParams: "DATE",
-            getSortOrderFromParams: "ASC",
+            getSortOrderFromParams: "ASCENDING",
             postEnteredView: jest.fn(),
             postLeftView: jest.fn(),
           }}
@@ -106,7 +106,7 @@ describe("blog page", () => {
           getPageWithParams: [],
           getTagsFromParams: [],
           getSortModeFromParams: "DATE",
-          getSortOrderFromParams: "ASC",
+          getSortOrderFromParams: "ASCENDING",
         }}
       >
         <Blog />

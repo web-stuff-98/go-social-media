@@ -2,7 +2,7 @@ import type { CancelToken } from "axios";
 import axios from "axios";
 import { baseURL, makeRequest } from "./makeRequest";
 
-export type SortOrder = "DESC" | "ASC";
+export type SortOrder = "DESCENDING" | "ASCENDING";
 export type SortMode = "DATE" | "POPULARITY";
 
 const getPage = (

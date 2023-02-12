@@ -548,7 +548,7 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pageSize := 20
-	sortOrder := "DESC"
+	sortOrder := "DESCENDING"
 	term := ""
 	sortMode := "DATE"
 	if r.URL.Query().Has("mode") {
@@ -571,7 +571,7 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	findOptions := options.Find()
-	if sortOrder == "DESC" {
+	if sortOrder == "DESCENDING" {
 		if sortMode == "DATE" {
 			findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
 		}
@@ -579,7 +579,7 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 			findOptions.SetSort(bson.D{{Key: "sort_vote_count", Value: -1}})
 		}
 	}
-	if sortOrder == "ASC" {
+	if sortOrder == "ASCENDING" {
 		if sortMode == "DATE" {
 			findOptions.SetSort(bson.D{{Key: "created_at", Value: 1}})
 		}

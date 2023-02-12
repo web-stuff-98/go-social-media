@@ -88,6 +88,8 @@ export default function PostCard({
 
   return (
     <article
+      tabIndex={0}
+      aria-label={`Post article titled ${post.title}`}
       ref={containerRef}
       style={isMobile ? { height: "33.33%" } : {}}
       className={isMobile ? classes.mobileContainer : classes.container}
@@ -155,10 +157,11 @@ export default function PostCard({
               )}
             </div>
             <div ref={textContainerRef} className={classes.textTags}>
-              <h1 tabIndex={0}>{post.title}</h1>
-              <h3 tabIndex={1}>{post.description}</h3>
+              <h1>{post.title}</h1>
+              <h3>{post.description}</h3>
               <div
-                aria-label="Post tags"
+                tabIndex={3}
+                aria-label="Post tags list"
                 role="contentinfo"
                 className={classes.tags}
               >
@@ -181,6 +184,8 @@ export default function PostCard({
                 ))}
               </div>
               <div
+                tabIndex={2}
+                aria-label="Author and voting options"
                 style={
                   reverse
                     ? { right: "var(--padding)" }
@@ -280,7 +285,9 @@ export default function PostCard({
                     user={getUserData(post.author_id)}
                   />
                 }
-                <a href={`/post/${post.slug}`}>View page</a>
+                <a tabIndex={1} href={`/post/${post.slug}`}>
+                  View page
+                </a>
               </div>
             </div>
           </>

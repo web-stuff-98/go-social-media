@@ -11,14 +11,17 @@ export default function SearchFormDropdowns() {
   } = usePosts();
 
   return (
-    <div data-testid="Search form dropdowns" className={classes.dropdownsContainer}>
+    <div
+      data-testid="Search form dropdowns"
+      className={classes.dropdownsContainer}
+    >
       <Dropdown
         light
-        index={getSortOrderFromParams === "DESC" ? 0 : 1}
+        index={getSortOrderFromParams === "DESCENDING" ? 0 : 1}
         setIndex={setSortOrderInParams}
         items={[
-          { name: "DESC", node: "Desc" },
-          { name: "ASC", node: "Asc" },
+          { name: "DESCENDING", node: "Desc" },
+          { name: "ASCENDING", node: "Asc" },
         ]}
       />
       <div className={classes.sortMode}>

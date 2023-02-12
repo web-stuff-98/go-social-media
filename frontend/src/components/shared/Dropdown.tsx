@@ -132,7 +132,7 @@ export default function Dropdown({
             setDropdownOpen(false);
           }
         }}
-        aria-label={name}
+        aria-label={dropdownOpen ? `Dropdown menu with current item as ${name}, press enter to open` : name}
       >
         {children}
       </button>
@@ -144,7 +144,6 @@ export default function Dropdown({
       onMouseLeave={() => setDropdownOpen(false)}
       className={classes.container}
       role="menu"
-      aria-expanded={dropdownOpen ? "true" : "false"}
     >
       <div className={classes.inner} ref={rootItemContainerRef}>
         {renderItem(

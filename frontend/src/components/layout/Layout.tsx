@@ -9,6 +9,7 @@ import Header from "./Header";
 import Chat from "../chat/Chat";
 import { useAuth } from "../../context/AuthContext";
 import { ChatProvider } from "../../context/ChatContext";
+import { HiddenSkipLinksProvider } from "./HiddenSkipLinks";
 
 export default function Layout() {
   const { state: iState } = useInterface();
@@ -68,41 +69,43 @@ export default function Layout() {
   }, [pathname]);
 
   return (
-    <div className={classes.container}>
-      <div className={classes.backgroundOuterContainer}>
-        <div className={classes.backgroundInnerContainer}>
-          <div aria-label="hidden" className={classes.background} />
-          <div
-            aria-label="hidden"
-            style={{
-              maskImage: `radial-gradient(circle at ${
-                (mousePos?.left! / iState.dimensions.width) * 100
-              }% ${
-                (mousePos?.top! / iState.dimensions.height) * 100
-              }%, black 0%, transparent 7%)`,
-              WebkitMaskImage: `radial-gradient(circle at ${
-                (mousePos?.left! / iState.dimensions.width) * 100
-              }% ${
-                (mousePos?.top! / iState.dimensions.height) * 100
-              }%, black 0%, transparent 7%)`,
-              ...(iState.darkMode
-                ? { filter: "brightness(4.7) contrast(1.8) blur(3px)" }
-                : {}),
-            }}
-            className={classes.backgroundHover}
-          />
+    <HiddenSkipLinksProvider>
+      <div className={classes.container}>
+        <div className={classes.backgroundOuterContainer}>
+          <div className={classes.backgroundInnerContainer}>
+            <div aria-label="hidden" className={classes.background} />
+            <div
+              aria-label="hidden"
+              style={{
+                maskImage: `radial-gradient(circle at ${
+                  (mousePos?.left! / iState.dimensions.width) * 100
+                }% ${
+                  (mousePos?.top! / iState.dimensions.height) * 100
+                }%, black 0%, transparent 7%)`,
+                WebkitMaskImage: `radial-gradient(circle at ${
+                  (mousePos?.left! / iState.dimensions.width) * 100
+                }% ${
+                  (mousePos?.top! / iState.dimensions.height) * 100
+                }%, black 0%, transparent 7%)`,
+                ...(iState.darkMode
+                  ? { filter: "brightness(4.7) contrast(1.8) blur(3px)" }
+                  : {}),
+              }}
+              className={classes.backgroundHover}
+            />
+          </div>
         </div>
+        <Header />
+        <Nav />
+        {user && (
+          <ChatProvider>
+            <Chat />
+          </ChatProvider>
+        )}
+        <main id="main" style={getStyle}>
+          <Outlet />
+        </main>
       </div>
-      <Header />
-      <Nav />
-      {user && (
-        <ChatProvider>
-          <Chat />
-        </ChatProvider>
-      )}
-      <main style={getStyle}>
-        <Outlet />
-      </main>
-    </div>
+    </HiddenSkipLinksProvider>
   );
 }

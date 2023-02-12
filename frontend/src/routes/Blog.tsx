@@ -59,7 +59,7 @@ export default function Blog() {
           <ResMsg large resMsg={resMsg} />
         </div>
       </div>
-      <aside data-testid="Aside container">
+      <aside id="aside" data-testid="Aside container">
         <div className={classes.inner}>
           <form data-testid="Search form" className={classes.searchForm}>
             <SearchFormDropdowns />
@@ -86,7 +86,7 @@ export default function Blog() {
           <div className={classes.searchTags}>
             {getTagsFromParams.map((t) => (
               <button
-                aria-label={"Tag:" + t}
+                aria-label={"Remove tag:" + t}
                 name={"Tag:" + t}
                 key={t}
                 onClick={() => addOrRemoveTagInParams(t)}

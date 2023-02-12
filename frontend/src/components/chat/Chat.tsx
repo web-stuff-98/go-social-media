@@ -29,7 +29,6 @@ export default function Chat() {
   const containerRef = useRef<HTMLDivElement>(null);
   return (
     <div
-      tabIndex={0}
       ref={containerRef}
       style={{
         ...(pathname.includes("/blog")
@@ -62,6 +61,7 @@ export default function Chat() {
         </>
       ) : (
         <button
+          tabIndex={0}
           aria-hidden={chatOpen ? "true" : "false"}
           name="Open chat"
           aria-label="Open chat"

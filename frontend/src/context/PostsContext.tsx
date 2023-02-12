@@ -71,7 +71,7 @@ export const PostsContext = createContext<{
   updatePostCard: () => {},
   removePostCard: () => {},
 
-  getSortOrderFromParams: "DESC",
+  getSortOrderFromParams: "DESCENDING",
   getSortModeFromParams: "DATE",
   getTagsFromParams: [],
   getTermFromParams: "",
@@ -119,7 +119,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getSortOrderFromParams = useMemo(
-    () => (searchParams.get("order") || "DESC") as SortOrder,
+    () => (searchParams.get("order") || "DESCENDING") as SortOrder,
     [searchParams]
   );
   const getSortModeFromParams = useMemo(
@@ -144,7 +144,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const setSortOrderInParams = (index: number) =>
     addUpdateOrRemoveParamsAndNavigateToUrl(
       "order",
-      index === 0 ? "DESC" : "ASC"
+      index === 0 ? "DESCENDING" : "ASCENDING"
     );
   const setSortModeInParams = (index: number) =>
     addUpdateOrRemoveParamsAndNavigateToUrl(
@@ -332,7 +332,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
           createPostCardOnNewest(data.DATA as IPostCard);
           setPostsCount((p) => p + 1);
           if (getSortModeFromParams === "DATE") {
-            if (getSortOrderFromParams === "DESC" && page === "1") {
+            if (getSortOrderFromParams === "DESCENDING" && page === "1") {
               /* If sorting by most recent posts and
               on the first page, add the post to the top
           of the feed */
@@ -342,7 +342,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
               if (posts[0]) {
                 removePostCard(posts[0].ID);
               }
-            } else if (getSortOrderFromParams === "ASC" && posts.length < 20) {
+            } else if (getSortOrderFromParams === "ASCENDING" && posts.length < 20) {
               /* If sorting by oldest posts and there are less than 20
           posts (the maximum number of posts on a page) it means the
           user is on the last page, so add the post to the end of

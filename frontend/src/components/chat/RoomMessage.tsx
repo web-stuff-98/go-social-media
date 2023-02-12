@@ -104,6 +104,7 @@ export default function RoomMessage({
           {isEditing ? (
             <form onSubmit={handleSubmitUpdate}>
               <textarea
+                autoFocus
                 onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
                   setEditInput(e.target.value)
                 }

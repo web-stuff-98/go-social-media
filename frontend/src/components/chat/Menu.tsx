@@ -14,7 +14,7 @@ export default function Menu() {
   );
 
   return (
-    <div data-testid="Menu container" className={classes.container}>
+    <div tabIndex={0} data-testid="Menu container" className={classes.container}>
       <MenuButton section={ChatSection.CONVS} />
       <MenuButton section={ChatSection.ROOMS} />
       <MenuButton section={ChatSection.EDITOR} />

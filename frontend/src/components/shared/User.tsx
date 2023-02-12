@@ -23,6 +23,8 @@ export default function User({
   small,
   testid,
   square,
+  forceTabIndex,
+  tabIndex,
 }: {
   user?: IUser;
   uid: string;
@@ -34,6 +36,8 @@ export default function User({
   small?: boolean;
   testid?: string;
   square?: boolean;
+  forceTabIndex?: boolean;
+  tabIndex?: number;
 }) {
   const { userEnteredView, cacheUserData, userLeftView } = useUsers();
   const { openUserdropdown } = useUserdropdown();
@@ -85,7 +89,11 @@ export default function User({
       {user && (
         <>
           <div
-            tabIndex={currentUser && uid === currentUser?.ID ? -1 : 0}
+            tabIndex={
+              currentUser && uid === currentUser?.ID && !forceTabIndex
+                ? -1
+                : tabIndex || 0
+            }
             {...(currentUser && currentUser.ID !== user.ID
               ? {
                   role: "button",

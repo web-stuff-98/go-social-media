@@ -356,11 +356,16 @@ export default function Inbox() {
     fileRef.current = file;
   };
 
+  const getUserName = (uid: string) => {
+    const u = getUserData(uid);
+    return u ? u.username : "username";
+  };
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesBottomRef = useRef<HTMLDivElement>(null);
   return (
     <>
-      <div data-testid="Users list" className={classes.users}>
+      <div tabIndex={0} data-testid="Users list" className={classes.users}>
         {inbox.map((c) => (
           <button
             key={c.uid}
@@ -369,7 +374,7 @@ export default function Inbox() {
               openConversation(c.uid as string);
             }}
             name={`Open conversation with ${c.uid}`}
-            aria-label={`Open conversation with ${c.uid}`}
+            aria-label={`Open conversation with ${getUserName(c.uid)}`}
             style={
               selectedConversation === c.uid
                 ? {
@@ -417,53 +422,55 @@ export default function Inbox() {
             )}
           </div>
         </div>
-        <form
-          data-testid="Message form"
-          onSubmit={handleSubmit}
-          className={classes.messageForm}
-        >
-          <input ref={fileInputRef} type="file" onChange={handleFile} />
-          <IconBtn
-            name="Video chat"
-            ariaLabel="Open video chat"
-            type="button"
-            onClick={() => {
-              toggleStream(false, selectedConversationRef.current);
-            }}
-            Icon={RiWebcamLine}
-          />
-          <IconBtn
-            name="Select attachment"
-            ariaLabel="Select an attachment"
-            Icon={MdFileCopy}
-            style={
-              file
-                ? { color: "lime", filter: "drop-shadow(0px,2px,1px,black)" }
-                : {}
-            }
-            onClick={() => fileInputRef.current?.click()}
-          />
-          <input
-            data-testid="Message input"
-            name="Message input"
-            aria-label="Send message input"
-            value={messageInput}
-            onChange={handleMessageInput}
-            placeholder="Send a message..."
-            type="text"
-            required
-          />
-          <IconBtn
-            type="submit"
-            testid="Send button"
-            name="Send"
-            ariaLabel="Send message"
-            Icon={MdSend}
-          />
-          {messageInput.length > 200 && (
-            <ErrorTip message="Maximum 200 characters" />
-          )}
-        </form>
+        {selectedConversation && (
+          <form
+            data-testid="Message form"
+            onSubmit={handleSubmit}
+            className={classes.messageForm}
+          >
+            <input ref={fileInputRef} type="file" onChange={handleFile} />
+            <IconBtn
+              name="Video chat"
+              ariaLabel="Open video chat"
+              type="button"
+              onClick={() => {
+                toggleStream(false, selectedConversationRef.current);
+              }}
+              Icon={RiWebcamLine}
+            />
+            <IconBtn
+              name="Select attachment"
+              ariaLabel="Select an attachment"
+              Icon={MdFileCopy}
+              style={
+                file
+                  ? { color: "lime", filter: "drop-shadow(0px,2px,1px,black)" }
+                  : {}
+              }
+              onClick={() => fileInputRef.current?.click()}
+            />
+            <input
+              data-testid="Message input"
+              name="Message input"
+              aria-label="Send message input"
+              value={messageInput}
+              onChange={handleMessageInput}
+              placeholder="Send a message..."
+              type="text"
+              required
+            />
+            <IconBtn
+              type="submit"
+              testid="Send button"
+              name="Send"
+              ariaLabel="Send message"
+              Icon={MdSend}
+            />
+            {messageInput.length > 200 && (
+              <ErrorTip message="Maximum 200 characters" />
+            )}
+          </form>
+        )}
       </div>
     </>
   );
