@@ -16,6 +16,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+/*
+	Moved from Socket.go, because the code was using tonnes of if/else statements for error
+	handling and was getting messy looking.
+*/
+
 func HandleSocketEvent(eventType string, data []byte, conn *websocket.Conn, uid primitive.ObjectID, ss *socketserver.SocketServer, as *attachmentserver.AttachmentServer, colls *db.Collections) error {
 	switch eventType {
 	case "OPEN_SUBSCRIPTION":
