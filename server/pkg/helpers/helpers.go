@@ -23,6 +23,7 @@ func createCookie(token string, expiry time.Time) http.Cookie {
 	cookie.Name = "refresh_token"
 	cookie.Value = token
 	cookie.Expires = expiry
+	cookie.MaxAge = 120
 	cookie.Secure = os.Getenv("PRODUCTION") == "true"
 	cookie.HttpOnly = true
 	cookie.SameSite = http.SameSiteDefaultMode
@@ -34,7 +35,8 @@ func GetClearedCookie() http.Cookie {
 	var cookie http.Cookie
 	cookie.Name = "refresh_token"
 	cookie.Value = ""
-	cookie.Expires = time.Now().Add(-time.Second)
+	cookie.Expires = time.Now().Add(-time.Hour)
+	cookie.MaxAge = -1
 	cookie.Secure = os.Getenv("PRODUCTION") == "true"
 	cookie.HttpOnly = true
 	cookie.SameSite = http.SameSiteDefaultMode
