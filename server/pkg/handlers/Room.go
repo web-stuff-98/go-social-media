@@ -118,12 +118,6 @@ func (h handler) GetRoomPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	count, err := h.Collections.RoomCollection.EstimatedDocumentCount(r.Context())
-	if err != nil {
-		responseMessage(w, http.StatusInternalServerError, "Internal error")
-		return
-	}
-
 	// Need to fill out the can_access property, so get the RoomPrivateData documents for each room
 	for i, room := range rooms {
 		privateData := &models.RoomPrivateData{}
