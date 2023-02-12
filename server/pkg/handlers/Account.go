@@ -111,7 +111,7 @@ func (h handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user models.User
-	if h.Collections.UserCollection.FindOne(r.Context(), bson.M{"username": bson.M{"$regex": credentialsInput.Username, "$options": "i"}}).Decode(&user); err != nil {
+	if err := h.Collections.UserCollection.FindOne(r.Context(), bson.M{"username": bson.M{"$regex": credentialsInput.Username, "$options": "i"}}).Decode(&user); err != nil {
 		if err != mongo.ErrNoDocuments {
 			responseMessage(w, http.StatusInternalServerError, "Internal error")
 		} else {
