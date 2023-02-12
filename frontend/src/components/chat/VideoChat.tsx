@@ -3,9 +3,9 @@ import IconBtn from "../shared/IconBtn";
 import { ImSpinner8, ImVolumeMute, ImVolumeMute2 } from "react-icons/im";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { PeerWithID, useChat } from "./Chat";
 import { useUsers } from "../../context/UsersContext";
 import useSocket from "../../context/SocketContext";
+import useChat, { PeerWithID } from "../../context/ChatContext";
 
 export default function VideoChat({
   isRoom,

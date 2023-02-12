@@ -8,13 +8,13 @@ import {
   getRoomImageAsBlob,
 } from "../../services/rooms";
 import { z } from "zod";
-import { useChat } from "./Chat";
 import FormikInputAndLabel from "../shared/forms/FormikInputLabel";
 import FormikFileButtonInput from "../shared/forms/FormikFileButtonInput";
 import useFormikValidate from "../../hooks/useFormikValidate";
 import { IResMsg } from "../../interfaces/GeneralInterfaces";
 import { IRoomCard } from "../../interfaces/ChatInterfaces";
 import Toggle from "../shared/Toggle";
+import useChat from "../../context/ChatContext";
 
 export default function RoomEditor() {
   const { editRoomId, handleCreateUpdateRoom } = useChat();

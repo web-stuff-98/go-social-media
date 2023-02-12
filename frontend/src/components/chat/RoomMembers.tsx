@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import useChat from "../../context/ChatContext";
 import { useModal } from "../../context/ModalContext";
 import useSocket from "../../context/SocketContext";
 import { useUsers } from "../../context/UsersContext";
@@ -12,7 +13,6 @@ import classes from "../../styles/components/chat/RoomMembers.module.scss";
 import { instanceOfChangeData } from "../../utils/DetermineSocketEvent";
 import ResMsg from "../shared/ResMsg";
 import User from "../shared/User";
-import { useChat } from "./Chat";
 
 type RoomPrivateData = {
   members: string[];

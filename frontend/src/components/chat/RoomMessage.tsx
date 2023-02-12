@@ -8,10 +8,10 @@ import { RiDeleteBin2Fill } from "react-icons/ri";
 import { AiFillEdit } from "react-icons/ai";
 import { useModal } from "../../context/ModalContext";
 import { useAuth } from "../../context/AuthContext";
-import { useChat } from "./Chat";
 import useSocket from "../../context/SocketContext";
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import useChat from "../../context/ChatContext";
 
 export default function RoomMessage({
   msg,

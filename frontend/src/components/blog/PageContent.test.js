@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { UsersContext } from "../../context/UsersContext";
 import PageContent from "./PageContent";
 import * as postServices from "../../services/posts";
+import { AuthContext } from "../../context/AuthContext";
 
 postServices.voteOnPost = jest.fn();
 
@@ -26,6 +27,8 @@ const mockPost = {
   body: "<p>Test body</p>",
   author_id: "1",
 };
+
+const mockUser = { ID: "1", username: "username" };
 
 beforeEach(() => {
   container = document.createElement("div");
@@ -59,6 +62,7 @@ describe("post page content", () => {
     await act(async () =>
       render(
         <BrowserRouter>
+        <AuthContext.Provider value={{user:mockUser}}>
           <UsersContext.Provider
             value={{
               getUserData,
@@ -73,6 +77,7 @@ describe("post page content", () => {
               setPost={jest.fn()}
             />
           </UsersContext.Provider>
+          </AuthContext.Provider>
         </BrowserRouter>,
         container
       )
@@ -99,10 +104,14 @@ describe("post page content", () => {
     expect(upvoteBtn).toBeInTheDocument();
     expect(downvoteBtn).toBeInTheDocument();
 
-    upvoteBtn.click();
+    await act(async () => {
+      upvoteBtn.click();
+    });
     expect(postServices.voteOnPost).toHaveBeenCalledWith("123", true);
 
-    downvoteBtn.click();
+    await act(async () => {
+      downvoteBtn.click();
+    });
     expect(postServices.voteOnPost).toHaveBeenCalledWith("123", false);
   });
 });

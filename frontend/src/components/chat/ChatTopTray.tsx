@@ -2,7 +2,7 @@ import classes from "../../styles/components/chat/Chat.module.scss";
 import IconBtn from "../shared/IconBtn";
 import { MdMenu } from "react-icons/md";
 import { IoMdClose } from "react-icons/io";
-import { ChatSection, useChat } from "./Chat";
+import useChat, { ChatSection } from "../../context/ChatContext";
 
 export default function ChatTopTray({ closeChat }: { closeChat: () => void }) {
   const { section, setSection } = useChat();

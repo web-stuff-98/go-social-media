@@ -125,11 +125,11 @@ button,
   --padding-small: 1px;
 
   /* Whitespace & Dimensions */
-  --horizontal-whitespace: 27.5vw;
+  --horizontal-whitespace: 27.5vw; /* This changes in interface context */
 
   /* Font sizes */
   --font-lg: min(7vw, 1.866rem);
-  --font-md: min(5.78vw, 1.066rem);
+  --font-md: min(5.78vw, 1.05rem);
   --font-sm: min(4.65vw, 0.95rem);
   --font-xs: min(4vw, 0.866rem);
 

@@ -118,7 +118,7 @@ func (h handler) GetRoomPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Need to fill out the can_access property, so get the RoomPrivateData documents for each room
+	// Need to fill out the can_access property for frontend display, so get the RoomPrivateData documents for each room
 	for i, room := range rooms {
 		privateData := &models.RoomPrivateData{}
 		if err := h.Collections.RoomPrivateDataCollection.FindOne(r.Context(), bson.M{"_id": room.ID}).Decode(&privateData); err != nil {

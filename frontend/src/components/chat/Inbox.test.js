@@ -50,12 +50,6 @@ async function RenderComponent() {
   chatServices.getConversations = jest.fn().mockResolvedValueOnce(["2"]);
   chatServices.getConversation = jest.fn().mockResolvedValueOnce([mockMessage]);
   return await act(async () => {
-    const mockChildMethod = jest.fn();
-    jest.spyOn(React, "useRef").mockReturnValue({
-      current: {
-        childMethod: mockChildMethod,
-      },
-    });
     render(
       <SocketContext.Provider value={{ sendIfPossible: sendIfPossibleMock }}>
         <AuthContext.Provider value={{ user: mockUser }}>
@@ -101,17 +95,22 @@ describe("inbox chat section", () => {
     await RenderComponent();
 
     const conversationUserButton = await screen.findByTestId(
-      "conversation uid:2"
+      `conversation uid:${mockMessage.uid}`
     );
 
     expect(conversationUserButton).toBeInTheDocument();
 
     await act(async () => {
-      conversationUserButton.click();
+      fireEvent.click(conversationUserButton)
     });
 
     expect(chatServices.getConversation).toHaveBeenCalledWith(mockMessage.uid);
-    expect(screen.getByText(mockMessage.content)).toBeInTheDocument();
+
+    // I cannot get this part of the test to work anymore. It probably has something to do
+    // with mocking useRef. I will not waste any more time on this.
+
+    const textContent = await screen.findByText(mockMessage.content)
+    expect(textContent).toBeInTheDocument();
   });
 
   test("opening a conversation then filling out the message input and clicking the send button should invoke the sendIfPossible function", async () => {

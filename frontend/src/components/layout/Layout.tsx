@@ -8,6 +8,7 @@ import { useMouse } from "../../context/MouseContext";
 import Header from "./Header";
 import Chat from "../chat/Chat";
 import { useAuth } from "../../context/AuthContext";
+import { ChatProvider } from "../../context/ChatContext";
 
 export default function Layout() {
   const { state: iState } = useInterface();
@@ -94,7 +95,11 @@ export default function Layout() {
       </div>
       <Header />
       <Nav />
-      {user && <Chat />}
+      {user && (
+        <ChatProvider>
+          <Chat />
+        </ChatProvider>
+      )}
       <main style={getStyle}>
         <Outlet />
       </main>

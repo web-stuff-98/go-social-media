@@ -23,7 +23,7 @@ import useAttachment from "../../context/AttachmentContext";
 import VideoChat from "./VideoChat";
 import { RiWebcamLine } from "react-icons/ri";
 import { IConversation } from "../../interfaces/ChatInterfaces";
-import { useChat } from "./Chat";
+import useChat from "../../context/ChatContext";
 
 export default function Inbox() {
   const { getUserData, cacheUserData } = useUsers();
@@ -230,7 +230,10 @@ export default function Inbox() {
       return;
     }
     if (instanceOfPrivateMessageInviteResponded(data)) {
-      if (data.DATA.recipient_id === selectedConversationRef.current || data.DATA.recipient_id === currentUser?.ID) {
+      if (
+        data.DATA.recipient_id === selectedConversationRef.current ||
+        data.DATA.recipient_id === currentUser?.ID
+      ) {
         setInbox((inbox) => {
           let newInbox = inbox;
           const i = inbox[
@@ -361,6 +364,7 @@ export default function Inbox() {
         {inbox.map((c) => (
           <button
             key={c.uid}
+            data-testid={`conversation uid:${c.uid}`}
             onClick={() => {
               openConversation(c.uid as string);
             }}
@@ -375,12 +379,7 @@ export default function Inbox() {
             }
             className={classes.user}
           >
-            <User
-              testid={`conversation uid:${c.uid}`}
-              small
-              uid={c.uid}
-              user={getUserData(c.uid)}
-            />
+            <User small uid={c.uid} user={getUserData(c.uid)} />
             {notifications &&
               notifications.map((n) => n.type.includes(c.uid)).length > 0 && (
                 <div className={classes.notifications}>

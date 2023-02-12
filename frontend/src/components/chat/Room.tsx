@@ -2,7 +2,6 @@ import classes from "../../styles/components/chat/Room.module.scss";
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import { getRoom } from "../../services/rooms";
-import { ChatSection, useChat } from "./Chat";
 import ResMsg from "../shared/ResMsg";
 import RoomMessage from "./RoomMessage";
 import useSocket from "../../context/SocketContext";
@@ -28,6 +27,7 @@ import { IoPeople } from "react-icons/io5";
 import * as process from "process";
 import { IRoom } from "../../interfaces/ChatInterfaces";
 import { IResMsg } from "../../interfaces/GeneralInterfaces";
+import useChat, { ChatSection } from "../../context/ChatContext";
 (window as any).process = process;
 
 export default function Room() {
@@ -84,7 +84,7 @@ export default function Room() {
         content: messageInput,
         room_id: roomId,
         has_attachment: file ? true : false,
-        invitation:false,
+        invitation: false,
       })
     );
     setMessageInput("");
@@ -131,7 +131,7 @@ export default function Room() {
     if (instanceOfRoomMessageUpdateData(data)) {
       setRoom((o) => {
         if (!o) return o;
-        console.log(data)
+        console.log(data);
         let newMsgs = o.messages;
         const i = o.messages.findIndex((msg) => msg.ID === data.DATA.ID);
         if (i === -1) return o;

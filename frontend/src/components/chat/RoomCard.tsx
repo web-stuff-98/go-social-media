@@ -5,11 +5,11 @@ import { AiFillEdit, AiFillLock } from "react-icons/ai";
 import { useState, useEffect, useRef } from "react";
 import { getRoomImage } from "../../services/rooms";
 import useSocket from "../../context/SocketContext";
-import { useChat } from "./Chat";
 import { useAuth } from "../../context/AuthContext";
 import { IRoomCard } from "../../interfaces/ChatInterfaces";
 import { RiDeleteBin2Fill } from "react-icons/ri";
 import { IoPeople } from "react-icons/io5";
+import useChat from "../../context/ChatContext";
 
 export default function RoomCard({ r }: { r: IRoomCard }) {
   const { user } = useAuth();
