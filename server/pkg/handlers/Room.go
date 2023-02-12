@@ -46,8 +46,6 @@ func (h handler) GetRoomPage(w http.ResponseWriter, r *http.Request) {
 	pageSize := 20
 
 	findOptions := options.Find()
-	findOptions.SetLimit(int64(pageSize))
-	findOptions.SetSkip(int64(pageSize) * (int64(pageNumber) - 1))
 	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
 
 	filter := bson.M{}
@@ -77,6 +75,35 @@ func (h handler) GetRoomPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
+	// Because countdocuments is expensive O(n), look for the value stored in cache first
+	// It's fine if the count is slightly out of date. Probably a better way to do this
+	var count int64
+	filterKey := "FIND-ROOMS-FILTER-COUNT=" + fmt.Sprint(filter)
+	getFilterCmd := h.RedisClient.Get(r.Context(), filterKey)
+	if getFilterCmd.Err() == nil {
+		if cachedCount, err := strconv.Atoi(getFilterCmd.Val()); err == nil {
+			count = int64(cachedCount)
+		} else {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+			return
+		}
+	} else {
+		exactCount, err := h.Collections.RoomCollection.CountDocuments(r.Context(), filter)
+		if err != nil {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+			return
+		}
+		count = exactCount
+		setCmd := h.RedisClient.Set(r.Context(), filterKey, fmt.Sprint(exactCount), time.Second*15)
+		if setCmd.Err() != nil {
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+			return
+		}
+	}
+
+	findOptions.SetLimit(int64(pageSize))
+	findOptions.SetSkip(int64(pageSize) * (int64(pageNumber) - 1))
 
 	cursor, err := h.Collections.RoomCollection.Find(r.Context(), filter, findOptions)
 	if err != nil {
