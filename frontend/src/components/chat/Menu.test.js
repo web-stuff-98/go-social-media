@@ -1,7 +1,7 @@
-import { screen, render, waitFor } from "@testing-library/react";
+import { screen, render } from "@testing-library/react";
 import { act } from "react-dom/test-utils";
-import { BrowserRouter } from "react-router-dom";
-import Chat, { ChatContext } from "./Chat";
+import { ChatContext, ChatSection } from "../../context/ChatContext";
+import Chat from "./Chat";
 import Menu from "./Menu";
 
 let container = null;
@@ -27,8 +27,10 @@ async function RenderComponent() {
   //Render the chat component instead of the Menu component. Menu component should be inside Chat component.
   await act(async () => {
     render(
-      <ChatContext.Provider value={{ setSection: jest.fn() }}>
-        <Chat />
+      <ChatContext.Provider value={{ setSection: jest.fn(), section:ChatSection.MENU }}>
+        <Chat>
+          <Menu />
+        </Chat>
       </ChatContext.Provider>,
       container
     );

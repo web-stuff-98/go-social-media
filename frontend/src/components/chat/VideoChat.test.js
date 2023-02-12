@@ -2,8 +2,8 @@ import { screen, render } from "@testing-library/react";
 import { unmountComponentAtNode } from "react-dom";
 import { act } from "react-dom/test-utils";
 import { AuthContext } from "../../context/AuthContext";
+import { ChatContext } from "../../context/ChatContext";
 import { SocketContext } from "../../context/SocketContext";
-import { ChatContext } from "./Chat";
 import VideoChat from "./VideoChat";
 
 let container = null;

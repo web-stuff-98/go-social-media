@@ -1,10 +1,10 @@
-import { screen, render, fireEvent, waitFor } from "@testing-library/react";
+import { screen, render, fireEvent } from "@testing-library/react";
 import { unmountComponentAtNode } from "react-dom";
-import { ChatContext } from "./Chat";
 import RoomEditor from "./RoomEditor";
 import * as roomServices from "../../services/rooms";
 import { AuthContext } from "../../context/AuthContext";
 import { act } from "react-dom/test-utils";
+import { ChatContext } from "../../context/ChatContext";
 
 roomServices.createRoom = jest.fn().mockResolvedValueOnce("1");
 roomServices.getRoom = jest.fn().mockReturnValue({

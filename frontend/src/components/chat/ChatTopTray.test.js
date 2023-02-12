@@ -1,7 +1,7 @@
 import { screen, render } from "@testing-library/react";
 import { unmountComponentAtNode } from "react-dom";
 import { act } from "react-dom/test-utils";
-import { ChatSection, ChatContext } from "./Chat";
+import { ChatContext, ChatSection } from "../../context/ChatContext";
 import ChatTopTray from "./ChatTopTray";
 
 let container = null;
