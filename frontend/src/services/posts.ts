@@ -10,7 +10,8 @@ const getPage = (
   order: SortOrder,
   mode: SortMode,
   tags: string[],
-  term: string
+  term: string,
+  cancelToken: CancelToken
 ) =>
   makeRequest(
     `/api/posts/page/${pageNum}${
@@ -24,6 +25,7 @@ const getPage = (
     {
       method: "GET",
       withCredentials: true,
+      cancelToken,
     }
   );
 

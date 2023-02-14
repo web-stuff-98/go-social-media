@@ -4,6 +4,13 @@ This is my Golang & React social media personal project. I made tests for the Re
 
 I tried to make the website accessible after completing it. I also wrote unit tests for a lot of the react components, 3 of the tests fail, the other 50 pass. It's definitely not accessible.
 
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnneh
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnneh
+nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnheeh
+
 ## Features
 
 - Private & group video chat

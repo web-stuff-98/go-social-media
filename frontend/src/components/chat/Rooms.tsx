@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import type { ChangeEvent } from "react";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import { FaSearch } from "react-icons/fa";
@@ -12,7 +12,9 @@ import RoomCard from "./RoomCard";
 import { debounce } from "lodash";
 import { IRoomCard } from "../../interfaces/ChatInterfaces";
 import { IResMsg } from "../../interfaces/GeneralInterfaces";
+import type { CancelToken, CancelTokenSource } from "axios";
 import Toggle from "../shared/Toggle";
+import axios from "axios";
 
 export default function Rooms() {
   const { socket, openSubscription, closeSubscription } = useSocket();
@@ -32,6 +34,9 @@ export default function Rooms() {
     pen: false,
   });
 
+  const cancelSource = useRef<CancelTokenSource>();
+  const cancelToken = useRef<CancelToken>();
+
   useEffect(() => {
     setResMsg({ msg: "", err: false, pen: true });
     const controller = new AbortController();
@@ -50,10 +55,16 @@ export default function Rooms() {
 
   const updatePage = async () => {
     try {
+      if (cancelToken.current) {
+        cancelSource.current?.cancel();
+      }
+      cancelSource.current = axios.CancelToken.source();
+      cancelToken.current = cancelSource.current?.token;
       const { count, rooms } = await getRoomPage(
         pageNum,
         searchInput,
-        onlyOwnRooms
+        onlyOwnRooms,
+        cancelToken.current!
       );
       setCount(Number(count));
       setPage(JSON.parse(rooms) as IRoomCard[]);

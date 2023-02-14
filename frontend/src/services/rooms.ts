@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { CancelToken } from "axios";
 import { IRoomCard } from "../interfaces/ChatInterfaces";
 import { makeRequest } from "./makeRequest";
 
@@ -56,13 +56,19 @@ const deleteRoom = (id: string) =>
     method: "DELETE",
   });
 
-const getRoomPage = (page: number, term: string, own: boolean) =>
+const getRoomPage = (
+  page: number,
+  term: string,
+  own: boolean,
+  cancelToken: CancelToken
+) =>
   makeRequest(
     `/api/rooms/page/${page}${
       term ? `?term=${term.replaceAll(" ", "+")}` : ""
     }${own ? `${term ? "&" : "?"}own=true` : ""}`,
     {
       withCredentials: true,
+      cancelToken,
     }
   );
 

@@ -6,6 +6,7 @@ import {
   useCallback,
   useMemo,
   startTransition,
+  useRef,
 } from "react";
 import type { ReactNode } from "react";
 import {
@@ -30,6 +31,7 @@ import {
 import debounce from "lodash/debounce";
 import { IPostCard } from "../interfaces/PostInterfaces";
 import { IResMsg } from "../interfaces/GeneralInterfaces";
+import axios, { CancelToken, CancelTokenSource } from "axios";
 
 export const PostsContext = createContext<{
   posts: IPostCard[];
@@ -196,14 +198,23 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     [page, searchParams]
   );
 
+  const cancelSource = useRef<CancelTokenSource>();
+  const cancelToken = useRef<CancelToken>();
+
   const getPageWithParams = () => {
     setResMsg({ msg: "", err: false, pen: true });
+    if (cancelSource.current) {
+      cancelSource.current.cancel();
+    }
+    cancelSource.current = axios.CancelToken.source();
+    cancelToken.current = cancelSource.current?.token;
     getPage(
       page ? Number(page) : 1,
       getSortOrderFromParams,
       getSortModeFromParams,
       getTagsFromParams,
-      getTermFromParams
+      getTermFromParams,
+      cancelToken.current!
     )
       .then((p: any) => {
         const posts = JSON.parse(p.posts) || [];
@@ -342,7 +353,10 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
               if (posts[0]) {
                 removePostCard(posts[0].ID);
               }
-            } else if (getSortOrderFromParams === "ASCENDING" && posts.length < 20) {
+            } else if (
+              getSortOrderFromParams === "ASCENDING" &&
+              posts.length < 20
+            ) {
               /* If sorting by oldest posts and there are less than 20
           posts (the maximum number of posts on a page) it means the
           user is on the last page, so add the post to the end of
