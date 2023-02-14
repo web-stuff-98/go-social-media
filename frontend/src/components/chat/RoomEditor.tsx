@@ -67,8 +67,8 @@ export default function RoomEditor() {
     validate,
     onSubmit: async (vals: { name: string; image?: any; private: boolean }) => {
       try {
-        setResMsg({ msg: "", pen: true, err: false });
         if (validationErrs.length > 0) return;
+        setResMsg({ msg: "", pen: true, err: false });
         await handleCreateUpdateRoom(
           vals,
           originalImageChanged,

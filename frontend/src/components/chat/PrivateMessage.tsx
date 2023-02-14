@@ -98,19 +98,21 @@ export default function PrivateMessage({
       onMouseLeave={() => setMouseInside(false)}
       tabIndex={0}
     >
-      {msg.uid === user?.ID && !isEditing && !msg.invitation && (
+      {msg.uid === user?.ID && !isEditing && (
         <div tabIndex={2} className={classes.icons}>
-          <IconBtn
-            type="button"
-            name="Edit message"
-            ariaLabel="Edit message"
-            Icon={AiFillEdit}
-            onClick={() => {
-              setIsEditing(true);
-              setMouseInside(true);
-              setEditInput(msg.content);
-            }}
-          />
+          {!msg.invitation && (
+            <IconBtn
+              type="button"
+              name="Edit message"
+              ariaLabel="Edit message"
+              Icon={AiFillEdit}
+              onClick={() => {
+                setIsEditing(true);
+                setMouseInside(true);
+                setEditInput(msg.content);
+              }}
+            />
+          )}
           <IconBtn
             type="button"
             name="Delete message"
