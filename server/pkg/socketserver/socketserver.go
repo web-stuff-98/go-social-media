@@ -266,11 +266,13 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			socketServer.VidChatStatus.mutex.Lock()
 			socketServer.ConnectionSubscriptionCount.mutex.Lock()
 			socketServer.OpenConversations.mutex.Lock()
+			socketServer.UserOnlineStatus.mutex.Lock()
 			for conn := range socketServer.Connections.data {
 				if conn == connData.Conn {
 					delete(socketServer.Connections.data, conn)
 					delete(socketServer.VidChatStatus.data, conn)
 					delete(socketServer.ConnectionSubscriptionCount.data, conn)
+					delete(socketServer.UserOnlineStatus.data, connData.Uid)
 					if connData.Uid != primitive.NilObjectID {
 						delete(socketServer.OpenConversations.data, connData.Uid)
 					}
@@ -307,6 +309,7 @@ func RunServer(socketServer *SocketServer, colls *db.Collections) {
 			socketServer.VidChatStatus.mutex.Unlock()
 			socketServer.ConnectionSubscriptionCount.mutex.Unlock()
 			socketServer.OpenConversations.mutex.Unlock()
+			socketServer.UserOnlineStatus.mutex.Unlock()
 		}
 	}()
 	/* ----- Get user online status ----- */
