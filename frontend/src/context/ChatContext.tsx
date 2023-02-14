@@ -148,10 +148,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           ID: editRoomId,
         })
           .then(() => {
-            if (
-              (vals.image && !editRoomId) ||
-              (editRoomId && originalImageChanged && vals.image)
-            ) {
+            if (originalImageChanged && vals.image) {
               uploadRoomImage(vals.image, editRoomId)
                 .then(() => resolve())
                 .catch((e) => reject(e));
@@ -165,10 +162,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       return new Promise<void>((resolve, reject) => {
         createRoom(vals)
           .then((id) => {
-            if (
-              (vals.image && !editRoomId) ||
-              (editRoomId && originalImageChanged && vals.image)
-            ) {
+            if (vals.image) {
               uploadRoomImage(vals.image, id)
                 .then(() => resolve())
                 .catch((e) => reject(e));
