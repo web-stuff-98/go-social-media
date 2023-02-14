@@ -49,9 +49,8 @@ export const ChatContext = createContext<{
 
   handleCreateUpdateRoom: (
     vals: { name: string; image?: File; private: boolean },
-    originalImageChanged: boolean,
-    numErrs: number
-  ) => void;
+    originalImageChanged: boolean
+  ) => Promise<void>;
 
   notifications: { type: string }[];
 }>({
@@ -73,7 +72,7 @@ export const ChatContext = createContext<{
   toggleStream: () => {},
   streamToggling: false,
 
-  handleCreateUpdateRoom: () => {},
+  handleCreateUpdateRoom: () => new Promise((r) => r()),
 
   notifications: [],
 });
@@ -139,26 +138,46 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
   const handleCreateUpdateRoom = async (
     vals: { name: string; image?: File; private: boolean },
-    originalImageChanged: boolean,
-    numErrs: number
+    originalImageChanged: boolean
   ) => {
-    if (numErrs > 0) return;
-    let id: string;
     if (editRoomId) {
-      id = editRoomId;
-      await updateRoom({
-        name: vals.name,
-        private: vals.private,
-        ID: editRoomId,
+      return new Promise<void>((resolve, reject) => {
+        updateRoom({
+          name: vals.name,
+          private: vals.private,
+          ID: editRoomId,
+        })
+          .then(() => {
+            if (
+              (vals.image && !editRoomId) ||
+              (editRoomId && originalImageChanged && vals.image)
+            ) {
+              uploadRoomImage(vals.image, editRoomId)
+                .then(() => resolve())
+                .catch((e) => reject(e));
+            } else {
+              resolve();
+            }
+          })
+          .catch((e) => reject(e));
       });
     } else {
-      id = await createRoom(vals);
-    }
-    if (
-      (vals.image && !editRoomId) ||
-      (editRoomId && originalImageChanged && vals.image)
-    ) {
-      await uploadRoomImage(vals.image, id);
+      return new Promise<void>((resolve, reject) => {
+        createRoom(vals)
+          .then((id) => {
+            if (
+              (vals.image && !editRoomId) ||
+              (editRoomId && originalImageChanged && vals.image)
+            ) {
+              uploadRoomImage(vals.image, id)
+                .then(() => resolve())
+                .catch((e) => reject(e));
+            } else {
+              resolve();
+            }
+          })
+          .catch((e) => reject(e));
+      });
     }
   };
 

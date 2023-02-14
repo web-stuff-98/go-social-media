@@ -48,11 +48,11 @@ export default function RoomEditor() {
 
   useEffect(() => {
     if (!editRoomId) return;
-    const controller = new AbortController()
+    const controller = new AbortController();
     loadRoom();
     return () => {
       controller.abort();
-    }
+    };
     // eslint-disable-next-line
   }, [editRoomId]);
 
@@ -68,10 +68,10 @@ export default function RoomEditor() {
     onSubmit: async (vals: { name: string; image?: any; private: boolean }) => {
       try {
         setResMsg({ msg: "", pen: true, err: false });
-        handleCreateUpdateRoom(
+        if (validationErrs.length > 0) return;
+        await handleCreateUpdateRoom(
           vals,
           originalImageChanged,
-          validationErrs.length
         );
         setResMsg({ msg: "", pen: false, err: false });
       } catch (e) {
