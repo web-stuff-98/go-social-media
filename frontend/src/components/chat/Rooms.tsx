@@ -13,17 +13,18 @@ import { debounce } from "lodash";
 import { IRoomCard } from "../../interfaces/ChatInterfaces";
 import { IResMsg } from "../../interfaces/GeneralInterfaces";
 import type { CancelToken, CancelTokenSource } from "axios";
-import Toggle from "../shared/Toggle";
 import axios from "axios";
+import Dropdown from "../shared/Dropdown";
+
+const roomDropdownItems = [
+  { name: "OWN_ROOMS", node: "Your rooms" },
+  { name: "INVITED_ROOMS", node: "Invited rooms" },
+];
 
 export default function Rooms() {
   const { socket, openSubscription, closeSubscription } = useSocket();
 
-  const [onlyOwnRooms, setOnlyOwnRoomsState] = useState(false);
-  const setOnlyOwnRooms = (to: boolean) => {
-    setPageNum(1);
-    setOnlyOwnRoomsState(to);
-  };
+  const [roomDropdownIndex, setRoomDropdownIndex] = useState(0);
   const [pageNum, setPageNum] = useState(1);
   const [page, setPage] = useState<IRoomCard[]>([]);
   const [count, setCount] = useState(0);
@@ -45,12 +46,12 @@ export default function Rooms() {
       controller.abort();
     };
     // eslint-disable-next-line
-  }, [pageNum, searchInput, onlyOwnRooms]);
+  }, [pageNum, searchInput, roomDropdownIndex]);
 
   const handleSearch = useMemo(
     () => debounce(() => updatePage(), 300),
     // eslint-disable-next-line
-    [searchInput, page, onlyOwnRooms]
+    [searchInput, page, roomDropdownIndex]
   );
 
   const updatePage = async () => {
@@ -63,7 +64,9 @@ export default function Rooms() {
       const { count, rooms } = await getRoomPage(
         pageNum,
         searchInput,
-        onlyOwnRooms,
+        roomDropdownItems[roomDropdownIndex].name as
+          | "OWN_ROOMS"
+          | "INVITED_ROOMS",
         cancelToken.current!
       );
       setCount(Number(count));
@@ -145,10 +148,21 @@ export default function Rooms() {
         />
       </form>
       <div className={classes.ownRoomsToggleAndPaginationControls}>
-        <Toggle
+        {/*<Toggle
           toggledOn={onlyOwnRooms}
           setToggledOn={setOnlyOwnRooms}
           label="Your rooms"
+        />
+        <Toggle
+          toggledOn={onlyOwnRooms}
+          setToggledOn={setOnlyOwnRooms}
+          label="Joined rooms"
+        />*/}
+        <Dropdown
+          index={roomDropdownIndex}
+          setIndex={setRoomDropdownIndex}
+          light
+          items={roomDropdownItems}
         />
         <div
           data-testid="Pagination controls container"

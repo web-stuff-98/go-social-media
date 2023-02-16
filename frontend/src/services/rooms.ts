@@ -59,13 +59,13 @@ const deleteRoom = (id: string) =>
 const getRoomPage = (
   page: number,
   term: string,
-  own: boolean,
+  param: "OWN_ROOMS" | "INVITED_ROOMS",
   cancelToken: CancelToken
 ) =>
   makeRequest(
     `/api/rooms/page/${page}${
       term ? `?term=${term.replaceAll(" ", "+")}` : ""
-    }${own ? `${term ? "&" : "?"}own=true` : ""}`,
+    }${param ? `${term ? "&" : "?"}${param}` : ""}`,
     {
       withCredentials: true,
       cancelToken,
@@ -126,8 +126,8 @@ export {
   getRoom,
   getRoomImageAsBlob,
   getRandomRoomImage,
-  getOwnRooms,
   inviteToRoom,
+  getOwnRooms,
   banFromRoom,
   unbanFromRoom,
   declineInvite,

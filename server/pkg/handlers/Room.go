@@ -59,7 +59,7 @@ func (h handler) GetRoomPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	if r.URL.Query().Has("own") {
+	if r.URL.Query().Has("OWN_ROOMS") {
 		filter = bson.M{
 			"author_id": user.ID,
 		}
@@ -75,8 +75,41 @@ func (h handler) GetRoomPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	if r.URL.Query().Has("INVITED_ROOMS") {
+		matchingIds := []primitive.ObjectID{}
+		if cursor, err := h.Collections.RoomPrivateDataCollection.Find(r.Context(), bson.M{"members": bson.M{"$all": []primitive.ObjectID{user.ID}}}); err != nil {
+			cursor.Close(r.Context())
+			responseMessage(w, http.StatusInternalServerError, "Internal error")
+			return
+		} else {
+			for cursor.Next(r.Context()) {
+				roomPrivateData := &models.RoomPrivateData{}
+				if err := cursor.Decode(&roomPrivateData); err != nil {
+					cursor.Close(r.Context())
+					responseMessage(w, http.StatusInternalServerError, "Internal error")
+					return
+				} else {
+					matchingIds = append(matchingIds, roomPrivateData.ID)
+				}
+			}
+		}
+		filter = bson.M{
+			"_id": bson.M{"$in": matchingIds},
+		}
+		if r.URL.Query().Has("term") {
+			if r.URL.Query().Get("term") != " " {
+				filter = bson.M{
+					"$text": bson.M{
+						"$search":        r.URL.Query().Get("term"),
+						"$caseSensitive": false,
+					},
+					"_id": bson.M{"$in": matchingIds},
+				}
+			}
+		}
+	}
 
-	// Because countdocuments is expensive O(n), look for the value stored in cache first
+	// Because countdocuments is expensive, O(n) it says in docs, look for the value stored in cache first
 	// It's fine if the count is slightly out of date. Probably a better way to do this
 	var count int64
 	filterKey := "FIND-ROOMS-FILTER-COUNT=" + fmt.Sprint(filter)
