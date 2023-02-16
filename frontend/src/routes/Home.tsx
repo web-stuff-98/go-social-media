@@ -1,6 +1,17 @@
 import classes from "../styles/pages/SimplePage.module.scss";
 
+import { AdvancedVideo } from "@cloudinary/react";
+import { Cloudinary } from "@cloudinary/url-gen";
+
 export default function Home() {
+  const cld = new Cloudinary({
+    cloud: {
+      cloudName: "dr7whzm5r",
+    },
+  });
+
+  const vid = cld.video("go-social-media_tf5qv3");
+
   return (
     <div className={classes.container}>
       <h1>Welcome</h1>
@@ -12,6 +23,8 @@ export default function Home() {
         accounts go through TestAcc1 up to TestAcc50, the password is Test1234!,
         make sure to include the capital T and the exclamation mark at the end.
       </p>
+      <AdvancedVideo style={{ width: "100%" }} cldVid={vid} controls />
+
       <div className={classes.lists}>
         <div className={classes.listContainer}>
           <label>Website features</label>

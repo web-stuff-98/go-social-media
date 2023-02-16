@@ -60,8 +60,10 @@ func (h handler) GetPfp(w http.ResponseWriter, r *http.Request) {
 	if err := h.Collections.PfpCollection.FindOne(r.Context(), bson.M{"_id": id}).Decode(&pfp); err != nil {
 		if err != mongo.ErrNoDocuments {
 			responseMessage(w, http.StatusInternalServerError, "Internal error")
-			return
+		} else {
+			responseMessage(w, http.StatusNotFound, "Not found")
 		}
+		return
 	}
 
 	w.Header().Set("Content-Type", "image/jpeg")
