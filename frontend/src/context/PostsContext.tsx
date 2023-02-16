@@ -235,7 +235,11 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
         setResMsg({ msg: "", err: false, pen: false });
       })
       .catch((e) => {
-        setResMsg({ msg: `${e}`, err: true, pen: false });
+        if (!axios.isCancel(e)) {
+          setResMsg({ msg: `${e}`, err: true, pen: false });
+        } else {
+          setResMsg({ msg: "", err: false, pen: false });
+        }
       });
     getNewestPosts().then((p: IPostCard[] | null) => {
       startTransition(() => {

@@ -398,6 +398,8 @@ func (h handler) GetVideoPartialContent(w http.ResponseWriter, r *http.Request) 
 	w.Header().Add("Content-Range", fmt.Sprint(start)+"-"+fmt.Sprint(end)+"/"+fmt.Sprint(metaData.Size))
 	w.Header().Add("Content-Type", "video/mp4")
 
+	cursor.Close(r.Context())
+
 	w.Write(chunkBytes[:maxLength])
 }
 

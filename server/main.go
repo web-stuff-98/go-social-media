@@ -427,6 +427,9 @@ func main() {
 			ucursor.Decode(&user)
 			protectedPids[user.ID] = struct{}{}
 		}
+		pcursor.Close(context.Background())
+		rcursor.Close(context.Background())
+		ucursor.Close(context.Background())
 	} else {
 		DB.Drop(context.Background())
 		go seed.SeedDB(Collections, 10, 10, 5, protectedUids, protectedPids, protectedRids)
