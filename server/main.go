@@ -429,8 +429,7 @@ func main() {
 		pcursor.Close(context.Background())
 		rcursor.Close(context.Background())
 		ucursor.Close(context.Background())
-
-		Collections.InboxCollection.UpdateMany(context.Background(), bson.M{}, bson.M{"$set": bson.M{"messages": []models.PrivateMessage{}, "messages_sent_to": []primitive.ObjectID{}}})
+		//Collections.InboxCollection.UpdateMany(context.Background(), bson.M{}, bson.M{"$set": bson.M{"messages": []models.PrivateMessage{}, "messages_sent_to": []primitive.ObjectID{}}})
 	} else {
 		//DB.Drop(context.Background())
 		//go seed.SeedDB(Collections, 10, 10, 5, protectedUids, protectedPids, protectedRids)

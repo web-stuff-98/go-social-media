@@ -49,7 +49,7 @@ export default function User({
     if (!uid || uid === "undefined") return;
     if (entry.isIntersecting) {
       userEnteredView(uid);
-      cacheUserData(uid);
+      cacheUserData(uid, true);
     } else {
       userLeftView(uid);
     }

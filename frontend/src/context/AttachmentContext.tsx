@@ -8,7 +8,7 @@ import { useAuth } from "./AuthContext";
 /*
     This handles uploading attachments. It used to be handle via socket but I
     couldn't get it to work because of a typo so I rewrote everything to use
-    HTTP endpoints instead.
+    HTTP endpoints instead, then noticed the typo after rewriting everything...
 */
 
 const AttachmentContext = createContext<{
