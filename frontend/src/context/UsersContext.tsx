@@ -58,7 +58,7 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
 
   const cacheUserData = async (uid: string, force?: boolean) => {
     const foundIndex = users.findIndex((u) => u.ID === uid);
-    if (foundIndex !== -1 && !force) return;
+    if (foundIndex === -1 && !force) return;
     try {
       if (currentUser && uid === currentUser.ID) return;
       const data = await makeRequest(`/api/users/${uid}`, {
@@ -168,7 +168,6 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
     if (instanceOfChangeData(data)) {
       if (data.ENTITY === "USER") {
         if (data.METHOD === "UPDATE_IMAGE" || data.METHOD === "UPDATE") {
-          console.log("RECIEVED USER UPDATE DATA:", data.DATA);
           updateUserData(data.DATA);
         }
       }
