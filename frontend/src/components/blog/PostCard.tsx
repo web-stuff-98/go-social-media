@@ -12,7 +12,7 @@ import IconBtn from "../shared/IconBtn";
 import { useModal } from "../../context/ModalContext";
 import User from "../shared/User";
 import { useUsers } from "../../context/UsersContext";
-import { FaChevronUp, FaChevronDown } from "react-icons/fa";
+import { GoChevronDown, GoChevronUp } from "react-icons/go";
 import { useAuth } from "../../context/AuthContext";
 import { IPostCard } from "../../interfaces/PostInterfaces";
 
@@ -209,9 +209,11 @@ export default function PostCard({
                               : { filter: "opacity(0.5)" }),
                           }}
                           svgStyle={{
-                            transform: "scale(1.1)",
+                            transform: "scale(1.5)",
+                            stroke: "var(--text-color)",
+                            strokeWidth: "1px",
                           }}
-                          Icon={FaChevronUp}
+                          Icon={GoChevronUp}
                           type="button"
                           onClick={async () => {
                             try {
@@ -252,9 +254,11 @@ export default function PostCard({
                               : { filter: "opacity(0.5)" }),
                           }}
                           svgStyle={{
-                            transform: "scale(1.1)",
+                            transform: "scale(1.5)",
+                            stroke: "var(--text-color)",
+                            strokeWidth: "1px",
                           }}
-                          Icon={FaChevronDown}
+                          Icon={GoChevronDown}
                           type="button"
                           onClick={async () => {
                             try {

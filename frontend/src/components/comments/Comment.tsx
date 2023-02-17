@@ -15,7 +15,7 @@ import ErrorTip from "../shared/forms/ErrorTip";
 import { CommentForm } from "./CommentForm";
 import { useModal } from "../../context/ModalContext";
 import { useAuth } from "../../context/AuthContext";
-import { FaChevronUp, FaChevronDown } from "react-icons/fa";
+import { GoChevronUp, GoChevronDown } from "react-icons/go";
 import { IComment } from "../../interfaces/PostInterfaces";
 
 export default function Comment({
@@ -69,7 +69,12 @@ export default function Comment({
                         ? { stroke: "1px" }
                         : { filter: "opacity(0.5)" }),
                     }}
-                    Icon={FaChevronUp}
+                    svgStyle={{
+                      transform: "scale(1.5)",
+                      stroke: "var(--text-color)",
+                      strokeWidth: "1px",
+                    }}
+                    Icon={GoChevronUp}
                     onClick={async () => {
                       try {
                         if (!user)
@@ -107,7 +112,12 @@ export default function Comment({
                         ? { stroke: "1px" }
                         : { filter: "opacity(0.5)" }),
                     }}
-                    Icon={FaChevronDown}
+                    svgStyle={{
+                      transform: "scale(1.5)",
+                      stroke: "var(--text-color)",
+                      strokeWidth: "1px",
+                    }}
+                    Icon={GoChevronDown}
                     onClick={async () => {
                       try {
                         if (!user)

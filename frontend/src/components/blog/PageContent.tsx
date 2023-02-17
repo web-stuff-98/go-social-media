@@ -2,7 +2,7 @@ import { useUsers } from "../../context/UsersContext";
 import classes from "../../styles/pages/Page.module.scss";
 import IconBtn from "../shared/IconBtn";
 import User from "../shared/User";
-import { FaChevronUp, FaChevronDown } from "react-icons/fa";
+import { GoChevronUp, GoChevronDown } from "react-icons/go";
 import { voteOnPost } from "../../services/posts";
 import { useModal } from "../../context/ModalContext";
 import { useAuth } from "../../context/AuthContext";
@@ -74,9 +74,11 @@ export default function PageContent({
                       : { filter: "opacity(0.5)" }),
                   }}
                   svgStyle={{
-                    transform: "scale(1.1)",
+                    transform: "scale(1.5)",
+                    stroke: "var(--text-color)",
+                    strokeWidth: "1px",
                   }}
-                  Icon={FaChevronUp}
+                  Icon={GoChevronUp}
                   type="button"
                   onClick={async () => {
                     try {
@@ -115,9 +117,11 @@ export default function PageContent({
                       : { filter: "opacity(0.5)" }),
                   }}
                   svgStyle={{
-                    transform: "scale(1.1)",
+                    transform: "scale(1.5)",
+                    stroke: "var(--text-color)",
+                    strokeWidth: "1px",
                   }}
-                  Icon={FaChevronDown}
+                  Icon={GoChevronDown}
                   type="button"
                   onClick={async () => {
                     try {
