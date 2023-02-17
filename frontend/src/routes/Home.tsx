@@ -24,7 +24,6 @@ export default function Home() {
         make sure to include the capital T and the exclamation mark at the end.
       </p>
       <AdvancedVideo style={{ width: "100%" }} cldVid={vid} controls />
-
       <div className={classes.lists}>
         <div className={classes.listContainer}>
           <label>Website features</label>

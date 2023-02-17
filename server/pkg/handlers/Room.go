@@ -92,6 +92,7 @@ func (h handler) GetRoomPage(w http.ResponseWriter, r *http.Request) {
 					matchingIds = append(matchingIds, roomPrivateData.ID)
 				}
 			}
+			cursor.Close(r.Context())
 		}
 		filter = bson.M{
 			"_id": bson.M{"$in": matchingIds},
@@ -139,11 +140,11 @@ func (h handler) GetRoomPage(w http.ResponseWriter, r *http.Request) {
 	findOptions.SetSkip(int64(pageSize) * (int64(pageNumber) - 1))
 
 	cursor, err := h.Collections.RoomCollection.Find(r.Context(), filter, findOptions)
+	defer cursor.Close(r.Context())
 	if err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
 	}
-	defer cursor.Close(r.Context())
 
 	var rooms []models.Room
 	if err = cursor.All(r.Context(), &rooms); err != nil {
@@ -204,6 +205,7 @@ func (h handler) GetOwnRooms(w http.ResponseWriter, r *http.Request) {
 
 	rooms := []models.Room{}
 	cursor, err := h.Collections.RoomCollection.Find(r.Context(), bson.M{"author_id": user.ID})
+	defer cursor.Close(r.Context())
 	for cursor.Next(r.Context()) {
 		room := &models.Room{}
 		cursor.Decode(&room)
@@ -716,19 +718,24 @@ func (h handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	cur, err := h.Collections.RoomCollection.Find(r.Context(), bson.M{
 		"author_id": user.ID,
 	})
-	for cur.Next(r.Context()) {
-		numRooms++
-		room := &models.Room{}
-		cur.Decode(&room)
-		if strings.ToLower(room.Name) == strings.ToLower(roomInput.Name) {
-			responseMessage(w, http.StatusBadRequest, "You already have a room by that name")
-			cur.Close(r.Context())
+	defer cur.Close(r.Context())
+	if err != nil {
+		for cur.Next(r.Context()) {
+			numRooms++
+			room := &models.Room{}
+			cur.Decode(&room)
+			if strings.ToLower(room.Name) == strings.ToLower(roomInput.Name) {
+				responseMessage(w, http.StatusBadRequest, "You already have a room by that name")
+				cur.Close(r.Context())
+				return
+			}
+		}
+		if numRooms == 4 {
+			responseMessage(w, http.StatusBadRequest, "You can create a maximum of 8 rooms")
 			return
 		}
-	}
-	cur.Close(r.Context())
-	if numRooms == 4 {
-		responseMessage(w, http.StatusBadRequest, "You can create a maximum of 8 rooms")
+	} else {
+		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
 	}
 
@@ -951,6 +958,7 @@ func (h handler) UpdateRoom(w http.ResponseWriter, r *http.Request) {
 		},
 		"author_id": user.ID,
 	})
+	defer cursor.Close(r.Context())
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
 			responseMessage(w, http.StatusInternalServerError, "Internal error")

@@ -519,6 +519,7 @@ func (h handler) GetNewestPosts(w http.ResponseWriter, r *http.Request) {
 
 	var posts []models.Post
 	cursor, err := h.Collections.PostCollection.Find(r.Context(), bson.M{"image_pending": false}, findOptions)
+	defer cursor.Close(r.Context())
 	if err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return

@@ -370,6 +370,7 @@ func (h handler) GetVideoPartialContent(w http.ResponseWriter, r *http.Request) 
 	// Retrieve the chunks
 	chunkBytes := []byte{}
 	cursor, err := h.Collections.AttachmentChunksCollection.Find(r.Context(), bson.M{"_id": bson.M{"$in": metaData.ChunkIDs[startChunkIndex:endChunkIndex]}})
+	defer cursor.Close(r.Context())
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			responseMessage(w, http.StatusNotFound, "Not found")
