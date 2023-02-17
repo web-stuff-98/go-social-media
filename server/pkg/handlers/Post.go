@@ -600,9 +600,9 @@ func (h handler) GetPage(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		if term == "" {
-			filter = bson.M{"tags": bson.M{"$in": tags}, "image_pending": false}
+			filter = bson.M{"tags": bson.M{"$all": tags}, "image_pending": false}
 		} else {
-			filter = bson.M{"tags": bson.M{"$in": tags}, "image_pending": false,
+			filter = bson.M{"tags": bson.M{"$all": tags}, "image_pending": false,
 				"$text": bson.M{
 					"$search":        term,
 					"$caseSensitive": false,
