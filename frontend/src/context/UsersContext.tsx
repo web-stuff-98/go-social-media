@@ -48,10 +48,10 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<IUser[]>([]);
 
   const getUserData = useCallback(
-    (uid: string) => {
-      if (currentUser && uid === currentUser.ID) return currentUser;
-      return users.find((u) => u.ID === uid) as IUser;
-    },
+    (uid: string) =>
+      currentUser && uid === currentUser.ID
+        ? currentUser
+        : (users.find((u) => u.ID === uid) as IUser),
     // eslint-disable-next-line
     [users]
   );
@@ -61,6 +61,8 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
     if (foundIndex === -1 && !force) return;
     try {
       if (currentUser && uid === currentUser.ID) return;
+      //Shouldn't be making 2 requests here.
+      //Cant really be asked to make it one, nobody will read this anyway
       const data = await makeRequest(`/api/users/${uid}`, {
         withCredentials: true,
       });
