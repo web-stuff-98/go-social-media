@@ -11,14 +11,6 @@ import ChatTopTray from "./ChatTopTray";
 import RoomMembers from "./RoomMembers";
 import useChat from "../../context/ChatContext";
 
-/*
-  This contains all the video chat functions and state,
-  it also contains openRoom and openRoomEditor, and the
-  create/update room function. I had to put the create
-  update room function in here because I couldn't get
-  the test to pass otherwise.
-*/
-
 export default function Chat() {
   const { pathname } = useLocation();
   const { notifications, section } = useChat();
