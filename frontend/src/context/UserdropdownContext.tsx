@@ -55,6 +55,7 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
       else internal();
       function internal() {
         if (!containerRef.current) throw new Error("NO CONTAINER REF!!!");
+        // this state should be a number in the first place but whatever
         const leftClickPos = Number(clickPos.left.replace("px", ""));
         const topClickPos = Number(clickPos.top.replace("px", ""));
         const containerRightEndPos =
