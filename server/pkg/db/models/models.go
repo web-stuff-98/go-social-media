@@ -12,7 +12,7 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type User struct {
 	ID              primitive.ObjectID   `bson:"_id,omitempty" json:"ID"`
-	Username        string               `bson:"username,maxlength=15" json:"username"`
+	Username        string               `bson:"username,maxlength=16" json:"username"`
 	Password        string               `bson:"password" json:"-"`
 	Base64pfp       string               `bson:"-" json:"base64pfp,omitempty"`
 	RoomsMessagesIn []primitive.ObjectID `bson:"rooms_messages_in" json:"-"`

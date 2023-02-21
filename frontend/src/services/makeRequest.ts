@@ -10,7 +10,7 @@ const api = axios.create({
   baseURL,
 });
 
-export function makeRequest(url: string, options?: RawAxiosRequestConfig) {
+export async function makeRequest(url: string, options?: RawAxiosRequestConfig) {
   return api(url, options)
     .then((res: any) => res.data)
     .catch((e: any) =>
