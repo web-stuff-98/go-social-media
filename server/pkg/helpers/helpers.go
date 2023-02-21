@@ -84,10 +84,10 @@ func GetUserAndSessionFromRequest(r *http.Request, collections db.Collections) (
 	}
 	var session models.Session
 	var user models.User
-	if collections.SessionCollection.FindOne(context.TODO(), bson.M{"_id": sessionID}).Decode(&session); err != nil {
+	if err := collections.SessionCollection.FindOne(context.TODO(), bson.M{"_id": sessionID}).Decode(&session); err != nil {
 		return nil, nil, err
 	}
-	if collections.UserCollection.FindOne(context.TODO(), bson.M{"_id": session.UID}).Decode(&user); err != nil {
+	if err := collections.UserCollection.FindOne(context.TODO(), bson.M{"_id": session.UID}).Decode(&user); err != nil {
 		return nil, nil, err
 	}
 	if user.ID == primitive.NilObjectID {
