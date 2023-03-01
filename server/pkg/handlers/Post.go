@@ -1058,11 +1058,11 @@ func (h handler) UploadPostImage(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(32 << 20) // binary shift maximum 20mb in bytes, i think
 
 	file, handler, err := r.FormFile("file")
+	defer file.Close()
 	if err != nil {
 		responseMessage(w, http.StatusInternalServerError, "Internal error")
 		return
 	}
-	defer file.Close()
 
 	if handler.Size > 20*1024*1024 {
 		responseMessage(w, http.StatusRequestEntityTooLarge, "File too large, max 20mb.")
