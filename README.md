@@ -1,5 +1,19 @@
 # https://go-social-media-js.herokuapp.com
 
+
+
+
+
+
+# electron-social-media is my new project
+
+
+
+
+
+
+
+
 This is my Golang & React social media personal project. I made tests for the React components. A few of them are broken, but most pass. This is my 2nd project using Golang, my 1st project was a chat app broken by non thread safe maps, dataraces and bad routing.
 
 I tried to make the website accessible after completing it. I also wrote unit tests for a lot of the react components, 3 of the tests fail, the other 50 pass. It's definitely not accessible.
