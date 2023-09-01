@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/static/css/main.bf59baea.css",
-    "main.js": "/static/js/main.8c9672cb.js",
+    "main.css": "/static/css/main.2b91312d.css",
+    "main.js": "/static/js/main.333368f1.js",
     "static/media/coolvetica.rg-regular.otf": "/static/media/coolvetica.rg-regular.3d81d0e1fdbd5f69b232.otf",
     "static/media/go-mascot-wiki-colour.png": "/static/media/go-mascot-wiki-colour.78e7088ed1557a5ebd3b.png",
     "index.html": "/index.html",
-    "main.bf59baea.css.map": "/static/css/main.bf59baea.css.map",
-    "main.8c9672cb.js.map": "/static/js/main.8c9672cb.js.map"
+    "main.2b91312d.css.map": "/static/css/main.2b91312d.css.map",
+    "main.333368f1.js.map": "/static/js/main.333368f1.js.map"
   },
   "entrypoints": [
-    "static/css/main.bf59baea.css",
-    "static/js/main.8c9672cb.js"
+    "static/css/main.2b91312d.css",
+    "static/js/main.333368f1.js"
   ]
 }
