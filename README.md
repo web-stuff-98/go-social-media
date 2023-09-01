@@ -6,10 +6,6 @@ pSQL-Social is the "new" version of this, using Vue. This project uses React 18 
 
 - Private & group video chat
 - Filesharing
-- Live embedded comments
-- Live blog
-- Live everything else
-- Aria labelling & tab indexes
 - Notifications
 - Member invites & bans
 - Private & public customizable rooms
@@ -17,7 +13,7 @@ pSQL-Social is the "new" version of this, using Vue. This project uses React 18 
 - Rich text editor
 - Mobile responsive
 - Dark mode
-- Live edit & delete
+- Live everything by websocket subscription model
 
 # Frontend
 
