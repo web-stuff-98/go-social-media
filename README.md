@@ -1,5 +1,3 @@
-
-# Something went wrong with hosting this. I have no idea how to use docker, i just tried random stuff for a couple of weeks until it worked, now it doesn't, so I will try more random crap for a few weeks until it works again
 # https://go-social-media-js.herokuapp.com
 
 pSQL-Social is the "new" version of this, using Vue. This project uses React 18 and postgres. The server code is also messy and has lots of nested for loops
